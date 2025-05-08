@@ -451,3 +451,6 @@ FodyWeavers.xsd
 
 # ignore .ini
 *.ini
+
+# ignore .scene
+*.Scene
