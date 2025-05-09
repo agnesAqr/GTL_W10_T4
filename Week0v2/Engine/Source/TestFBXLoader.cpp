@@ -28,10 +28,7 @@ FSkeletalMeshRenderData* TestFBXLoader::ParseFBX(const FString& FilePath)
     if (!bResult)
         return nullptr;
 
-    FbxAxisSystem UnrealAxisSystem(
-    FbxAxisSystem::eZAxis,
-    FbxAxisSystem::eParityEven, // TODO Check
-    FbxAxisSystem::eLeftHanded);
+    const FbxAxisSystem UnrealAxisSystem(FbxAxisSystem::eZAxis, FbxAxisSystem::eParityEven, FbxAxisSystem::eLeftHanded);
     
     UnrealAxisSystem.ConvertScene(Scene);
     
