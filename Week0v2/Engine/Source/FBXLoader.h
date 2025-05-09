@@ -6,7 +6,7 @@
 #include "Container/Map.h"
 #include "FBX/FBXDefine.h"
 
-class TestFBXLoader
+class FBXLoader
 {
 public:
     static bool InitFBXManager();

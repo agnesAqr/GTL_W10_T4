@@ -1,9 +1,9 @@
-#include "TestFBXLoader.h"
+#include "FBXLoader.h"
 
 #include "Components/Material/Material.h"
 #include "Engine/FLoaderOBJ.h"
 
-bool TestFBXLoader::InitFBXManager()
+bool FBXLoader::InitFBXManager()
 {
     FbxManager = FbxManager::Create();
 
@@ -13,7 +13,7 @@ bool TestFBXLoader::InitFBXManager()
     return true;
 }
 
-FSkeletalMeshRenderData* TestFBXLoader::ParseFBX(const FString& FilePath)
+FSkeletalMeshRenderData* FBXLoader::ParseFBX(const FString& FilePath)
 {
     static bool bInitialized = false;
     if (bInitialized == false)
@@ -61,7 +61,7 @@ FSkeletalMeshRenderData* TestFBXLoader::ParseFBX(const FString& FilePath)
     return NewMeshData;
 }
 
-void TestFBXLoader::ExtractFBXMeshData(const FbxScene* Scene, FSkeletalMeshRenderData* MeshData, FRefSkeletal* RefSkeletal)
+void FBXLoader::ExtractFBXMeshData(const FbxScene* Scene, FSkeletalMeshRenderData* MeshData, FRefSkeletal* RefSkeletal)
 {
     FbxNode* RootNode = Scene->GetRootNode();
     if (RootNode == nullptr)
@@ -71,7 +71,7 @@ void TestFBXLoader::ExtractFBXMeshData(const FbxScene* Scene, FSkeletalMeshRende
 }
 
 /* Extract할 때 FBX의 Mapping Mode와 Reference Mode에 따라 모두 다르게 파싱을 진행해야 함!! */
-void TestFBXLoader::ExtractMeshFromNode(FbxNode* Node, FSkeletalMeshRenderData* MeshData, FRefSkeletal* RefSkeletal)
+void FBXLoader::ExtractMeshFromNode(FbxNode* Node, FSkeletalMeshRenderData* MeshData, FRefSkeletal* RefSkeletal)
 {
     FbxMesh* Mesh = Node->GetMesh();
     if (Mesh)
@@ -111,7 +111,7 @@ void TestFBXLoader::ExtractMeshFromNode(FbxNode* Node, FSkeletalMeshRenderData* 
     }
 }
 
-void TestFBXLoader::ExtractVertices(
+void FBXLoader::ExtractVertices(
     FbxMesh* Mesh,
     FSkeletalMeshRenderData* MeshData,
     FRefSkeletal* RefSkeletal)
@@ -163,7 +163,7 @@ void TestFBXLoader::ExtractVertices(
     ExtractSkinningData  (Mesh, MeshData, RefSkeletal, BaseVertexIndex);
 }
 
-void TestFBXLoader::ExtractNormals(
+void FBXLoader::ExtractNormals(
     FbxMesh* Mesh,
     FSkeletalMeshRenderData* RenderData,
     int BaseVertexIndex)
@@ -223,7 +223,7 @@ void TestFBXLoader::ExtractNormals(
     }
 }
 
-void TestFBXLoader::ExtractUVs(
+void FBXLoader::ExtractUVs(
     FbxMesh* Mesh,
     FSkeletalMeshRenderData* MeshData,
     int BaseVertexIndex)
@@ -274,7 +274,7 @@ void TestFBXLoader::ExtractUVs(
     }
 }
 
-void TestFBXLoader::ExtractTangents(
+void FBXLoader::ExtractTangents(
     FbxMesh* Mesh,
     FSkeletalMeshRenderData* MeshData,
     int BaseVertexIndex)
@@ -333,7 +333,7 @@ void TestFBXLoader::ExtractTangents(
     }
 }
 
-void TestFBXLoader::ExtractSkinningData(
+void FBXLoader::ExtractSkinningData(
     FbxMesh* Mesh,
     FSkeletalMeshRenderData* MeshData,
     FRefSkeletal* RefSkeletal,
@@ -456,7 +456,7 @@ void TestFBXLoader::ExtractSkinningData(
 }
 
 
-void TestFBXLoader::ProcessSkinning(FbxSkin* Skin, FSkeletalMeshRenderData* MeshData, FRefSkeletal* RefSkeletal, int BaseVertexIndex)
+void FBXLoader::ProcessSkinning(FbxSkin* Skin, FSkeletalMeshRenderData* MeshData, FRefSkeletal* RefSkeletal, int BaseVertexIndex)
 {
     int ClusterCount = Skin->GetClusterCount();
 
@@ -613,7 +613,7 @@ void TestFBXLoader::ProcessSkinning(FbxSkin* Skin, FSkeletalMeshRenderData* Mesh
     }
 }
 
-void TestFBXLoader::ExtractIndices(
+void FBXLoader::ExtractIndices(
     FbxMesh* Mesh,
     FSkeletalMeshRenderData* MeshData,
     int BaseVertexIndex)
@@ -659,7 +659,7 @@ void TestFBXLoader::ExtractIndices(
 }
 
 
-void TestFBXLoader::ExtractMaterials(
+void FBXLoader::ExtractMaterials(
     FbxNode* Node,
     FbxMesh* Mesh,
     FSkeletalMeshRenderData* MeshData,
@@ -762,7 +762,7 @@ void TestFBXLoader::ExtractMaterials(
     }
 }
 
-void TestFBXLoader::UpdateBoundingBox(FSkeletalMeshRenderData MeshData)
+void FBXLoader::UpdateBoundingBox(FSkeletalMeshRenderData MeshData)
 {
     if (MeshData.Vertices.Num() == 0)
         return;
@@ -792,7 +792,7 @@ void TestFBXLoader::UpdateBoundingBox(FSkeletalMeshRenderData MeshData)
     MeshData.BoundingBox.max = Max;
 }
 
-FSkeletalMeshRenderData* TestFBXLoader::GetSkeletalRenderData(FString FilePath)
+FSkeletalMeshRenderData* FBXLoader::GetSkeletalRenderData(FString FilePath)
 {
     // TODO: 폴더에서 가져올 수 있으면 가져오기
     if (SkeletalMeshData.Contains(FilePath))
@@ -804,7 +804,7 @@ FSkeletalMeshRenderData* TestFBXLoader::GetSkeletalRenderData(FString FilePath)
 }
 
 // FBX 머티리얼 → FObjMaterialInfo 변환 헬퍼
-FObjMaterialInfo TestFBXLoader::ConvertFbxToObjMaterialInfo(
+FObjMaterialInfo FBXLoader::ConvertFbxToObjMaterialInfo(
     FbxSurfaceMaterial* FbxMat,
     const FString& BasePath)
 {
@@ -914,7 +914,7 @@ FObjMaterialInfo TestFBXLoader::ConvertFbxToObjMaterialInfo(
     return OutInfo;
 }
 
-USkeletalMesh* TestFBXLoader::CreateSkeletalMesh(const FString& FilePath)
+USkeletalMesh* FBXLoader::CreateSkeletalMesh(const FString& FilePath)
 {
     FSkeletalMeshRenderData* MeshData = ParseFBX(FilePath);
     if (MeshData == nullptr)
@@ -935,7 +935,7 @@ USkeletalMesh* TestFBXLoader::CreateSkeletalMesh(const FString& FilePath)
     return SkeletalMesh;
 }
 
-USkeletalMesh* TestFBXLoader::GetSkeletalMesh(const FString& FilePath)
+USkeletalMesh* FBXLoader::GetSkeletalMesh(const FString& FilePath)
 {
     if (SkeletalMeshMap.Contains(FilePath))
         return SkeletalMeshMap[FilePath];
@@ -943,7 +943,7 @@ USkeletalMesh* TestFBXLoader::GetSkeletalMesh(const FString& FilePath)
     return nullptr;
 }
 
-FSkeletalMeshRenderData TestFBXLoader::GetCopiedSkeletalRenderData(FString FilePath)
+FSkeletalMeshRenderData FBXLoader::GetCopiedSkeletalRenderData(FString FilePath)
 {
     // 있으면 가져오고
     FSkeletalMeshRenderData* OriginRenderData = SkeletalMeshData[FilePath];
@@ -955,7 +955,7 @@ FSkeletalMeshRenderData TestFBXLoader::GetCopiedSkeletalRenderData(FString FileP
     return {};
 }
 
-FRefSkeletal* TestFBXLoader::GetRefSkeletal(FString FilePath)
+FRefSkeletal* FBXLoader::GetRefSkeletal(FString FilePath)
 {
     // TODO: 폴더에서 가져올 수 있으면 가져오기
     if (RefSkeletalData.Contains(FilePath))
@@ -966,7 +966,7 @@ FRefSkeletal* TestFBXLoader::GetRefSkeletal(FString FilePath)
     return nullptr;
 }
 
-void TestFBXLoader::AddVertexFromControlPoint(
+void FBXLoader::AddVertexFromControlPoint(
     FbxMesh* Mesh,
     FSkeletalMeshRenderData* MeshData,
     int ControlPointIndex)

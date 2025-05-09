@@ -343,7 +343,7 @@ xcopy /y /d "$(ProjectDir)imgui.ini" "$(OutDir)"
     <ClCompile Include="Engine\Source\Runtime\Windows\D3D11RHI\FShaderProgram.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Windows\D3D11RHI\GraphicDevice.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Windows\D3D11RHI\VertexShader.cpp" />
-    <ClCompile Include="Engine\Source\TestFBXLoader.cpp" />
+    <ClCompile Include="Engine\Source\FBXLoader.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Windows\RawInput.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Windows\WindowsCursor.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Windows\WindowsPlatformTime.cpp" />
@@ -579,7 +579,7 @@ xcopy /y /d "$(ProjectDir)imgui.ini" "$(OutDir)"
     <ClInclude Include="Engine\Source\Runtime\Windows\D3D11RHI\FShaderProgram.h" />
     <ClInclude Include="Engine\Source\Runtime\Windows\D3D11RHI\GraphicDevice.h" />
     <ClInclude Include="Engine\Source\Runtime\Windows\D3D11RHI\VertexShader.h" />
-    <ClInclude Include="Engine\Source\TestFBXLoader.h" />
+    <ClInclude Include="Engine\Source\FBXLoader.h" />
     <ClInclude Include="Engine\Source\Runtime\Windows\RawInput.h" />
     <ClInclude Include="Engine\Source\Runtime\Windows\WindowsCursor.h" />
     <ClInclude Include="Engine\Source\Runtime\Windows\WindowsPlatformTime.h" />

@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "HAL/PlatformType.h"
 
 namespace EEngineShowFlags
@@ -17,5 +17,6 @@ namespace EEngineShowFlags
         SF_Collision = 1ULL << 8,
         SF_CollisionSelectedOnly = 1ULL << 9,
         SF_SkeletalMesh = 1ULL << 10,
+        SF_ALL = (1ULL << 11) - 1
     };
 }

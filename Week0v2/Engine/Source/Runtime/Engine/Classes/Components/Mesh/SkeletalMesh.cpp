@@ -1,9 +1,9 @@
-﻿#include "SkeletalMesh.h"
+#include "SkeletalMesh.h"
 
 #include "Renderer/RenderResourceManager.h"
 #include "LaunchEngineLoop.h"
 #include "Renderer/Renderer.h"
-#include "TestFBXLoader.h"
+#include "FBXLoader.h"
 #include "Components/Material/Material.h"
 #include "Engine/FLoaderOBJ.h"
 
@@ -27,8 +27,8 @@ void USkeletalMesh::GetUsedMaterials(TArray<UMaterial*>& Out) const
 
 void USkeletalMesh::SetData(const FString& FilePath)
 {
-    FSkeletalMeshRenderData SkeletalMeshRenderData = TestFBXLoader::GetCopiedSkeletalRenderData(FilePath);
-    FRefSkeletal* RefSkeletal = TestFBXLoader::GetRefSkeletal(FilePath);
+    FSkeletalMeshRenderData SkeletalMeshRenderData = FBXLoader::GetCopiedSkeletalRenderData(FilePath);
+    FRefSkeletal* RefSkeletal = FBXLoader::GetRefSkeletal(FilePath);
 
     SetData(SkeletalMeshRenderData, RefSkeletal);
 }

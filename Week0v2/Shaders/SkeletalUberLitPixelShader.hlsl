@@ -3,9 +3,8 @@
 Texture2D DiffuseTexture : register(t0);
 Texture2D AmbientTexture : register(t1);
 Texture2D SpecularTexture : register(t2);
-Texture2D BumpTexture : register(t3);
-Texture2D AlphaTexture : register(t4);
-Texture2D NormalTexture : register(t5);
+Texture2D AlphaTexture : register(t3);
+Texture2D NormalTexture : register(t4);
 
 // 샘플링 패턴
 static const int filterSize = 1; // 중앙을 포함한 반경 EX. (-2, -1, 0, 1, 2) -> 5x5
@@ -644,14 +643,8 @@ PS_OUTPUT mainPS(PS_INPUT input)
     output.color = float4(baseColor.rgb * input.color.rgb, 1.0);
     return output;
 #endif
-    // Bump (Height)
-    float height = BumpTexture.Sample(linearSampler, uv).r;
-    float scale = 0.05;
-    float2 viewDir = normalize((CameraPos - input.worldPos).xy);
-    float2 pUV = uv + viewDir * ((height - 0.5) * scale);
-    
     // Normal
-    float4 normalTex = ((NormalTexture.Sample(linearSampler, pUV)- 0.5) * 2);
+    float4 normalTex = ((NormalTexture.Sample(linearSampler, uv)- 0.5) * 2);
 
     float2 tileSize = float2(TILE_SIZE_X, TILE_SIZE_Y);
     

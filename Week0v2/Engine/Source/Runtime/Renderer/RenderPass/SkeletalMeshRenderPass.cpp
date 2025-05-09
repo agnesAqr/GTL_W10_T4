@@ -1,4 +1,4 @@
-﻿#include "SkeletalMeshRenderPass.h"
+#include "SkeletalMeshRenderPass.h"
 
 #include "EditorEngine.h"
 #include "LaunchEngineLoop.h"
@@ -383,7 +383,6 @@ void FSkeletalMeshRenderPass::UpdateMaterialConstants(const FObjMaterialInfo& Ma
     auto DiffuseTexture  = FEngineLoop::ResourceManager.GetTexture(MaterialInfo.DiffuseTexturePath);
     auto AmbientTexture  = FEngineLoop::ResourceManager.GetTexture(MaterialInfo.AmbientTexturePath);
     auto SpecularTexture = FEngineLoop::ResourceManager.GetTexture(MaterialInfo.SpecularTexturePath);
-    auto BumpTexture     = FEngineLoop::ResourceManager.GetTexture(MaterialInfo.BumpTexturePath);
     auto AlphaTexture    = FEngineLoop::ResourceManager.GetTexture(MaterialInfo.AlphaTexturePath);
     auto NormalTexture   = FEngineLoop::ResourceManager.GetTexture(MaterialInfo.NormalTexturePath);
     
@@ -391,11 +390,10 @@ void FSkeletalMeshRenderPass::UpdateMaterialConstants(const FObjMaterialInfo& Ma
         DiffuseTexture  ? DiffuseTexture->TextureSRV  : defaultSRV,  // t0
         AmbientTexture  ? AmbientTexture->TextureSRV  : defaultSRV,  // t1
         SpecularTexture ? SpecularTexture->TextureSRV : defaultSRV,  // t2
-        BumpTexture     ? BumpTexture->TextureSRV     : defaultSRV,  // t3
-        AlphaTexture    ? AlphaTexture->TextureSRV    : defaultSRV,  // t4
-        NormalTexture   ? NormalTexture->TextureSRV   : defaultSRV   // t5
+        AlphaTexture    ? AlphaTexture->TextureSRV    : defaultSRV,  // t3
+        NormalTexture   ? NormalTexture->TextureSRV   : defaultSRV   // t4
     };
-    Graphics.DeviceContext->PSSetShaderResources(0, 6, srvs);
+    Graphics.DeviceContext->PSSetShaderResources(0, 5, srvs);
 
     ID3D11SamplerState* linearSampler = renderResourceManager->GetSamplerState(ESamplerType::Linear);
     Graphics.DeviceContext->PSSetSamplers(static_cast<uint32>(ESamplerType::Linear), 1, &linearSampler);

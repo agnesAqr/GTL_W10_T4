@@ -15,11 +15,12 @@
 #include "Engine/FEditorStateManager.h"
 #include "LevelEditor/SLevelEditor.h"
 #include "SlateCore/Layout/SlateRect.h"
+#include "ShowFlags.h"
 
 FVector FEditorViewportClient::Pivot = FVector(0.0f, 0.0f, 0.0f);
 float FEditorViewportClient::OrthoSize = 10.0f;
 
-FEditorViewportClient::FEditorViewportClient() : Viewport(nullptr), ViewportType(LVT_Perspective), ShowFlag(31 | (1ULL << 10)), ViewMode(VMI_Lit_Phong)
+FEditorViewportClient::FEditorViewportClient() : Viewport(nullptr), ViewportType(LVT_Perspective), ShowFlag(EEngineShowFlags::SF_ALL), ViewMode(VMI_Lit_Phong)
 {
 
 }

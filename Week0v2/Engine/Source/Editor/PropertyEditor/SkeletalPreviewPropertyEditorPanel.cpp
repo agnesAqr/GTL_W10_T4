@@ -1,4 +1,4 @@
-﻿#include "SkeletalPreviewPropertyEditorPanel.h"
+#include "SkeletalPreviewPropertyEditorPanel.h"
 
 #include <shellapi.h> // ShellExecute 관련 함수 정의 포함
 
@@ -29,7 +29,7 @@
 
 #include "LaunchEngineLoop.h"
 #include "PlayerCameraManager.h"
-#include "TestFBXLoader.h"
+#include "FBXLoader.h"
 #include "Components/PrimitiveComponents/MeshComponents/SkeletalMeshComponent.h"
 #include "Light/ShadowMapAtlas.h"
 #include "UnrealEd/EditorViewportClient.h"
@@ -923,7 +923,7 @@ void SkeletalPreviewPropertyEditorPanel::RenderForSkeletalMesh(USkeletalMeshComp
         std::filesystem::path P = PreviewName;
         FString FileName = FString( P.filename().string() ); 
         
-        const TMap<FString, USkeletalMesh*> Meshes = TestFBXLoader::GetSkeletalMeshes();
+        const TMap<FString, USkeletalMesh*> Meshes = FBXLoader::GetSkeletalMeshes();
         if (ImGui::BeginCombo("##SkeletalMesh", GetData(FileName), ImGuiComboFlags_None))
         {
             for (int i = 0; i < (int)fbxFiles.size(); ++i)
