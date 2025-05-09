@@ -7,7 +7,6 @@
 // name을 문자열화 해주는 매크로
 #define INLINE_STRINGIFY(name) #name
 
-
 // RTTI를 위한 클래스 매크로
 #define DECLARE_CLASS(TClass, TSuperClass) \
 private: \
@@ -18,7 +17,12 @@ public: \
     using Super = TSuperClass; \
     using ThisClass = TClass; \
     static UClass* StaticClass() { \
-        static UClass ClassInfo{ TEXT(#TClass), static_cast<uint32>(sizeof(TClass)), static_cast<uint32>(alignof(TClass)), TSuperClass::StaticClass() }; \
+        static UClass ClassInfo{    \
+            TEXT(#TClass), \
+            static_cast<uint32>(sizeof(TClass)), \
+            static_cast<uint32>(alignof(TClass)), \
+            TSuperClass::StaticClass()  \
+        }; \
         ClassInfo.Creator = [](UObject* InOuter) -> void* { return FObjectFactory::ConstructObject<TClass>(InOuter); }; \
         return &ClassInfo; \
     } \
@@ -29,6 +33,34 @@ private: \
         } \
     }; \
 public: \
+    static inline FAutoRegister_##TClass AutoRegister_##TClass_Instance;
+
+// RTTI용 추상(abstract) 클래스 매크로 (인스턴스화 불가)
+#define DECLARE_ABSTRACT_CLASS(TClass, TSuperClass)                       \
+private:                                                                  \
+    TClass& operator=(const TClass&) = delete;                            \
+    TClass(TClass&&) = delete;                                            \
+    TClass& operator=(TClass&&) = delete;                                 \
+public:                                                                   \
+    using Super     = TSuperClass;                                        \
+    using ThisClass = TClass;                                             \
+    static UClass* StaticClass() {                                        \
+        static UClass ClassInfo{                                         \
+            TEXT(#TClass),                                                \
+            static_cast<uint32>(sizeof(TClass)),                          \
+            static_cast<uint32>(alignof(TClass)),                         \
+            TSuperClass::StaticClass()                                    \
+    };                                                                \
+    /* Creator를 설정하지 않으므로 인스턴스화 불가 */                  \
+    return &ClassInfo;                                                \
+    }                                                                     \
+private:                                                                  \
+    struct FAutoRegister_##TClass {                                       \
+        FAutoRegister_##TClass() {                                        \
+            UClassRegistry::Get().RegisterClass(TClass::StaticClass());   \
+    }                                                                 \
+    };                                                                    \
+public:                                                                   \
     static inline FAutoRegister_##TClass AutoRegister_##TClass_Instance;
 
 #define DECLARE_ACTORCOMPONENT_INFO(T) \
