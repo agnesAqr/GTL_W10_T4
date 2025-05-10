@@ -149,9 +149,7 @@ robocopy "$(ProjectDir)Assets" "$(OutDir)\Assets" *.* /E /NFL /NDL
 robocopy "$(ProjectDir)Contents" "$(OutDir)\Contents" *.* /E /R:3 /W:5 /NFL /NDL
 robocopy "$(ProjectDir)Font"     "$(OutDir)\Font"     *.* /E /R:3 /W:5 /NFL /NDL
 robocopy "$(ProjectDir)Shaders"  "$(OutDir)\Shaders"  *.* /E /R:3 /W:5 /NFL /NDL
-robocopy "$(ProjectDir)Icon"     "$(OutDir)\Icon"     *.* /E /R:3 /W:5 /NFL /NDL
-xcopy /y /d "$(ProjectDir)editor.ini" "$(OutDir)"
-xcopy /y /d "$(ProjectDir)imgui.ini" "$(OutDir)"</Command>
+robocopy "$(ProjectDir)Icon"     "$(OutDir)\Icon"     *.* /E /R:3 /W:5 /NFL /NDL</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -186,8 +184,6 @@ robocopy "$(ProjectDir)Contents" "$(OutDir)\Contents" *.* /E /R:3 /W:5 /NFL /NDL
 robocopy "$(ProjectDir)Font"     "$(OutDir)\Font"     *.* /E /R:3 /W:5 /NFL /NDL
 robocopy "$(ProjectDir)Shaders"  "$(OutDir)\Shaders"  *.* /E /R:3 /W:5 /NFL /NDL
 robocopy "$(ProjectDir)Icon"     "$(OutDir)\Icon"     *.* /E /R:3 /W:5 /NFL /NDL
-xcopy /y /d "$(ProjectDir)editor.ini" "$(OutDir)"
-xcopy /y /d "$(ProjectDir)imgui.ini" "$(OutDir)"
 </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>

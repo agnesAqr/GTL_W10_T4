@@ -9,14 +9,14 @@
 #include "Engine/Assets/Animation/IAnimationDataModel.h"
 #include "Engine/Assets/Animation/UAnimationAsset.h"
 
-FbxManager* TestFBXLoader::FbxManager = nullptr;
+FbxManager* FBXLoader::FbxManager = nullptr;
     
-TMap<FName, FSkeletalMeshRenderData*> TestFBXLoader::SkeletalMeshData = {};
-TMap<FString, USkeletalMesh*> TestFBXLoader::SkeletalMeshMap = {};
-TMap<FName, FRefSkeletal*> TestFBXLoader::RefSkeletalData = {};
+TMap<FName, FSkeletalMeshRenderData*> FBXLoader::SkeletalMeshData = {};
+TMap<FString, USkeletalMesh*> FBXLoader::SkeletalMeshMap = {};
+TMap<FName, FRefSkeletal*> FBXLoader::RefSkeletalData = {};
 
-TMap<FName, UAnimSequence*> TestFBXLoader::SkeletalAnimSequences = {};
-TMap<FName, UAnimDataModel*> TestFBXLoader::AnimDataModels = {};
+TMap<FName, UAnimSequence*> FBXLoader::SkeletalAnimSequences = {};
+TMap<FName, UAnimDataModel*> FBXLoader::AnimDataModels = {};
 
 bool FBXLoader::InitFBXManager()
 {
@@ -28,7 +28,7 @@ bool FBXLoader::InitFBXManager()
     return true;
 }
 
-FSkeletalMeshRenderData* FBXLoader::ParseFBX(const FString& FilePath)
+FSkeletalMeshRenderData* FBXLoader::ParseFBX(const FString& FilePath, bool bIsAbsolutePath)
 {
     static bool bInitialized = false;
     if (bInitialized == false)
@@ -73,7 +73,6 @@ FSkeletalMeshRenderData* FBXLoader::ParseFBX(const FString& FilePath)
     UnrealAxisSystem.ConvertScene(Scene);
     
     Importer->Import(Scene);
-    Importer->Destroy();
 
     FSkeletalMeshRenderData* NewMeshData = new FSkeletalMeshRenderData();
     FRefSkeletal* RefSkeletal = new FRefSkeletal();
@@ -155,7 +154,7 @@ FSkeletalMeshRenderData* FBXLoader::ParseFBX(const FString& FilePath)
     return NewMeshData;
 }
 
-void FBXLoader::ExtractFBXMeshData(const FbxScene* Scene, FSkeletalMeshRenderData* MeshData, FRefSkeletal* RefSkeletal)
+void FBXLoader::ExtractFBXMeshData(const FbxScene* Scene, FSkeletalMeshRenderData* MeshData, FRefSkeletal* RefSkeletal, TMap<FString, FbxNode*>& OutNodeMap)
 {
     FbxNode* RootNode = Scene->GetRootNode();
     if (RootNode == nullptr)
@@ -164,8 +163,12 @@ void FBXLoader::ExtractFBXMeshData(const FbxScene* Scene, FSkeletalMeshRenderDat
     ExtractMeshFromNode(RootNode, MeshData, RefSkeletal, OutNodeMap);
 }
 
+void FBXLoader::ExtractSkeleton(FbxScene* Scene, FSkeletalMeshRenderData* MeshData, FRefSkeletal* RefSkeletal)
+{
+}
+
 /* Extract할 때 FBX의 Mapping Mode와 Reference Mode에 따라 모두 다르게 파싱을 진행해야 함!! */
-void FBXLoader::ExtractMeshFromNode(FbxNode* Node, FSkeletalMeshRenderData* MeshData, FRefSkeletal* RefSkeletal)
+void FBXLoader::ExtractMeshFromNode(FbxNode* Node, FSkeletalMeshRenderData* MeshData, FRefSkeletal* RefSkeletal, TMap<FString, FbxNode*>& OutNodeMap)
 {
     if (Node != nullptr)
     {
@@ -949,7 +952,7 @@ void FBXLoader::ExtractMaterials(
     }
 }
 
-void TestFBXLoader::ExtractAnimation(const int BoneTreeIndex, const FRefSkeletal& RefSkeletal, FbxAnimLayer* AnimLayer, UAnimDataModel* AnimModel,
+void FBXLoader::ExtractAnimation(const int BoneTreeIndex, const FRefSkeletal& RefSkeletal, FbxAnimLayer* AnimLayer, UAnimDataModel* AnimModel,
     const TMap<FString, FbxNode*>& NodeMap)
 {
         // 1) 엔진 본 노드 정보 가져오기

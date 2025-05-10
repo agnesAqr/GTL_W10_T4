@@ -16,7 +16,7 @@
 
 #include "LaunchEngineLoop.h"
 #include "ShowFlags.h"
-#include "TestFBXLoader.h"
+#include "FBXLoader.h"
 #include "Actors/SkeletalMeshActor.h"
 #include "Camera/CameraComponent.h"
 
@@ -203,7 +203,7 @@ void ControlEditorPanel::CreateMenuButton(ImVec2 ButtonSize, ImFont* IconFont)
                 if (FileName)
                 {
                     std::cout << FileName << std::endl;
-                    if (TestFBXLoader::ImportFBX(FileName) == false)
+                    if (FBXLoader::ImportFBX(FileName) == false)
                     {
                         tinyfd_messageBox("Error", "FBX 파일을 불러올 수 없습니다.", "ok", "error", 1);
                     }

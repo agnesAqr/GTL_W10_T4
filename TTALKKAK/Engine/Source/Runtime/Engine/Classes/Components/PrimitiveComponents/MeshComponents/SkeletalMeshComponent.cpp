@@ -156,7 +156,7 @@ void USkeletalMeshComponent::CreateBoneComponents()
 USkeletalMesh* USkeletalMeshComponent::LoadSkeletalMesh(const FString& FilePath)
 {
     USkeletalMesh* SkeletalMesh = FBXLoader::CreateSkeletalMesh(FilePath);
-    TestFBXLoader::CreateAnimationSequence(FilePath);
+    FBXLoader::CreateAnimationSequence(FilePath);
     
     SetSkeletalMesh(SkeletalMesh);
     

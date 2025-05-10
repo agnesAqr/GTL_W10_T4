@@ -462,6 +462,17 @@
     <ClInclude Include="Engine\Source\Runtime\Engine\Viewport.h" />
     <ClInclude Include="Engine\Source\Runtime\SlateCore\Layout\SlateRect.h" />
     <ClInclude Include="Engine\Source\FBXLoader.h" />
+    <ClInclude Include="Engine\Source\Runtime\Core\Container\FFileHelper.h" />
+    <ClInclude Include="Engine\Source\Runtime\Core\Container\Path.h" />
+    <ClInclude Include="Engine\Source\Runtime\Core\Container\StringConv.h" />
+    <ClInclude Include="Engine\Source\Runtime\Core\Math\FrameRate.h" />
+    <ClInclude Include="Engine\Source\Runtime\Core\Math\FrameTime.h" />
+    <ClInclude Include="Engine\Source\Runtime\Core\Math\NumericLimits.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Engine\Assets\Animation\AnimDataModel.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Engine\Assets\Animation\AnimTypes.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Engine\Assets\Animation\IAnimationDataModel.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Engine\Assets\Animation\UAnimationAsset.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Engine\Assets\UAsset.h" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\Source\ThirdParty\DirectXTK\Include\DDSTextureLoader.h" />
@@ -673,6 +684,15 @@
     <ClCompile Include="Engine\Source\Runtime\Engine\Viewport.cpp" />
     <ClCompile Include="Engine\Source\Runtime\SlateCore\Layout\SlateRect.cpp" />
     <ClCompile Include="Engine\Source\FBXLoader.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Core\Container\FFileHelper.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Core\Container\Path.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Core\Math\FrameRate.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Core\Math\FrameTime.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Engine\Assets\Animation\AnimDataModel.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Engine\Assets\Animation\AnimTypes.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Engine\Assets\Animation\IAnimationDataModel.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Engine\Assets\Animation\UAnimationAsset.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Engine\Assets\UAsset.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\ShaderHeaders\GConstantBuffers.hlsli" />
