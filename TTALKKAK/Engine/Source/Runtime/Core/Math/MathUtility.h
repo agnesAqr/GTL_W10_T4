@@ -10,6 +10,12 @@
 
 #define PI_DOUBLE            (3.141592653589793238462643383279502884197169399)
 
+enum class EInterpType
+{
+    Constant,
+    Linear,
+    Cubic,
+};
 
 struct FMath
 {
@@ -336,5 +342,11 @@ struct FMath
 	    }
 
 	    return fmodf(X, Y);
+	}
+
+    // Rounds a double to the nearest integer (ties at .5 go up)
+    static int32 RoundToInt(const double Value)
+	{
+	    return static_cast<int32>(std::floor(Value + 0.5));
 	}
 };

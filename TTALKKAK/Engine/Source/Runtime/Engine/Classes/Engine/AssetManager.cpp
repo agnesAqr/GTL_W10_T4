@@ -37,7 +37,7 @@ void UAssetManager::InitAssetManager()
     LoadObjFiles();
 }
 
-const TMap<FName, FAssetInfo>& UAssetManager::GetAssetRegistry()
+const TMap<FName, FAssetMetaData>& UAssetManager::GetAssetRegistry()
 {
     return AssetRegistry->PathNameToAssetInfo;
 }
@@ -52,15 +52,15 @@ void UAssetManager::LoadObjFiles()
     {
         if (Entry.is_regular_file() && Entry.path().extension() == ".obj")
         {
-            FAssetInfo NewAssetInfo;
+            FAssetMetaData NewAssetInfo;
             NewAssetInfo.AssetName = FName(Entry.path().filename().string());
-            NewAssetInfo.PackagePath = FName(Entry.path().parent_path().string());
+            NewAssetInfo.FullPath = FPath(Entry.path().parent_path());
             NewAssetInfo.AssetType = EAssetType::StaticMesh; // obj 파일은 무조건 StaticMesh
             NewAssetInfo.Size = static_cast<uint32>(std::filesystem::file_size(Entry.path()));
             
             AssetRegistry->PathNameToAssetInfo.Add(NewAssetInfo.AssetName, NewAssetInfo);
             
-            FString MeshName = NewAssetInfo.PackagePath.ToString() + "/" + NewAssetInfo.AssetName.ToString();
+            FString MeshName = NewAssetInfo.FullPath.ToString() + "/" + NewAssetInfo.AssetName.ToString();
             FManagerOBJ::CreateStaticMesh(MeshName);
             // ObjFileNames.push_back(UGTLStringLibrary::StringToWString(Entry.path().string()));
             // FObjManager::LoadObjStaticMeshAsset(UGTLStringLibrary::StringToWString(Entry.path().string()));
@@ -68,9 +68,9 @@ void UAssetManager::LoadObjFiles()
 
         if (Entry.is_regular_file() && Entry.path().extension() == ".csv")
         {
-            FAssetInfo NewAssetInfo;
+            FAssetMetaData NewAssetInfo;
             NewAssetInfo.AssetName = FName(Entry.path().filename().string());
-            NewAssetInfo.PackagePath = FName(Entry.path().parent_path().string());
+            NewAssetInfo.FullPath = FPath(Entry.path().parent_path());
             NewAssetInfo.AssetType = EAssetType::Curve;
             NewAssetInfo.Size = static_cast<uint32>(std::filesystem::file_size(Entry.path()));
             

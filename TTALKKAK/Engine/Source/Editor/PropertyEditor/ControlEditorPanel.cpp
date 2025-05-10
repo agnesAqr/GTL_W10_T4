@@ -16,6 +16,7 @@
 
 #include "LaunchEngineLoop.h"
 #include "ShowFlags.h"
+#include "FBXLoader.h"
 #include "Actors/SkeletalMeshActor.h"
 #include "Camera/CameraComponent.h"
 
@@ -185,6 +186,26 @@ void ControlEditorPanel::CreateMenuButton(ImVec2 ButtonSize, ImFont* IconFont)
                     if (FManagerOBJ::CreateStaticMesh(FileName) == nullptr)
                     {
                         tinyfd_messageBox("Error", "파일을 불러올 수 없습니다.", "ok", "error", 1);
+                    }
+                }
+            }
+
+            if (ImGui::MenuItem("Autodesk FBX (.fbx)"))
+            {
+                const char* lFilterPatternsFbx[1] = { "*.fbx" };
+                const char* FileName = tinyfd_openFileDialog(
+                    "Open FBX File",
+                    "",
+                    1, lFilterPatternsFbx,
+                    "Autodesk FBX (.fbx) file",
+                    0);
+
+                if (FileName)
+                {
+                    std::cout << FileName << std::endl;
+                    if (FBXLoader::ImportFBX(FileName) == false)
+                    {
+                        tinyfd_messageBox("Error", "FBX 파일을 불러올 수 없습니다.", "ok", "error", 1);
                     }
                 }
             }

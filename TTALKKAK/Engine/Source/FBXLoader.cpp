@@ -1,7 +1,22 @@
 #include "FBXLoader.h"
 
 #include "Components/Material/Material.h"
+#include "Container/FFileHelper.h"
+#include "Container/Path.h"
+#include "Engine/AssetManager.h"
 #include "Engine/FLoaderOBJ.h"
+#include "Engine/Assets/Animation/AnimDataModel.h"
+#include "Engine/Assets/Animation/IAnimationDataModel.h"
+#include "Engine/Assets/Animation/UAnimationAsset.h"
+
+FbxManager* FBXLoader::FbxManager = nullptr;
+    
+TMap<FName, FSkeletalMeshRenderData*> FBXLoader::SkeletalMeshData = {};
+TMap<FString, USkeletalMesh*> FBXLoader::SkeletalMeshMap = {};
+TMap<FName, FRefSkeletal*> FBXLoader::RefSkeletalData = {};
+
+TMap<FName, UAnimSequence*> FBXLoader::SkeletalAnimSequences = {};
+TMap<FName, UAnimDataModel*> FBXLoader::AnimDataModels = {};
 
 bool FBXLoader::InitFBXManager()
 {
@@ -13,7 +28,7 @@ bool FBXLoader::InitFBXManager()
     return true;
 }
 
-FSkeletalMeshRenderData* FBXLoader::ParseFBX(const FString& FilePath)
+FSkeletalMeshRenderData* FBXLoader::ParseFBX(const FString& FilePath, bool bIsAbsolutePath)
 {
     static bool bInitialized = false;
     if (bInitialized == false)
@@ -23,56 +38,143 @@ FSkeletalMeshRenderData* FBXLoader::ParseFBX(const FString& FilePath)
     }
     FbxImporter* Importer = FbxImporter::Create(FbxManager, "myImporter");
     FbxScene* Scene = FbxScene::Create(FbxManager, "myScene");
-    
-    bool bResult = Importer->Initialize(GetData("Contents\\" + FilePath), -1, FbxManager->GetIOSettings());
-    if (!bResult)
-        return nullptr;
 
-    FbxAxisSystem UnrealAxisSystem(
-    FbxAxisSystem::eZAxis,
-    FbxAxisSystem::eParityEven, // TODO Check
-    FbxAxisSystem::eLeftHanded);
+    if (bIsAbsolutePath == false)
+    {
+        const bool bResult = Importer->Initialize(GetData("Contents\\" + FilePath), -1, FbxManager->GetIOSettings());
+        if (!bResult)
+            return nullptr;
+    }
+    else
+    {
+        const bool bResult = Importer->Initialize(GetData(FilePath), -1, FbxManager->GetIOSettings());
+        if (!bResult)
+            return nullptr;
+    }
+    
+    Importer->Import(Scene);
+
+    FbxGeometryConverter geomConverter(FbxManager);
+    geomConverter.Triangulate(Scene, /*replace=*/true);
+    
+    const FbxAxisSystem UnrealAxisSystem(FbxAxisSystem::eZAxis, FbxAxisSystem::eParityEven, FbxAxisSystem::eLeftHanded);
+    
+    // FBX 파일 내 원본 단위
+    FbxSystemUnit SceneUnit = Scene->GetGlobalSettings().GetSystemUnit();
+    // 언리얼 기본 단위: 센티미터(cm)
+    const FbxSystemUnit UnrealUnit = FbxSystemUnit::cm;
+
+    // 이미 cm 단위가 아니라면 변환
+    if (SceneUnit.GetScaleFactor() != UnrealUnit.GetScaleFactor())
+    {
+        UnrealUnit.ConvertScene(Scene);
+    }
     
     UnrealAxisSystem.ConvertScene(Scene);
     
     Importer->Import(Scene);
-    Importer->Destroy();
 
     FSkeletalMeshRenderData* NewMeshData = new FSkeletalMeshRenderData();
     FRefSkeletal* RefSkeletal = new FRefSkeletal();
     
     NewMeshData->Name = FilePath;
     RefSkeletal->Name = FilePath;
-    
-    ExtractFBXMeshData(Scene, NewMeshData, RefSkeletal);
 
-    for (int i=0;i<NewMeshData->Vertices.Num();i++)
+    TMap<FString, FbxNode*> NodeMap;
+    ExtractFBXMeshData(Scene, NewMeshData, RefSkeletal, NodeMap);
+
+    for (int i = 0; i < NewMeshData->Vertices.Num(); ++i)
     {
         FSkeletalVertex Vertex;
         Vertex = NewMeshData->Vertices[i];
         RefSkeletal->RawVertices.Add(Vertex);
     }
+
+    int AnimStackCount = Scene->GetSrcObjectCount<FbxAnimStack>();
+    
+    for (int s = 0; s < AnimStackCount; ++s)
+    {
+        // AnimStack 순회 내부
+        FbxTimeSpan TimeSpan;
+        
+        FbxAnimStack* AnimStack = Scene->GetSrcObject<FbxAnimStack>(s);
+        Scene->SetCurrentAnimationStack(AnimStack);
+
+        // 첫 번째 레이어만 사용
+        FbxAnimLayer* Layer = AnimStack->GetMember<FbxAnimLayer>(0);
+
+        // 애니메이션 모델 초기화
+        UAnimDataModel* AnimModel = FObjectFactory::ConstructObject<UAnimDataModel>(nullptr);
+        // 1. 해당 스택 이름으로 TakeInfo 조회
+        FbxTakeInfo* TakeInfo = Scene->GetTakeInfo(AnimStack->GetName());
+        if (TakeInfo)
+        {
+            TimeSpan = TakeInfo->mLocalTimeSpan;
+        }
+        else
+        {
+            // TakeInfo가 없으면 글로벌 타임라인 사용
+            Scene->GetGlobalSettings().GetTimelineDefaultTimeSpan(TimeSpan);
+        }
+
+        // 2. 재생 길이 계산
+        double DurationSeconds = TimeSpan.GetDuration().GetSecondDouble();
+        AnimModel->PlayLength = static_cast<float>(DurationSeconds);
+        
+        // 2-2) FBX 파일에 정의된 프레임레이트 읽기
+        FbxTime::EMode TimeMode = Scene->GetGlobalSettings().GetTimeMode();
+        double FBX_FPS = FbxTime::GetFrameRate(TimeMode);
+
+        // 3) 분모=1 로 간단히 만들거나, 필요하다면 분수 처리
+        uint32 Numer = static_cast<uint32>(FMath::RoundToInt(FBX_FPS));
+        AnimModel->FrameRate = FFrameRate(Numer, 1);
+
+        // 2-3) NumberOfFrames 계산 (프레임 사이 간격 1/FrameRate)
+        AnimModel->NumberOfFrames = AnimModel->FrameRate.AsFrames(AnimModel->PlayLength) + 1;
+
+
+        // 3) 루트 본부터 재귀하며 키 트랙 추출
+        for (const int RootIdx : RefSkeletal->RootBoneIndices)
+        {
+            ExtractAnimation(RootIdx, *RefSkeletal, Layer, AnimModel, NodeMap);
+        }
+
+        DebugWriteAnimationModel(AnimModel);
+
+        AnimDataModels.Add(FilePath, AnimModel);
+    }
+    
     
     SkeletalMeshData.Add(FilePath, NewMeshData);
     RefSkeletalData.Add(FilePath, RefSkeletal);
-
+    
+    Importer->Destroy();
     Scene->Destroy();
     
     return NewMeshData;
 }
 
-void FBXLoader::ExtractFBXMeshData(const FbxScene* Scene, FSkeletalMeshRenderData* MeshData, FRefSkeletal* RefSkeletal)
+void FBXLoader::ExtractFBXMeshData(const FbxScene* Scene, FSkeletalMeshRenderData* MeshData, FRefSkeletal* RefSkeletal, TMap<FString, FbxNode*>& OutNodeMap)
 {
     FbxNode* RootNode = Scene->GetRootNode();
     if (RootNode == nullptr)
         return;
+    
+    ExtractMeshFromNode(RootNode, MeshData, RefSkeletal, OutNodeMap);
+}
 
-    ExtractMeshFromNode(RootNode, MeshData, RefSkeletal);
+void FBXLoader::ExtractSkeleton(FbxScene* Scene, FSkeletalMeshRenderData* MeshData, FRefSkeletal* RefSkeletal)
+{
 }
 
 /* Extract할 때 FBX의 Mapping Mode와 Reference Mode에 따라 모두 다르게 파싱을 진행해야 함!! */
-void FBXLoader::ExtractMeshFromNode(FbxNode* Node, FSkeletalMeshRenderData* MeshData, FRefSkeletal* RefSkeletal)
+void FBXLoader::ExtractMeshFromNode(FbxNode* Node, FSkeletalMeshRenderData* MeshData, FRefSkeletal* RefSkeletal, TMap<FString, FbxNode*>& OutNodeMap)
 {
+    if (Node != nullptr)
+    {
+        OutNodeMap.Add(FString(Node->GetName()), Node);
+    }
+    
     FbxMesh* Mesh = Node->GetMesh();
     if (Mesh)
     {
@@ -105,9 +207,10 @@ void FBXLoader::ExtractMeshFromNode(FbxNode* Node, FSkeletalMeshRenderData* Mesh
     }
 
     // 자식 노드들에 대해 재귀적으로 수행
-    int childCount = Node->GetChildCount();
-    for (int i = 0; i < childCount; i++) {
-        ExtractMeshFromNode(Node->GetChild(i), MeshData, RefSkeletal);
+    const int childCount = Node->GetChildCount();
+    for (int i = 0; i < childCount; i++)
+    {
+        ExtractMeshFromNode(Node->GetChild(i), MeshData, RefSkeletal, OutNodeMap);
     }
 }
 
@@ -169,39 +272,27 @@ void FBXLoader::ExtractNormals(
     int BaseVertexIndex)
 {
     auto* NormalElem = Mesh->GetElementNormal();
-    if (!NormalElem) return;
+    if (!NormalElem)
+    {
+        // 노말 정보가 없으면 (0,0,1)로 초기화 예시
+        for (int i = BaseVertexIndex; i < RenderData->Vertices.Num(); ++i)
+        {
+            RenderData->Vertices[i].Normal = FVector(0, 0, 1);
+        }
+        return;
+    }
 
     // 매핑·레퍼런스 모드
     auto mapMode = NormalElem->GetMappingMode();
     auto refMode = NormalElem->GetReferenceMode();
 
-    // 순회 인덱스
+
+    int directCount = NormalElem->GetDirectArray().GetCount();
+    int indexCount  = refMode != FbxGeometryElement::eDirect ? NormalElem->GetIndexArray().GetCount() : 0;
+
     int polyVertCounter   = 0;
     int vertexBufferIndex = BaseVertexIndex;
-
-    // 인덱스 계산 람다
-    std::function<int(int,int)> getIdx;
-    if (mapMode == FbxGeometryElement::eByControlPoint) {
-        if (refMode == FbxGeometryElement::eDirect)
-            getIdx = [&](int cp, int pv){ return cp; };
-        else
-            getIdx = [&](int cp, int pv){ return NormalElem->GetIndexArray().GetAt(cp); };
-    }
-    else if (mapMode == FbxGeometryElement::eByPolygonVertex) {
-        if (refMode == FbxGeometryElement::eDirect)
-            getIdx = [&](int cp, int pv){ return pv; };
-        else
-            getIdx = [&](int cp, int pv){ return NormalElem->GetIndexArray().GetAt(pv); };
-    }
-    else {
-        // eByPolygon, eAllSame 등 추가 지원 필요 시 여기
-        return;
-    }
-
-
-
-    // 폴리곤-버텍스 순회
-    int polyCount = Mesh->GetPolygonCount();
+    int polyCount         = Mesh->GetPolygonCount();
 
     for (int p = 0; p < polyCount; ++p)
     {
@@ -209,13 +300,52 @@ void FBXLoader::ExtractNormals(
         for (int v = 0; v < polySize; ++v)
         {
             int ctrlIdx = Mesh->GetPolygonVertex(p, v);
-            int idx     = getIdx(ctrlIdx, polyVertCounter);
+            int idx = -1;
 
+            // 1) 인덱스 계산 (switch 문으로 람다 대체)
+            switch (mapMode)
+            {
+                case FbxGeometryElement::eByControlPoint:
+                    idx = (refMode == FbxGeometryElement::eDirect)
+                          ? ctrlIdx
+                          : NormalElem->GetIndexArray().GetAt(ctrlIdx);
+                    break;
+
+                case FbxGeometryElement::eByPolygonVertex:
+                    idx = (refMode == FbxGeometryElement::eDirect)
+                          ? polyVertCounter
+                          : NormalElem->GetIndexArray().GetAt(polyVertCounter);
+                    break;
+
+                default:
+                    // eByPolygon, eAllSame 등 지원 필요 시 여기에 추가
+                    idx = -1;
+                    break;
+            }
+
+            // 2) directArray 범위를 벗어나면 0으로 클램프
+            if (idx < 0 || idx >= directCount)
+            {
+                UE_LOG(LogLevel::Warning,TEXT("Normal index %d out of range [0,%d). Clamped to 0."), idx, directCount);
+                idx = 0;
+            }
+
+            // 3) 노말 추출
             auto Nor = NormalElem->GetDirectArray().GetAt(idx);
-            auto& V   = RenderData->Vertices[vertexBufferIndex];
-            V.Normal.X = (float)Nor[0];
-            V.Normal.Y = (float)Nor[1];
-            V.Normal.Z = (float)Nor[2];
+
+            // 4) vertexBufferIndex 범위 검사 후 대입
+            if (vertexBufferIndex < RenderData->Vertices.Num())
+            {
+                auto& V = RenderData->Vertices[vertexBufferIndex];
+                V.Normal.X = static_cast<float>(Nor[0]);
+                V.Normal.Y = static_cast<float>(Nor[1]);
+                V.Normal.Z = static_cast<float>(Nor[2]);
+            }
+            else
+            {
+                UE_LOG(LogLevel::Error,TEXT("vertexBufferIndex %d >= Vertices.Num() %d"), vertexBufferIndex, RenderData->Vertices.Num());
+                return;  // 더 이상 진행하지 않음
+            }
 
             ++polyVertCounter;
             ++vertexBufferIndex;
@@ -229,44 +359,77 @@ void FBXLoader::ExtractUVs(
     int BaseVertexIndex)
 {
     auto* UVElem = Mesh->GetElementUV(0);
-    if (!UVElem) return;
-
-    auto mapMode = UVElem->GetMappingMode();
-    auto refMode = UVElem->GetReferenceMode();
-
-    int polyVertCounter   = 0;
-    int vertexBufferIndex = BaseVertexIndex;
-
-    std::function<int(int,int)> getIdx;
-    if (mapMode == FbxGeometryElement::eByControlPoint) {
-        if (refMode == FbxGeometryElement::eDirect)
-            getIdx = [&](int cp, int pv){ return cp; };
-        else
-            getIdx = [&](int cp, int pv){ return UVElem->GetIndexArray().GetAt(cp); };
-    }
-    else if (mapMode == FbxGeometryElement::eByPolygonVertex) {
-        if (refMode == FbxGeometryElement::eDirect)
-            getIdx = [&](int cp, int pv){ return pv; };
-        else
-            getIdx = [&](int cp, int pv){ return UVElem->GetIndexArray().GetAt(pv); };
-    }
-    else {
+    if (!UVElem)
+    {
+        // UV가 없으면 (0,0)으로 초기화
+        for(int i = BaseVertexIndex; i < MeshData->Vertices.Num(); ++i)
+        {
+            MeshData->Vertices[i].TexCoord = FVector2D::ZeroVector;
+        }
         return;
     }
 
-    int polyCount = Mesh->GetPolygonCount();
+    // Mapping / Reference 모드
+    auto mapMode = UVElem->GetMappingMode();
+    auto refMode = UVElem->GetReferenceMode();
+    int directCount = UVElem->GetDirectArray().GetCount();
+    int indexCount  = (refMode != FbxGeometryElement::eDirect)
+                      ? UVElem->GetIndexArray().GetCount()
+                      : 0;
+
+    int polyVertCounter   = 0;
+    int vertexBufferIndex = BaseVertexIndex;
+    int polyCount         = Mesh->GetPolygonCount();
+
     for (int p = 0; p < polyCount; ++p)
     {
         int polySize = Mesh->GetPolygonSize(p);
         for (int v = 0; v < polySize; ++v)
         {
             int ctrlIdx = Mesh->GetPolygonVertex(p, v);
-            int idx     = getIdx(ctrlIdx, polyVertCounter);
+            int idx = -1;
 
+            // 인덱스 계산
+            if (mapMode == FbxGeometryElement::eByControlPoint)
+            {
+                idx = (refMode == FbxGeometryElement::eDirect)
+                      ? ctrlIdx
+                      : UVElem->GetIndexArray().GetAt(ctrlIdx);
+            }
+            else if (mapMode == FbxGeometryElement::eByPolygonVertex)
+            {
+                idx = (refMode == FbxGeometryElement::eDirect)
+                      ? polyVertCounter
+                      : UVElem->GetIndexArray().GetAt(polyVertCounter);
+            }
+            else
+            {
+                // eByPolygon, eAllSame 등 지원 필요 시 여기에 추가
+                idx = -1;
+            }
+
+            // DirectArray 범위 체크
+            if (idx < 0 || idx >= directCount)
+            {
+                UE_LOG(LogLevel::Warning,
+                    TEXT("UV index %d out of range [0,%d). Clamped to 0."), idx, directCount);
+                idx = 0;
+            }
+
+            // vertexBufferIndex 범위 체크
+            if (vertexBufferIndex >= MeshData->Vertices.Num())
+            {
+                UE_LOG(LogLevel::Error,
+                    TEXT("vertexBufferIndex %d >= Vertices.Num() %d"),
+                    vertexBufferIndex, MeshData->Vertices.Num());
+                return;
+            }
+
+            // 실제 UV 추출
             auto UV = UVElem->GetDirectArray().GetAt(idx);
-            auto& V = MeshData->Vertices[vertexBufferIndex];
-            V.TexCoord.X = (float)UV[0];
-            V.TexCoord.Y = 1.0f - (float)UV[1];  // DirectX 좌표계 보정
+            auto& V  = MeshData->Vertices[vertexBufferIndex];
+            V.TexCoord.X = static_cast<float>(UV[0]);
+            V.TexCoord.Y = 1.0f - static_cast<float>(UV[1]);  // DirectX용 Y 반전
 
             ++polyVertCounter;
             ++vertexBufferIndex;
@@ -274,58 +437,85 @@ void FBXLoader::ExtractUVs(
     }
 }
 
-void FBXLoader::ExtractTangents(
-    FbxMesh* Mesh,
-    FSkeletalMeshRenderData* MeshData,
-    int BaseVertexIndex)
+void FBXLoader::ExtractTangents(FbxMesh* Mesh, FSkeletalMeshRenderData* MeshData, int BaseVertexIndex)
 {
-    // Tangent 없으면 생성
+   // 1) Tangent 요소 가져오기 / 생성
     auto* TanElem = Mesh->GetElementTangent(0);
     if (!TanElem || TanElem->GetDirectArray().GetCount() == 0)
     {
-        printf("FBX Tangent Empty!");
+        UE_LOG(LogLevel::Warning, TEXT("FBX Tangent Empty! Generating..."));
         Mesh->GenerateTangentsData(0, /*overwrite=*/ true);
         TanElem = Mesh->GetElementTangent(0);
-        if (!TanElem) return;
+        if (!TanElem || TanElem->GetDirectArray().GetCount() == 0)
+        {
+            UE_LOG(LogLevel::Error, TEXT("Failed to generate FBX tangents."));
+            return;
+        }
     }
 
+    // 2) 모드 & 카운트
     auto mapMode = TanElem->GetMappingMode();
     auto refMode = TanElem->GetReferenceMode();
+    int directCount = TanElem->GetDirectArray().GetCount();
+    int indexCount  = (refMode != FbxGeometryElement::eDirect)
+                      ? TanElem->GetIndexArray().GetCount()
+                      : 0;
 
     int polyVertCounter   = 0;
     int vertexBufferIndex = BaseVertexIndex;
+    int polyCount         = Mesh->GetPolygonCount();
+    int totalVertices     = MeshData->Vertices.Num();
 
-    std::function<int(int,int)> getIdx;
-    if (mapMode == FbxGeometryElement::eByControlPoint) {
-        if (refMode == FbxGeometryElement::eDirect)
-            getIdx = [&](int cp, int pv){ return cp; };
-        else
-            getIdx = [&](int cp, int pv){ return TanElem->GetIndexArray().GetAt(cp); };
-    }
-    else if (mapMode == FbxGeometryElement::eByPolygonVertex) {
-        if (refMode == FbxGeometryElement::eDirect)
-            getIdx = [&](int cp, int pv){ return pv; };
-        else
-            getIdx = [&](int cp, int pv){ return TanElem->GetIndexArray().GetAt(pv); };
-    }
-    else {
-        return;
-    }
-
-    int polyCount = Mesh->GetPolygonCount();
+    // 3) 폴리곤-버텍스 순회
     for (int p = 0; p < polyCount; ++p)
     {
         int polySize = Mesh->GetPolygonSize(p);
         for (int v = 0; v < polySize; ++v)
         {
             int ctrlIdx = Mesh->GetPolygonVertex(p, v);
-            int idx     = getIdx(ctrlIdx, polyVertCounter);
+            int idx = -1;
 
+            // 3-1) 인덱스 계산
+            if (mapMode == FbxGeometryElement::eByControlPoint)
+            {
+                idx = (refMode == FbxGeometryElement::eDirect)
+                      ? ctrlIdx
+                      : TanElem->GetIndexArray().GetAt(ctrlIdx);
+            }
+            else if (mapMode == FbxGeometryElement::eByPolygonVertex)
+            {
+                idx = (refMode == FbxGeometryElement::eDirect)
+                      ? polyVertCounter
+                      : TanElem->GetIndexArray().GetAt(polyVertCounter);
+            }
+            else
+            {
+                UE_LOG(LogLevel::Warning,TEXT("Unsupported Tangent MappingMode %d"), (int)mapMode);
+                return;
+            }
+
+            // 3-2) DirectArray 범위 검사
+            if (idx < 0 || idx >= directCount)
+            {
+                UE_LOG(LogLevel::Warning,TEXT("Tangent index %d out of range [0,%d). Clamped to 0."),
+                    idx, directCount);
+                idx = 0;
+            }
+
+            // 3-3) vertexBufferIndex 범위 검사
+            if (vertexBufferIndex < 0 || vertexBufferIndex >= totalVertices)
+            {
+                UE_LOG(LogLevel::Error,TEXT("vertexBufferIndex %d >= Vertices.Num() %d"),
+                    vertexBufferIndex, totalVertices);
+                return;
+            }
+
+            // 4) 실제 Tangent 복사
             auto Tan = TanElem->GetDirectArray().GetAt(idx);
-            auto& V   = MeshData->Vertices[vertexBufferIndex];
-            V.Tangent.X = (float)Tan[0];
-            V.Tangent.Y = (float)Tan[1];
-            V.Tangent.Z = (float)Tan[2];
+            auto& V = MeshData->Vertices[vertexBufferIndex];
+            V.Tangent.X = static_cast<float>(Tan[0]);
+            V.Tangent.Y = static_cast<float>(Tan[1]);
+            V.Tangent.Z = static_cast<float>(Tan[2]);
 
             ++polyVertCounter;
             ++vertexBufferIndex;
@@ -762,6 +952,107 @@ void FBXLoader::ExtractMaterials(
     }
 }
 
+void FBXLoader::ExtractAnimation(const int BoneTreeIndex, const FRefSkeletal& RefSkeletal, FbxAnimLayer* AnimLayer, UAnimDataModel* AnimModel,
+    const TMap<FString, FbxNode*>& NodeMap)
+{
+        // 1) 엔진 본 노드 정보 가져오기
+    const FBoneNode& BoneNode = RefSkeletal.BoneTree[BoneTreeIndex];
+    // FBX 노드 매핑 테이블에서 해당 이름의 FbxNode*를 찾음
+    FbxNode* Node = NodeMap.FindRef(BoneNode.BoneName);
+    if (Node)
+    {
+        // 2) 트랙 생성 및 기본 정보 설정
+        FBoneAnimationTrack Track;
+        Track.Name          = FName(*BoneNode.BoneName);
+        Track.BoneTreeIndex = BoneTreeIndex;
+        FRawAnimSequenceTrack& Raw = Track.InternalTrackData;
+
+        // 3) Translation/Rotation/Scale 커브 가져오기
+        const FbxAnimCurve* Tx = Node->LclTranslation.GetCurve(AnimLayer, FBXSDK_CURVENODE_COMPONENT_X);
+        const FbxAnimCurve* Ty = Node->LclTranslation.GetCurve(AnimLayer, FBXSDK_CURVENODE_COMPONENT_Y);
+        const FbxAnimCurve* Tz = Node->LclTranslation.GetCurve(AnimLayer, FBXSDK_CURVENODE_COMPONENT_Z);
+        
+        const FbxAnimCurve* Rx = Node->LclRotation.GetCurve(AnimLayer, FBXSDK_CURVENODE_COMPONENT_X);
+        const FbxAnimCurve* Ry = Node->LclRotation.GetCurve(AnimLayer, FBXSDK_CURVENODE_COMPONENT_Y);
+        const FbxAnimCurve* Rz = Node->LclRotation.GetCurve(AnimLayer, FBXSDK_CURVENODE_COMPONENT_Z);
+        
+        const FbxAnimCurve* Sx = Node->LclScaling.GetCurve(AnimLayer, FBXSDK_CURVENODE_COMPONENT_X);
+        const FbxAnimCurve* Sy = Node->LclScaling.GetCurve(AnimLayer, FBXSDK_CURVENODE_COMPONENT_Y);
+        const FbxAnimCurve* Sz = Node->LclScaling.GetCurve(AnimLayer, FBXSDK_CURVENODE_COMPONENT_Z);
+
+        // 4) 키 개수 결정 (Translation 중 하나의 커브 개수를 기준으로)
+        int KeyCount = 0;
+        if (Tx)       KeyCount = Tx->KeyGetCount();
+        else if (Ty)  KeyCount = Ty->KeyGetCount();
+        else if (Tz)  KeyCount = Tz->KeyGetCount();
+
+        // 5) 키프레임별로 값 읽어서 Raw에 추가
+        for (int k = 0; k < KeyCount; ++k)
+        {
+            // 시간 (초 단위)
+            FbxTime t = Tx ? Tx->KeyGetTime(k)
+                                  : Ty ? Ty->KeyGetTime(k)
+                                  : Tz->KeyGetTime(k);
+            float Time = static_cast<float>(t.GetSecondDouble());
+            Raw.KeyTimes.Add(Time);
+
+            // 위치
+            Raw.PosKeys.Add(FVector(
+                Tx ? (float)Tx->KeyGetValue(k) : Node->LclTranslation.Get()[0],
+                Ty ? (float)Ty->KeyGetValue(k) : Node->LclTranslation.Get()[1],
+                Tz ? (float)Tz->KeyGetValue(k) : Node->LclTranslation.Get()[2]
+            ));
+
+            // 회전 (Euler → Quat)
+            FbxQuaternion q;
+            if (Rx || Ry || Rz)
+            {
+                double ex = Rx ? Rx->KeyGetValue(k) : Node->LclRotation.Get()[0];
+                double ey = Ry ? Ry->KeyGetValue(k) : Node->LclRotation.Get()[1];
+                double ez = Rz ? Rz->KeyGetValue(k) : Node->LclRotation.Get()[2];
+                
+                // ex, ey, ez 는 Degree 단위 Euler 각
+                FbxDouble3 EulerAngles(ex, ey, ez);
+
+                // 매트릭스에 Euler 세팅
+                FbxAMatrix RotMat;
+                RotMat.SetR(EulerAngles);
+
+                // 매트릭스에서 쿼터니언 추출
+                q = RotMat.GetQ();
+            }
+            else
+            {
+                FbxDouble3 euler = Node->LclRotation.Get();
+                
+                // 매트릭스에 Euler 세팅
+                FbxAMatrix RotMat;
+                RotMat.SetR(euler);
+
+                // 매트릭스에서 쿼터니언 추출
+                q = RotMat.GetQ();
+            }
+            Raw.RotKeys.Add(FQuat(static_cast<float>(q[3]), static_cast<float>(q[0]), static_cast<float>(q[1]), static_cast<float>(q[2])));
+
+            // 스케일
+            Raw.ScaleKeys.Add(FVector(
+                Sx ? (float)Sx->KeyGetValue(k) : Node->LclScaling.Get()[0],
+                Sy ? (float)Sy->KeyGetValue(k) : Node->LclScaling.Get()[1],
+                Sz ? (float)Sz->KeyGetValue(k) : Node->LclScaling.Get()[2]
+            ));
+        }
+
+        // 6) 완성된 트랙을 모델에 추가
+        AnimModel->BoneAnimationTracks.Add(Track);
+    }
+
+    // 7) 자식 본 트리 순회
+    for (const int ChildIdx : BoneNode.ChildIndices)
+    {
+        ExtractAnimation(ChildIdx, RefSkeletal, AnimLayer, AnimModel, NodeMap);
+    }
+}
+
 void FBXLoader::UpdateBoundingBox(FSkeletalMeshRenderData MeshData)
 {
     if (MeshData.Vertices.Num() == 0)
@@ -966,6 +1257,40 @@ FRefSkeletal* FBXLoader::GetRefSkeletal(FString FilePath)
     return nullptr;
 }
 
+UAnimSequence* FBXLoader::CreateAnimationSequence(const FString& FilePath)
+{
+    ParseFBX(FilePath);
+
+    UAnimSequence* AnimSequence = GetAnimationSequence(FilePath);
+    
+    if (AnimSequence == nullptr)
+    {
+        AnimSequence = FObjectFactory::ConstructObject<UAnimSequence>(nullptr);
+
+        UAnimDataModel* AnimDataModel = GetAnimDataModel(FilePath);
+        AnimSequence->SetAnimDataModel(AnimDataModel);
+        SkeletalAnimSequences.Add(FilePath, AnimSequence);
+    }
+    
+    return AnimSequence;
+}
+
+UAnimSequence* FBXLoader::GetAnimationSequence(const FString& FilePath)
+{
+    if (SkeletalAnimSequences.Contains(FilePath))
+        return SkeletalAnimSequences[FilePath];
+
+    return nullptr;
+}
+
+UAnimDataModel* FBXLoader::GetAnimDataModel(const FString& FilePath)
+{
+    if (AnimDataModels.Contains(FilePath))
+        return AnimDataModels[FilePath];
+
+    return nullptr;
+}
+
 void FBXLoader::AddVertexFromControlPoint(
     FbxMesh* Mesh,
     FSkeletalMeshRenderData* MeshData,
@@ -987,4 +1312,87 @@ void FBXLoader::AddVertexFromControlPoint(
     Vertex.Tangent  = FVector(1.0f, 0.0f, 0.0f);
 
     MeshData->Vertices.Add(Vertex);
+}
+
+void FBXLoader::DebugWriteAnimationModel(const UAnimDataModel* AnimModel)
+{
+    if (!AnimModel)
+    {
+        UE_LOG(LogLevel::Warning, TEXT("DebugWriteAnimationModel: AnimModel is null."));
+        return;
+    }
+
+    // 누적할 출력 문자열
+    FString Output;
+
+    // 각 본 트랙별로 정보 작성
+    for (const FBoneAnimationTrack& Track : AnimModel->BoneAnimationTracks)
+    {
+        Output += FString::Printf(TEXT("Bone: %s\n"), *Track.Name.ToString());
+        const FRawAnimSequenceTrack& Raw = Track.InternalTrackData;
+        int32 KeyCount = Raw.KeyTimes.Num();
+
+        for (int32 i = 0; i < KeyCount; ++i)
+        {
+            float Time = Raw.KeyTimes.IsValidIndex(i) ? Raw.KeyTimes[i] : 0.f;
+            FVector Pos = Raw.PosKeys.IsValidIndex(i)   ? Raw.PosKeys[i]   : FVector::ZeroVector;
+            FQuat   Rot = Raw.RotKeys.IsValidIndex(i)   ? Raw.RotKeys[i]   : FQuat();
+            FVector Scale = Raw.ScaleKeys.IsValidIndex(i) ? Raw.ScaleKeys[i] : FVector::OneVector;
+
+            Output += FString::Printf(
+                TEXT("  Key %2d: Time=%.4f | Pos=(%.3f,%.3f,%.3f) | Rot=(%.3f,%.3f,%.3f,%.3f) | Scale=(%.3f,%.3f,%.3f)\n"),
+                i, Time,
+                Pos.X, Pos.Y, Pos.Z,
+                Rot.X, Rot.Y, Rot.Z, Rot.W,
+                Scale.X, Scale.Y, Scale.Z
+            );
+        }
+        Output += TEXT("\n");
+    }
+
+    // 파일 경로: Saved/Logs 폴더
+    const FString FilePath = TEXT("Logs/ExtractedAnimationDebug.txt");
+
+    if (FFileHelper::WriteStringToLogFile(*FilePath, Output))
+    {
+        UE_LOG(LogLevel::Warning, TEXT("Animation debug written to %s"), *FilePath);
+    }
+    else
+    {
+        UE_LOG(LogLevel::Error, TEXT("Failed to write animation debug to %s"), *FilePath);
+    }
+}
+
+bool FBXLoader::ImportFBX(const FString& FilePath)
+{
+    ParseFBX(FilePath, true);
+
+    FString StriptedPath = FPath::StripContentsPrefix(FilePath);
+    
+    USkeletalMesh* SkeletalMesh = GetSkeletalMesh(FilePath);
+    if (SkeletalMesh == nullptr)
+    {
+        SkeletalMesh = FObjectFactory::ConstructObject<USkeletalMesh>(nullptr);
+        const FSkeletalMeshRenderData SkeletalMeshRenderData = GetCopiedSkeletalRenderData(FilePath);
+        FRefSkeletal* RefSkeletal = GetRefSkeletal(FilePath);
+
+        if (SkeletalMeshRenderData.Name == "Empty" || RefSkeletal == nullptr)
+            return false;
+        
+        SkeletalMesh->SetData(SkeletalMeshRenderData, RefSkeletal);
+        SkeletalMeshMap.Add(FilePath, SkeletalMesh); 
+    }
+
+    UAnimSequence* AnimSequence = GetAnimationSequence(FilePath);
+    if (AnimSequence == nullptr)
+    {
+        AnimSequence = FObjectFactory::ConstructObject<UAnimSequence>(nullptr);
+
+        UAnimDataModel* AnimDataModel = GetAnimDataModel(FilePath);
+        
+        AnimSequence->SetAnimDataModel(AnimDataModel);
+        SkeletalAnimSequences.Add(FilePath, AnimSequence);
+    }
+    
+    return true;
 }
