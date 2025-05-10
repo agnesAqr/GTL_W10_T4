@@ -121,6 +121,9 @@
     <Filter Include="Engine\Source\Runtime\Engine\Classes\Animation">
       <UniqueIdentifier>{d087522d-904b-47da-94d8-b356452666c7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework">
+      <UniqueIdentifier>{37b438ba-687a-4ab8-b921-02ed2635d25b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\Source\Editor\PropertyEditor\IWindowToggleable.h">
@@ -346,9 +349,6 @@
     <ClInclude Include="Engine\Source\Runtime\Serialization\FWindowsBinHelper.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\GameFramework\ActorInfo.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\ActorComponentInfo.h" />
-    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework\MovementComponent.h" />
-    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework\ProjectileMovementComponent.h" />
-    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework\RotatingMovementComponent.h" />
     <ClInclude Include="Engine\Source\Runtime\Windows\D3D11RHI\FShaderProgram.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\RenderPass\FBaseRenderPass.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\RenderPass\StaticMeshRenderPass.h" />
@@ -457,7 +457,6 @@
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\PrimitiveComponents\MeshComponents\SkeletalMeshComponent.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\FBX\FBXDefine.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\RenderPass\SkeletalMeshRenderPass.h" />
-    <ClInclude Include="Engine\Source\TestFBXLoader.h" />
     <ClInclude Include="Engine\Source\Editor\PropertyEditor\PreviewControlEditorPanel.h" />
     <ClInclude Include="Engine\Source\Editor\PropertyEditor\SkeletalPreviewPropertyEditorPanel.h" />
     <ClInclude Include="Engine\Source\Editor\UnrealEd\SkeletalPreviewUI.h" />
@@ -472,6 +471,22 @@
       <Filter>Engine\Source\Runtime\Engine\Classes\Animation</Filter>
     </ClInclude>
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Animation\CustomAnimInstance.h" />
+    <ClInclude Include="Engine\Source\FBXLoader.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework\ChracterMovementComponent.h">
+      <Filter>Engine\Source\Runtime\Engine\Classes\Components\GameFramework</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework\MovementComponent.h">
+      <Filter>Engine\Source\Runtime\Engine\Classes\Components\GameFramework</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework\PawnMovementComponent.h">
+      <Filter>Engine\Source\Runtime\Engine\Classes\Components\GameFramework</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework\ProjectileMovementComponent.h">
+      <Filter>Engine\Source\Runtime\Engine\Classes\Components\GameFramework</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework\RotatingMovementComponent.h">
+      <Filter>Engine\Source\Runtime\Engine\Classes\Components\GameFramework</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\Source\ThirdParty\DirectXTK\Include\DDSTextureLoader.h" />
@@ -568,9 +583,6 @@
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Actors\PointLightActor.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Core\Math\Color.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Serialization\Archive.cpp" />
-    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework\MovementComponent.cpp" />
-    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework\ProjectileMovementComponent.cpp" />
-    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework\RotatingMovementComponent.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Windows\D3D11RHI\FShaderProgram.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\RenderPass\FBaseRenderPass.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\RenderPass\StaticMeshRenderPass.cpp" />
@@ -675,7 +687,6 @@
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\PrimitiveComponents\MeshComponents\SkeletalMeshComponent.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\FBX\FBXDefine.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\RenderPass\SkeletalMeshRenderPass.cpp" />
-    <ClCompile Include="Engine\Source\TestFBXLoader.cpp" />
     <ClCompile Include="Engine\Source\Editor\PropertyEditor\PreviewControlEditorPanel.cpp" />
     <ClCompile Include="Engine\Source\Editor\PropertyEditor\SkeletalPreviewPropertyEditorPanel.cpp" />
     <ClCompile Include="Engine\Source\Editor\UnrealEd\SkeletalPreviewUI.cpp" />
@@ -690,6 +701,22 @@
       <Filter>Engine\Source\Runtime\Engine\Classes\Animation</Filter>
     </ClCompile>
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Animation\CustomAnimInstance.cpp" />
+    <ClCompile Include="Engine\Source\FBXLoader.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework\ChracterMovementComponent.cpp">
+      <Filter>Engine\Source\Runtime\Engine\Classes\Components\GameFramework</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework\MovementComponent.cpp">
+      <Filter>Engine\Source\Runtime\Engine\Classes\Components\GameFramework</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework\PawnMovementComponent.cpp">
+      <Filter>Engine\Source\Runtime\Engine\Classes\Components\GameFramework</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework\ProjectileMovementComponent.cpp">
+      <Filter>Engine\Source\Runtime\Engine\Classes\Components\GameFramework</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework\RotatingMovementComponent.cpp">
+      <Filter>Engine\Source\Runtime\Engine\Classes\Components\GameFramework</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\ShaderHeaders\GConstantBuffers.hlsli" />

@@ -202,6 +202,11 @@ robocopy "$(ProjectDir)Icon"     "$(OutDir)\Icon"     *.* /E /R:3 /W:5 /NFL /NDL
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimInstance.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimSingleNodeInstance.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Animation\CustomAnimInstance.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework\ChracterMovementComponent.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework\MovementComponent.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework\PawnMovementComponent.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework\ProjectileMovementComponent.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework\RotatingMovementComponent.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\Mesh\SkeletalMesh.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\PrimitiveComponents\MeshComponents\SkeletalMeshComponent.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Curves\CurveFloat.cpp" />
@@ -264,9 +269,6 @@ robocopy "$(ProjectDir)Icon"     "$(OutDir)\Icon"     *.* /E /R:3 /W:5 /NFL /NDL
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Actors\PointLightActor.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Actors\SpotLightActor.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\ActorComponent.cpp" />
-    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework\MovementComponent.cpp" />
-    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework\ProjectileMovementComponent.cpp" />
-    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework\RotatingMovementComponent.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\LightComponents\DirectionalLightComponent.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\LightComponents\LightComponent.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\LightComponents\LightComponentBase.cpp" />
@@ -410,6 +412,11 @@ robocopy "$(ProjectDir)Icon"     "$(OutDir)\Icon"     *.* /E /R:3 /W:5 /NFL /NDL
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimInstance.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimSingleNodeInstance.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Animation\CustomAnimInstance.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework\ChracterMovementComponent.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework\MovementComponent.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework\PawnMovementComponent.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework\ProjectileMovementComponent.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework\RotatingMovementComponent.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\Mesh\SkeletalMesh.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\PrimitiveComponents\MeshComponents\SkeletalMeshComponent.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Curves\CurveFloat.h" />
@@ -495,9 +502,6 @@ robocopy "$(ProjectDir)Icon"     "$(OutDir)\Icon"     *.* /E /R:3 /W:5 /NFL /NDL
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Actors\SpotLightActor.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\ActorComponent.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\ActorComponentInfo.h" />
-    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework\MovementComponent.h" />
-    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework\ProjectileMovementComponent.h" />
-    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework\RotatingMovementComponent.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\LightComponents\DirectionalLightComponent.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\LightComponents\LightComponent.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\LightComponents\LightComponentBase.h" />
