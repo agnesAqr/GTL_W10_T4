@@ -3,6 +3,7 @@
 #include "ImGUI/imgui.h"
 
 #include "LaunchEngineLoop.h"
+#include "Animation/AnimationSettings.h"
 #include "Renderer/Renderer.h"
 
 
@@ -176,6 +177,16 @@ void Console::ExecuteCommand(const std::string& command)
     else if (command.rfind("shadow_filter ", 0) == 0) //shadow filter 명령어 처리
     {
         SetShadowFilterMode(command);
+    }
+    else if (command == "skinning cpu")
+    {
+        GCurrentSkinningMode = ESkinningMode::CPU;
+        AddLog(LogLevel::Display, "Skinning mode : CPU");
+    }
+    else if (command == "skinning gpu")
+    {
+        GCurrentSkinningMode = ESkinningMode::GPU;
+        AddLog(LogLevel::Display, "Skinning mode : GPU");
     }
     else {
         AddLog(LogLevel::Error, "Unknown command: %s", command.c_str());

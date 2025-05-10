@@ -4,6 +4,7 @@
 #include "LaunchEngineLoop.h"
 #include "Renderer/Renderer.h"
 #include "FBXLoader.h"
+#include "Animation/AnimationSettings.h"
 #include "Components/Material/Material.h"
 #include "Engine/FLoaderOBJ.h"
 
@@ -212,7 +213,6 @@ void USkeletalMesh::UpdateSkinnedVertices()
     if (SkeletalMeshRenderData.Vertices.Num() <= 0)
         return;
 
-
     if (GetRefSkeletal()->RawVertices.Num() == SkeletalMeshRenderData.Vertices.Num())
     {
         for (int i = 0; i < SkeletalMeshRenderData.Vertices.Num(); i++)
@@ -221,12 +221,14 @@ void USkeletalMesh::UpdateSkinnedVertices()
         }
     }
 
-    // 스키닝 적용
-    for (auto& Vertex : SkeletalMeshRenderData.Vertices)
+    // CPU Skinning
+    if (GCurrentSkinningMode == ESkinningMode::CPU)
     {
-        Vertex.SkinningVertex(SkeletalMeshRenderData.Bones);
+        for (auto& Vertex : SkeletalMeshRenderData.Vertices)
+        {
+            Vertex.SkinningVertex(SkeletalMeshRenderData.Bones);
+        }
     }
-
     FRenderResourceManager* renderResourceManager = GEngineLoop.Renderer.GetResourceManager();
     GetRenderData().VB = renderResourceManager->CreateDynamicVertexBuffer<FSkeletalVertex>(SkeletalMeshRenderData.Vertices);
 }

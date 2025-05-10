@@ -30,6 +30,7 @@ private:
     void UpdateLightConstants();
     void UpdateMaterialConstants(const FObjMaterialInfo& MaterialInfo);
     void UpdateCameraConstant(const std::shared_ptr<FViewportClient>& InViewportClient);
+    void UpdateSkinningMatrixConstant(USkeletalMeshComponent* SkelComp);
 
 private:
     bool IsLightInFrustum(ULightComponentBase* LightComponent, const FFrustum& CameraFrustum) const;
