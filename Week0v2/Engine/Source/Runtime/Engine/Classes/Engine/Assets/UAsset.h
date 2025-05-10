@@ -9,6 +9,7 @@ enum class EAssetType : uint8
     SkeletalMesh,
     Texture2D,
     Material,
+    Curve,
     Animation,
     MAX,
 };
@@ -65,5 +66,4 @@ private:
     * Import 단계에서 채워진 에셋 메타데이터
     */
     FAssetMetaData MetaData;
-    
 };

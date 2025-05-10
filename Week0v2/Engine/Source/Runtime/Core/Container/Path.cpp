@@ -4,6 +4,16 @@
 
 using namespace std::filesystem;
 
+FString FPath::StripContentsPrefix(const FString& InFullPath)
+{
+    static const std::string Prefix = TEXT("C:\\Users\\Jungle\\Desktop\\Github\\GTL_W10_T4\\Week0v2\\Contents\\");
+    if (InFullPath.RFind(Prefix) == 0)
+    {
+        return InFullPath.Substr(Prefix.length());
+    }
+    return InFullPath;
+}
+
 FString FPath::GetBaseFilename(const FString& InPath)
 {
     return PathType(GetData(InPath)).stem().string();

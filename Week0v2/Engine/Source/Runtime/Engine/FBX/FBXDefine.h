@@ -36,7 +36,6 @@ private:
     FVector SkinVertexPosition(const TArray<FBone>& bones) const;
 };
 
-
 struct FRefSkeletal
 {
     // Tree structure for bones

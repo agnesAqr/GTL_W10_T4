@@ -18,6 +18,7 @@
 
 struct FRawAnimSequenceTrack
 {
+    TArray<float> KeyTimes;    // 각 키의 시간(초)
     TArray<FVector> PosKeys;
     TArray<FQuat> RotKeys;
     TArray<FVector> ScaleKeys;
@@ -25,19 +26,19 @@ struct FRawAnimSequenceTrack
 
 struct FAnimWeight
 {
-    /** Helper function to determine if a weight is relevant. */
-    static FORCEINLINE bool IsRelevant(float InWeight)
+    /** 가중치가 유효한(적용 가능한)지 판단하는 헬퍼 함수 */
+    static FORCEINLINE bool IsRelevant(const float InWeight)
     {
         return (InWeight > ZERO_ANIMWEIGHT_THRESH);
     }
 
-    /** Helper function to determine if a normalized weight is considered full weight. */
-    static FORCEINLINE bool IsFullWeight(float InWeight)
+    /** 정규화된 가중치가 최대치(1.0)에 근접했는지 판단하는 헬퍼 함수 */
+    static FORCEINLINE bool IsFullWeight(const float InWeight)
     {
         return (InWeight >= (1.f - ZERO_ANIMWEIGHT_THRESH));
     }
 
-    /** Get a small relevant weight for ticking */
+    /** 최소한으로 유효한 가중치를 반환하는 함수 */
     static FORCEINLINE float GetSmallestRelevantWeight()
     {
         return 2.f * ZERO_ANIMWEIGHT_THRESH;
@@ -46,10 +47,10 @@ struct FAnimWeight
 
 enum class EAnimInterpolationType : uint8
 {
-    /** Linear interpolation when looking up values between keys. */
+    /** 키 사이 값을 조회할 때 선형 보간(Linear Interpolation) */
     Linear,
 
-    /** Step interpolation when looking up values between keys. */
+    /** 키 사이 값을 조회할 때 단계별 보간(Step Interpolation) */
     Step,
 };
 

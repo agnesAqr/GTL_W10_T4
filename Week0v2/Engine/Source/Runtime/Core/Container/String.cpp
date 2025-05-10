@@ -350,3 +350,47 @@ FString FString::Printf(const ElementType* Format, ...)
         }
     }
 }
+
+int32 FString::RFind(const FString& SubStr, const ESearchCase::Type SearchCase) const
+{
+    if (SubStr.IsEmpty())
+    {
+        return INDEX_NONE;
+    }
+
+    if (SearchCase == ESearchCase::CaseSensitive)
+    {
+        const size_t pos = PrivateString.rfind(SubStr.PrivateString);
+        return (pos == BaseStringType::npos) ? INDEX_NONE : static_cast<int32>(pos);
+    }
+    else // IgnoreCase
+    {
+        // 모두 소문자로 변환한 복사본 생성
+        BaseStringType haystack = PrivateString;
+        BaseStringType needle   = SubStr.PrivateString;
+        std::transform(haystack.begin(), haystack.end(), haystack.begin(),
+                       [](ElementType c) { return static_cast<ElementType>(std::tolower(c)); });
+        std::transform(needle.begin(), needle.end(), needle.begin(),
+                       [](ElementType c) { return static_cast<ElementType>(std::tolower(c)); });
+
+        size_t pos = haystack.rfind(needle);
+        return (pos == BaseStringType::npos) ? INDEX_NONE : static_cast<int32>(pos);
+    }
+}
+
+FString FString::Substr(const int32 StartIndex, const int32 Count) const
+{
+    const int32 LenTotal = Len();
+    if (StartIndex < 0 || StartIndex >= LenTotal)
+    {
+        return FString(); // 빈 문자열
+    }
+
+    // Count가 지정되지 않았거나, 범위를 벗어나면 끝까지
+    const int32 MaxCount = (Count < 0 || StartIndex + Count > LenTotal)
+        ? (LenTotal - StartIndex)
+        : Count;
+
+    // std::basic_string::substr 사용하여 반환
+    return FString(PrivateString.substr(StartIndex, MaxCount));
+}

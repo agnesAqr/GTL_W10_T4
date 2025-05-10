@@ -46,8 +46,6 @@
 // }
 // #endif
 
-enum : int8 { INDEX_NONE = -1 };
-
 /** Determines case sensitivity options for string comparisons. */
 namespace ESearchCase
 {
@@ -320,6 +318,10 @@ public:
      * @return 포맷팅된 새로운 FString 객체.
      */
     static FString Printf(const ElementType* Format, ...);
+    
+    int32 RFind(const FString& SubStr, ESearchCase::Type SearchCase = ESearchCase::IgnoreCase) const;
+
+    FString Substr(int32 StartIndex, int32 Count = INDEX_NONE) const;
 };
 
 template <typename Number>

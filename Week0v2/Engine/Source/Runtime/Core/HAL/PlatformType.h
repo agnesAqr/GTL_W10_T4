@@ -120,4 +120,4 @@ inline ANSICHAR* ConvertWcharToAnsi(const WCHAR* wideStr)
 #include <string>
 using FWString = std::wstring;
 
-enum : int8 { INDEX_NONE = -1 };
+enum { INDEX_NONE = -1 };

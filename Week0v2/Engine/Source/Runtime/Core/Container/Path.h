@@ -19,6 +19,41 @@ public:
     explicit FPath(const FString& InPath)            : InternalPath(GetData(InPath)) {}
     explicit FPath(const char* InPath)               : InternalPath(InPath) {}
     explicit FPath(const PathType& InFsPath)         : InternalPath(InFsPath) {}
+    FPath(const FPath& InOther)                : InternalPath(InOther.InternalPath) {}
+
+    const PathType& GetPath() const noexcept { return InternalPath; }
+
+    /**
+     * 현재 작업 디렉터리(예: 실행 중인 .exe 위치) 기반 프로젝트 루트 경로를 FPath로 반환
+     */
+    static FPath ProjectDirPath()
+    {
+        return FPath(std::filesystem::current_path());
+    }
+
+    /**
+     * 프로젝트 루트 경로를 FString으로 반환
+     */
+    static FString ProjectDir()
+    {
+        return ProjectDirPath().ToString();
+    }
+
+    /**
+     * 프로젝트 Saved 디렉터리를 FPath로 반환 (ProjectDir/Saved)
+     */
+    static FPath ProjectSavedDirPath()
+    {
+        return ProjectDirPath() / FPath(TEXT("Saved"));
+    }
+
+    /**
+     * 프로젝트 Saved 디렉터리를 FString으로 반환 (절대 경로 문자열)
+     */
+    static FString ProjectSavedDir()
+    {
+        return ProjectSavedDirPath().Normalize().ToString();
+    }
 
     //–– 문자열 변환
     FString ToString() const
@@ -57,7 +92,9 @@ public:
     bool         CreateDirectories() const            { return std::filesystem::create_directories(InternalPath); }
     bool         RemoveFile() const                   { return std::filesystem::remove(InternalPath); }
 
-   TArray<FString> ListDirectory(const bool bRecursive = false) const
+    static FString StripContentsPrefix(const FString& InFullPath);
+
+    TArray<FString> ListDirectory(const bool bRecursive = false) const
     {
         TArray<FString> Out;
         if (bRecursive)

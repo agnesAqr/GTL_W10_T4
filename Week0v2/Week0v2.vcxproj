@@ -198,7 +198,10 @@ xcopy /y /d "$(ProjectDir)imgui.ini" "$(OutDir)"
     <ClCompile Include="Engine\Source\Editor\PropertyEditor\SkeletalPreviewPropertyEditorPanel.cpp" />
     <ClCompile Include="Engine\Source\Editor\UnrealEd\EditorPlayer.cpp" />
     <ClCompile Include="Engine\Source\Editor\UnrealEd\SkeletalPreviewUI.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Core\Container\FFileHelper.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Core\Container\Path.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Core\Math\FrameRate.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Core\Math\FrameTime.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Core\Math\Point.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Core\Math\Quat.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Camera\CameraBlur.cpp" />
@@ -409,8 +412,11 @@ xcopy /y /d "$(ProjectDir)imgui.ini" "$(OutDir)"
     <ClInclude Include="Engine\Source\Editor\UnrealEd\EditorPlayer.h" />
     <ClInclude Include="Engine\Source\Editor\UnrealEd\SkeletalPreviewUI.h" />
     <ClInclude Include="Engine\Source\Editor\UnrealEd\UnrealEd.h" />
+    <ClInclude Include="Engine\Source\Runtime\Core\Container\FFileHelper.h" />
     <ClInclude Include="Engine\Source\Runtime\Core\Container\Path.h" />
     <ClInclude Include="Engine\Source\Runtime\Core\Container\StringConv.h" />
+    <ClInclude Include="Engine\Source\Runtime\Core\Math\FrameRate.h" />
+    <ClInclude Include="Engine\Source\Runtime\Core\Math\FrameTime.h" />
     <ClInclude Include="Engine\Source\Runtime\Core\Math\MathSSE.h" />
     <ClInclude Include="Engine\Source\Runtime\Core\Math\NumericLimits.h" />
     <ClInclude Include="Engine\Source\Runtime\Core\Math\Point.h" />

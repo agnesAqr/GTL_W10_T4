@@ -143,6 +143,23 @@ public:
         return it != ContainerPrivate.end() ? &(it->second) : nullptr;
     }
 
+    // FindRef: 키가 존재하면 그 값을, 없으면 기본값(기본 생성된 ValueType)을 반환합니다.
+    // const 버전
+    const ValueType& FindRef(const KeyType& Key) const
+    {
+        static ValueType Default = ValueType();
+        auto it = ContainerPrivate.find(Key);
+        return it != ContainerPrivate.end() ? it->second : Default;
+    }
+
+    // non-const 버전
+    ValueType& FindRef(const KeyType& Key)
+    {
+        static ValueType Default = ValueType();
+        auto it = ContainerPrivate.find(Key);
+        return it != ContainerPrivate.end() ? it->second : Default;
+    }
+
     ValueType& FindOrAdd(const KeyType& Key)
     {
         if (ValueType* Value = Find(Key))
