@@ -1,8 +1,8 @@
 #pragma once
 #include "MeshComponent.h"
 #include "Components/Mesh/SkeletalMesh.h"
-
 class UStaticMeshComponent;
+class UAnimInstance;
 
 class USkeletalMeshComponent : public UMeshComponent
 {
@@ -11,6 +11,9 @@ class USkeletalMeshComponent : public UMeshComponent
 public:
     USkeletalMeshComponent() = default;
     USkeletalMeshComponent(const USkeletalMeshComponent& Other);
+
+
+    virtual void BeginPlay() override;
 
     virtual UObject* Duplicate(UObject* InOuter) override;
     virtual void DuplicateSubObjects(const UObject* Source, UObject* InOuter) override;
@@ -38,8 +41,7 @@ private:
     TArray<UStaticMeshComponent*> BoneComponents;
     void SkinningVertex();
     
-
-
+    UAnimInstance* OwningAnimInstance;
 
 protected:
     USkeletalMesh* SkeletalMesh = nullptr;

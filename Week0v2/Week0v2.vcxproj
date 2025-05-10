@@ -149,10 +149,7 @@ robocopy "$(ProjectDir)Assets" "$(OutDir)\Assets" *.* /E /NFL /NDL
 robocopy "$(ProjectDir)Contents" "$(OutDir)\Contents" *.* /E /R:3 /W:5 /NFL /NDL
 robocopy "$(ProjectDir)Font"     "$(OutDir)\Font"     *.* /E /R:3 /W:5 /NFL /NDL
 robocopy "$(ProjectDir)Shaders"  "$(OutDir)\Shaders"  *.* /E /R:3 /W:5 /NFL /NDL
-robocopy "$(ProjectDir)Icon"     "$(OutDir)\Icon"     *.* /E /R:3 /W:5 /NFL /NDL
-xcopy /y /d "$(ProjectDir)editor.ini" "$(OutDir)"
-xcopy /y /d "$(ProjectDir)imgui.ini" "$(OutDir)"
-</Command>
+robocopy "$(ProjectDir)Icon"     "$(OutDir)\Icon"     *.* /E /R:3 /W:5 /NFL /NDL</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -186,10 +183,7 @@ robocopy "$(ProjectDir)Assets" "$(OutDir)\Assets" *.* /E /NFL /NDL
 robocopy "$(ProjectDir)Contents" "$(OutDir)\Contents" *.* /E /R:3 /W:5 /NFL /NDL
 robocopy "$(ProjectDir)Font"     "$(OutDir)\Font"     *.* /E /R:3 /W:5 /NFL /NDL
 robocopy "$(ProjectDir)Shaders"  "$(OutDir)\Shaders"  *.* /E /R:3 /W:5 /NFL /NDL
-robocopy "$(ProjectDir)Icon"     "$(OutDir)\Icon"     *.* /E /R:3 /W:5 /NFL /NDL
-xcopy /y /d "$(ProjectDir)editor.ini" "$(OutDir)"
-xcopy /y /d "$(ProjectDir)imgui.ini" "$(OutDir)"
-</Command>
+robocopy "$(ProjectDir)Icon"     "$(OutDir)\Icon"     *.* /E /R:3 /W:5 /NFL /NDL</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -205,6 +199,9 @@ xcopy /y /d "$(ProjectDir)imgui.ini" "$(OutDir)"
     <ClCompile Include="Engine\Source\Runtime\Engine\Camera\CameraFadeInOut.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Camera\CameraLetterBox.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Actors\SkeletalMeshActor.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimInstance.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimSingleNodeInstance.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Animation\CustomAnimInstance.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\Mesh\SkeletalMesh.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\PrimitiveComponents\MeshComponents\SkeletalMeshComponent.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Curves\CurveFloat.cpp" />
@@ -410,6 +407,9 @@ xcopy /y /d "$(ProjectDir)imgui.ini" "$(OutDir)"
     <ClInclude Include="Engine\Source\Runtime\Engine\Camera\CameraFadeInOut.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Camera\CameraLetterBox.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Actors\SkeletalMeshActor.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimInstance.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimSingleNodeInstance.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Animation\CustomAnimInstance.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\Mesh\SkeletalMesh.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\PrimitiveComponents\MeshComponents\SkeletalMeshComponent.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Curves\CurveFloat.h" />

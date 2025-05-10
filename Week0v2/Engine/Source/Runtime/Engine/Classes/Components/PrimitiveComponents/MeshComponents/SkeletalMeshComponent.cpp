@@ -8,6 +8,7 @@
 #include "Classes/Engine/FLoaderOBJ.h"
 #include "GameFramework/Actor.h"
 #include "StaticMeshComponents/StaticMeshComponent.h"
+#include "Animation/AnimInstance.h"
 
 USkeletalMeshComponent::USkeletalMeshComponent(const USkeletalMeshComponent& Other)
     : UMeshComponent(Other)
@@ -209,6 +210,15 @@ void USkeletalMeshComponent::SkinningVertex()
 //     SetStaticMesh(Mesh);
 // }
 
+// FIX-ME
+void USkeletalMeshComponent::BeginPlay()
+{
+    Super::BeginPlay(); // 일단 Super를 해야하는 상황인지도 정확하게는 모르겠음.
+
+    OwningAnimInstance->NativeInitializeAnimation();
+
+}
+
 UObject* USkeletalMeshComponent::Duplicate(UObject* InOuter)
 {
     USkeletalMeshComponent* NewComp = FObjectFactory::ConstructObjectFrom<USkeletalMeshComponent>(this, InOuter);
@@ -229,6 +239,13 @@ void USkeletalMeshComponent::TickComponent(float DeltaTime)
 {
     //Timer += DeltaTime * 0.005f;
     //SetLocation(GetWorldLocation()+ (FVector(1.0f,1.0f, 1.0f) * sin(Timer)));
+
+    // 근데 여기서 돌면 Tick이 일정하지 않은 것으로 아는데 맞나 모르겠다
+    // 나중에 자세히 이야기할 것.
+    if (OwningAnimInstance)
+    {
+        OwningAnimInstance->NativeUpdateAnimation(DeltaTime);
+    }
 }
 
 void USkeletalMesh::ResetToOriginalPose()
