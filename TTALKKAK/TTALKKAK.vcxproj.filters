@@ -470,7 +470,6 @@
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimInstance.h">
       <Filter>Engine\Source\Runtime\Engine\Classes\Animation</Filter>
     </ClInclude>
-    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Animation\CustomAnimInstance.h" />
     <ClInclude Include="Engine\Source\FBXLoader.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework\ChracterMovementComponent.h">
       <Filter>Engine\Source\Runtime\Engine\Classes\Components\GameFramework</Filter>
@@ -487,6 +486,7 @@
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework\RotatingMovementComponent.h">
       <Filter>Engine\Source\Runtime\Engine\Classes\Components\GameFramework</Filter>
     </ClInclude>
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Animation\CustomAnimInstance.h" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\Source\ThirdParty\DirectXTK\Include\DDSTextureLoader.h" />
@@ -700,7 +700,6 @@
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimInstance.cpp">
       <Filter>Engine\Source\Runtime\Engine\Classes\Animation</Filter>
     </ClCompile>
-    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Animation\CustomAnimInstance.cpp" />
     <ClCompile Include="Engine\Source\FBXLoader.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework\ChracterMovementComponent.cpp">
       <Filter>Engine\Source\Runtime\Engine\Classes\Components\GameFramework</Filter>
@@ -717,6 +716,7 @@
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework\RotatingMovementComponent.cpp">
       <Filter>Engine\Source\Runtime\Engine\Classes\Components\GameFramework</Filter>
     </ClCompile>
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Animation\CustomAnimInstance.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\ShaderHeaders\GConstantBuffers.hlsli" />

@@ -1,10 +1,17 @@
 #include "CustomAnimInstance.h"
 #include "CoreUObject/UObject/Casts.h"
 
+UCustomAnimInstance::UCustomAnimInstance()
+{
+    AnimationA = nullptr;
+    AnimationB = nullptr;
+    BlendAlpha = 1.f;
+}
+
 UCustomAnimInstance::UCustomAnimInstance(const UCustomAnimInstance& Other)
-    : BlendAlpha(Other.BlendAlpha)
-    , AnimationA(Other.AnimationA)
+    : AnimationA(Other.AnimationA)
     , AnimationB(Other.AnimationB)
+    , BlendAlpha(Other.BlendAlpha)
 {
 }
 
