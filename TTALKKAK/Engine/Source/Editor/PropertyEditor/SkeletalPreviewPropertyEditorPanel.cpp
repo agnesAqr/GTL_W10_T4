@@ -632,7 +632,7 @@ void SkeletalPreviewPropertyEditorPanel::Render()
         {
             RenderForMaterial(StaticMeshComponent);
         }
-        else if (USkeletalMeshComponent* SkeletalMeshComponet = PickedActor->GetComponentByClass<USkeletalMeshComponent>())
+        if (USkeletalMeshComponent* SkeletalMeshComponet = PickedActor->GetComponentByClass<USkeletalMeshComponent>())
         {
             RenderForSkeletalMesh2(SkeletalMeshComponet);
             RenderForMaterial(SkeletalMeshComponet);

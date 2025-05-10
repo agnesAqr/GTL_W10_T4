@@ -32,11 +32,11 @@ public:
     void SetSkeletalMesh(USkeletalMesh* value);
     USkeletalMesh* LoadSkeletalMesh(const FString& FilePath);
     void CreateBoneComponents();
-    void UpdateBoneHierarchy();
+    //void UpdateBoneHierarchy();
 
 private:
     TArray<UStaticMeshComponent*> BoneComponents;
-    void SkinningVertex();
+    //void SkinningVertex();
     
 
 

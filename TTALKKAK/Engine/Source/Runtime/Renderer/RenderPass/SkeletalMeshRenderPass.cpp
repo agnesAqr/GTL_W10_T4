@@ -3,6 +3,7 @@
 #include "EditorEngine.h"
 #include "LaunchEngineLoop.h"
 #include "ShowFlags.h"
+#include "Animation/AnimationSettings.h"
 #include "BaseGizmos/GizmoBaseComponent.h"
 #include "D3D11RHI/CBStructDefine.h"
 #include "Engine/World.h"
@@ -33,7 +34,6 @@ FSkeletalMeshRenderPass::FSkeletalMeshRenderPass(const FName& InShaderName) : FB
 
     D3D11_BUFFER_DESC constdesc = {};
     constdesc.ByteWidth = sizeof(FLightingConstants);
-  
     constdesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
     constdesc.Usage = D3D11_USAGE_DYNAMIC;
     constdesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
@@ -123,6 +123,10 @@ void FSkeletalMeshRenderPass::Execute(const std::shared_ptr<FViewportClient> InV
     {
         const FMatrix Model = SkeletalMeshComponent->GetWorldMatrix();
         UpdateMatrixConstants(SkeletalMeshComponent, View, Proj);
+
+        // GPU Skinning
+        if (GCurrentSkinningMode == ESkinningMode::GPU)
+            UpdateSkinningMatrixConstant(SkeletalMeshComponent);
 
         UpdateLightConstants();
 
@@ -224,12 +228,10 @@ void FSkeletalMeshRenderPass::UpdateFlagConstant()
     FRenderResourceManager* renderResourceManager = GEngineLoop.Renderer.GetResourceManager();
 
     FFlagConstants FlagConstant;
-
     FlagConstant.IsLit = GEngineLoop.Renderer.bIsLit;
-
     FlagConstant.IsNormal = GEngineLoop.Renderer.bIsNormal;
-
     FlagConstant.IsVSM = GEngineLoop.Renderer.GetShadowFilterMode();
+    FlagConstant.IsGPUSkinning = GCurrentSkinningMode == ESkinningMode::GPU ? true : false;
 
     renderResourceManager->UpdateConstantBuffer(TEXT("FFlagConstants"), &FlagConstant);
 }
@@ -419,6 +421,17 @@ void FSkeletalMeshRenderPass::UpdateCameraConstant(const std::shared_ptr<FViewpo
     CameraConstants.FarPlane = curEditorViewportClient->GetFarClip();
 
     renderResourceManager->UpdateConstantBuffer(renderResourceManager->GetConstantBuffer(TEXT("FCameraConstant")), &CameraConstants);
+}
+
+void FSkeletalMeshRenderPass::UpdateSkinningMatrixConstant(USkeletalMeshComponent* SkelComp)
+{
+    FBonesConstant BoneConstants;
+    const auto& Bones = SkelComp->GetSkeletalMesh()->GetRenderData().Bones;
+    for (int i=0; i < Bones.Num() && i < MAX_BONES; ++i)
+        BoneConstants.SkinningMatrices[i] = Bones[i].SkinningMatrix;
+
+    FRenderResourceManager* renderResourceManager = GEngineLoop.Renderer.GetResourceManager();
+    renderResourceManager->UpdateConstantBuffer(renderResourceManager->GetConstantBuffer(TEXT("FBonesConstants")), &BoneConstants);
 }
 
 bool FSkeletalMeshRenderPass::IsLightInFrustum(ULightComponentBase* LightComponent, const FFrustum& CameraFrustum) const

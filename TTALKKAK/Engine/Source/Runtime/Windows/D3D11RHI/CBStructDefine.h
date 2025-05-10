@@ -9,6 +9,7 @@
 
 const int MAX_POINTLIGHT = 8;
 const int MAX_SPOTLIGHT = 8;
+const int MAX_BONES = 128;
 
 struct alignas(16) FFogCameraConstant
 {
@@ -188,10 +189,10 @@ struct alignas(16) FBlurConstants
 
 struct alignas(16) FFlagConstants
 {
-    uint32 IsLit; // offset: 0, size: 4
+    uint32 IsLit;
     uint32 IsNormal;
     uint32 IsVSM;
-    float flagPad0; // offset: 4, size: 12
+    uint32 IsGPUSkinning;
 };
 
 struct alignas(16) FMatrixConstants
@@ -210,6 +211,11 @@ struct alignas(16) FConstatntBufferActor
     FVector padding; // offset: 20, size: 12
 };
 
+struct alignas(16) FBonesConstant
+{
+    FMatrix SkinningMatrices[MAX_BONES];
+};
+
 enum class EShaderConstantBuffer
 {
     FCameraConstant = 0,
@@ -225,6 +231,7 @@ enum class EShaderConstantBuffer
     FPrimitiveCounts = 10,
     FSubUVConstant = 11,
     FViewportInfo = 12,
+    FBonesConstants = 13,
     EShaderConstantBuffer_MAX
 };
 
@@ -245,6 +252,7 @@ inline const TCHAR* EShaderConstantBufferToString(EShaderConstantBuffer e)
     case EShaderConstantBuffer::FPrimitiveCounts: return TEXT("FPrimitiveCounts");
     case EShaderConstantBuffer::FSubUVConstant: return TEXT("FSubUVConstant");
     case EShaderConstantBuffer::FViewportInfo: return TEXT("FViewportInfo");
+    case EShaderConstantBuffer::FBonesConstants: return TEXT("FBonesConstants");
     default: return TEXT("unknown");
     }
 }
@@ -279,6 +287,7 @@ inline EShaderConstantBuffer EShaderConstantBufferFromString(const TCHAR* str)
     if(std::strcmp(str, "FPrimitiveCounts") == 0) return EShaderConstantBuffer::FPrimitiveCounts;
     if(std::strcmp(str, "FSubUVConstant") == 0) return EShaderConstantBuffer::FSubUVConstant;
     if(std::strcmp(str, "FViewportInfo") == 0) return EShaderConstantBuffer::FViewportInfo;
+    if(std::strcmp(str, "FBonesConstants") == 0) return EShaderConstantBuffer::FBonesConstants;
 #endif
     return EShaderConstantBuffer::EShaderConstantBuffer_MAX;
 }

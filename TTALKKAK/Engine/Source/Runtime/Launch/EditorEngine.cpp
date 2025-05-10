@@ -254,7 +254,7 @@ UWorld* UEditorEngine::CreatePreviewWindow()
     }
     
     WCHAR EnginePreviewWindowClass[] = L"PreviewWindowClass";
-    WCHAR EnginePreviewTitle[] = L"Preview";
+    WCHAR EnginePreviewTitle[] = L"SkeletalMesh Viewer";
 
     HINSTANCE hInstance = reinterpret_cast<HINSTANCE>(GetWindowLongPtrW(GEngineLoop.GetDefaultWindow(), GWLP_HINSTANCE));
     HWND AppWnd = GEngineLoop.CreateEngineWindow(hInstance, EnginePreviewWindowClass, EnginePreviewTitle);

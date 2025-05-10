@@ -161,28 +161,28 @@ USkeletalMesh* USkeletalMeshComponent::LoadSkeletalMesh(const FString& FilePath)
     return SkeletalMesh;
 }
 
-void USkeletalMeshComponent::UpdateBoneHierarchy()
-{
-    for (int i=0;i<SkeletalMesh->GetRenderData().Vertices.Num();i++)
-    {
-         SkeletalMesh->GetRenderData().Vertices[i].Position = SkeletalMesh->GetRefSkeletal()->RawVertices[i].Position;
-    }
-    SkeletalMesh->UpdateBoneHierarchy();
-    SkinningVertex();
-}
-
-void USkeletalMeshComponent::SkinningVertex()
-{
-    for (auto& Vertex : SkeletalMesh->GetRenderData().Vertices)
-    {
-        Vertex.SkinningVertex(SkeletalMesh->GetRenderData().Bones);
-    }
-
-    FBXLoader::UpdateBoundingBox(SkeletalMesh->GetRenderData());
-    AABB = SkeletalMesh->GetRenderData().BoundingBox;
-
-    SkeletalMesh->SetData(SkeletalMesh->GetRenderData(), SkeletalMesh->GetRefSkeletal()); // TODO: Dynamic VertexBuffer Update하게 바꾸기
-}
+// void USkeletalMeshComponent::UpdateBoneHierarchy()
+// {
+//     for (int i=0;i<SkeletalMesh->GetRenderData().Vertices.Num();i++)
+//     {
+//          SkeletalMesh->GetRenderData().Vertices[i].Position = SkeletalMesh->GetRefSkeletal()->RawVertices[i].Position;
+//     }
+//     SkeletalMesh->UpdateBoneHierarchy();
+//     SkinningVertex();
+// }
+//
+// void USkeletalMeshComponent::SkinningVertex()
+// {
+//     for (auto& Vertex : SkeletalMesh->GetRenderData().Vertices)
+//     {
+//         Vertex.SkinningVertex(SkeletalMesh->GetRenderData().Bones);
+//     }
+//
+//     FBXLoader::UpdateBoundingBox(SkeletalMesh->GetRenderData());
+//     AABB = SkeletalMesh->GetRenderData().BoundingBox;
+//
+//     SkeletalMesh->SetData(SkeletalMesh->GetRenderData(), SkeletalMesh->GetRefSkeletal()); // TODO: Dynamic VertexBuffer Update하게 바꾸기
+// }
 
 // std::unique_ptr<FActorComponentInfo> USkeletalMeshComponent::GetComponentInfo()
 // {
@@ -231,21 +231,20 @@ void USkeletalMeshComponent::TickComponent(float DeltaTime)
     //SetLocation(GetWorldLocation()+ (FVector(1.0f,1.0f, 1.0f) * sin(Timer)));
 }
 
-void USkeletalMesh::ResetToOriginalPose()
-{
-    // 본 트랜스폼 복원
-    for (int i = 0; i < OriginalLocalTransforms.Num() && i < SkeletalMeshRenderData.Bones.Num(); i++)
-    {
-        // 로컬 트랜스폼 복원
-        SkeletalMeshRenderData.Bones[i].LocalTransform = OriginalLocalTransforms[i];
-
-        SkeletalMeshRenderData.Bones[i].GlobalTransform = OriginalGlobalMatrices[i];
-    }
-
-
-    // 로컬 트랜스폼으로부터 글로벌 트랜스폼과 스키닝 매트릭스 재계산
-    UpdateBoneHierarchy();
-
-    // 스키닝 적용
-    UpdateSkinnedVertices();
-}
+// void USkeletalMesh::ResetToOriginalPose()
+// {
+//     // 본 트랜스폼 복원
+//     for (int i = 0; i < OriginalLocalTransforms.Num() && i < SkeletalMeshRenderData.Bones.Num(); i++)
+//     {
+//         // 로컬 트랜스폼 복원
+//         SkeletalMeshRenderData.Bones[i].LocalTransform = OriginalLocalTransforms[i];
+//
+//         SkeletalMeshRenderData.Bones[i].GlobalTransform = OriginalGlobalMatrices[i];
+//     }
+//
+//     // 로컬 트랜스폼으로부터 글로벌 트랜스폼과 스키닝 매트릭스 재계산
+//     UpdateBoneHierarchy();
+//
+//     // 스키닝 적용
+//     UpdateSkinnedVertices();
+// }
