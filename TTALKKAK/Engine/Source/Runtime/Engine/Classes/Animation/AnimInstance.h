@@ -1,6 +1,7 @@
 #pragma once
 #include "UObject/Object.h"
 #include "UObject/ObjectMacros.h"
+#include "FBX/FBXDefine.h" // FIX-ME
 
 class UAnimInstance : public UObject
 {
@@ -18,10 +19,10 @@ public:
     virtual void NativeInitializeAnimation();
     virtual void NativeUpdateAnimation(float DeltaSeconds);
 
-
-    // 스켈레톤을 넣어야 하는데 스켈레톤이 없이 그냥 처리하고 있지 않나?
-
     // 
     // 프록시 타입
+
+protected:
+    FRefSkeletal* TargetSkeleton;
 };
 

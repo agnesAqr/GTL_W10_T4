@@ -1,6 +1,7 @@
 #pragma once
 #include "Animation/AnimInstance.h"
-//#include "Animation/AnimSingleNodeInstance.h"
+#include "Animation/AnimSingleNodeInstance.h"
+#include "Classes/Engine/Assets/Animation/AnimTypes.h"
 
 class UAnimSequence;
 
@@ -26,5 +27,9 @@ private:
     UAnimSequence* AnimationA;
     UAnimSequence* AnimationB;
     float BlendAlpha;
+    FPoseData FinalBlendedPose;
+
+    float CurrentTimeA;
+    float CurrentTimeB;
 };
 

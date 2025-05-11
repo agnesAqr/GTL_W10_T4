@@ -3,6 +3,7 @@
 
 UAnimInstance::UAnimInstance(const UAnimInstance& Other)
     : UObject(Other)
+    , TargetSkeleton(Other.TargetSkeleton)
 {
 }
 
@@ -27,6 +28,8 @@ void UAnimInstance::PostDuplicate()
 
 void UAnimInstance::NativeInitializeAnimation()
 {
+    // 여기서 스켈레톤 하나 가져오는 방식으로 하는게 좋을듯.
+    //TargetSkeleton=
 }
 
 void UAnimInstance::NativeUpdateAnimation(float DeltaSeconds)

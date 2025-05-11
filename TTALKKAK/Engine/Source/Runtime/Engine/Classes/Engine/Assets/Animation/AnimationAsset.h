@@ -1,6 +1,7 @@
 #pragma once
 #include "Engine/Assets/UAsset.h"
 #include "Math/FrameRate.h"
+#include "Classes/Engine/Assets/Animation/AnimTypes.h"
 
 struct FRefSkeletal;
 struct FRawAnimSequenceTrack;
@@ -63,6 +64,8 @@ public:
     virtual void TickAssetPlayer();
 
     virtual void PopulateModel();
+
+    PROPERTY(float, RateScale);
 protected:
     /** 재생 속도가 1.0일 때 이 AnimSequence의 길이(초) */
     float SequenceLength;
@@ -98,6 +101,9 @@ public:
     float GetTimeAtFrame(const int32 Frame) const override;
     void TickAssetPlayer() override;
     void PopulateModel() override;
+
+    // AtFrame으로 작성을 해야할 것 같기도 하고 흠.
+    void SamplePoseAtTime(float Time, const FRefSkeletal* Skeleton, FPoseData& OutPose) const;
 
 protected:
     /** 개별 애니메이션 트랙에 예상되는 키의 수를 포함합니다. */

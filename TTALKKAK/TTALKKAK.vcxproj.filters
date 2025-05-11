@@ -496,8 +496,10 @@
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Engine\Assets\Animation\AnimDataModel.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Engine\Assets\Animation\AnimTypes.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Engine\Assets\Animation\IAnimationDataModel.h" />
-    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Engine\Assets\Animation\UAnimationAsset.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Engine\Assets\UAsset.h" />
+    <ClInclude Include="Engine\Source\Runtime\Core\Math\Transform.h">
+      <Filter>Engine\Source\Runtime\Core\Math</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\Source\ThirdParty\DirectXTK\Include\DDSTextureLoader.h" />
@@ -735,8 +737,11 @@
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Engine\Assets\Animation\AnimDataModel.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Engine\Assets\Animation\AnimTypes.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Engine\Assets\Animation\IAnimationDataModel.cpp" />
-    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Engine\Assets\Animation\UAnimationAsset.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Engine\Assets\UAsset.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Engine\Assets\Animation\AnimationAsset.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Core\Math\Transform.cpp">
+      <Filter>Engine\Source\Runtime\Core\Math</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\ShaderHeaders\GConstantBuffers.hlsli" />

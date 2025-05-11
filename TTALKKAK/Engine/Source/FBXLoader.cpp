@@ -7,7 +7,7 @@
 #include "Engine/FLoaderOBJ.h"
 #include "Engine/Assets/Animation/AnimDataModel.h"
 #include "Engine/Assets/Animation/IAnimationDataModel.h"
-#include "Engine/Assets/Animation/UAnimationAsset.h"
+#include "Engine/Assets/Animation/AnimationAsset.h"
 
 FbxManager* FBXLoader::FbxManager = nullptr;
     
