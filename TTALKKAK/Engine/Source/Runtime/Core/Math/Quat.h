@@ -22,6 +22,8 @@ struct FQuat
 
     explicit FQuat(const FMatrix& InMatrix);
 
+    static const FQuat& Identity();
+
     void Serialize(FArchive& Ar) const
     {
         Ar << W << X << Y << Z;
@@ -33,6 +35,9 @@ struct FQuat
 
     // 쿼터니언의 곱셈 연산 (회전 결합)
     FQuat operator*(const FQuat& Other) const;
+
+    // 쿼터니언의 역을 반환
+    FQuat Inverse() const;
 
     // (쿼터니언) 벡터 회전
     FVector RotateVector(const FVector& Vec) const;

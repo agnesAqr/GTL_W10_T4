@@ -4,6 +4,8 @@
 #include "Matrix.h"
 #include "Rotator.h"
 
+const FQuat GIdentityQuat = FQuat(1.f, 0.f, 0.f, 0.f);
+
 FQuat::FQuat(const FVector& Axis, float Angle)
 {
     float HalfAngle = Angle * 0.5f;
@@ -68,6 +70,11 @@ FQuat::FQuat(const FMatrix& InMatrix)
     }
 }
 
+const FQuat& FQuat::Identity()
+{
+    return GIdentityQuat;
+}
+
 FQuat FQuat::operator*(const FQuat& Other) const
 {
     return FQuat(
@@ -76,6 +83,24 @@ FQuat FQuat::operator*(const FQuat& Other) const
             W * Other.Y - X * Other.Z + Y * Other.W + Z * Other.X,
             W * Other.Z + X * Other.Y - Y * Other.X + Z * Other.W
         );
+}
+
+FQuat FQuat::Inverse() const
+{
+    // 길이 제곱 계산
+    float NormSq = W * W + X * X + Y * Y + Z * Z;
+    // 0으로 나누는 것 방지
+    if (NormSq > std::numeric_limits<float>::epsilon()) // 또는 적절한 작은 값 (e.g., SMALL_NUMBER)
+    {
+        float InvNormSq = 1.0f / NormSq;
+        // 역 = 켤레 / 길이제곱
+        return FQuat(W * InvNormSq, -X * InvNormSq, -Y * InvNormSq, -Z * InvNormSq);
+    }
+    else
+    {
+        // 길이가 0에 가까우면 단위 쿼터니언 반환 (오류 상황)
+        return FQuat::Identity();
+    }
 }
 
 FVector FQuat::RotateVector(const FVector& Vec) const
