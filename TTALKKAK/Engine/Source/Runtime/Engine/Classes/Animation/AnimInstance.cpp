@@ -35,3 +35,8 @@ void UAnimInstance::NativeInitializeAnimation()
 void UAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
 }
+
+const FPoseData& UAnimInstance::GetCurrentPose() const
+{
+    return CurrentPoseData;
+}

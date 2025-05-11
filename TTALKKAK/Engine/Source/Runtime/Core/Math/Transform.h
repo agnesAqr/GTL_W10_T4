@@ -55,6 +55,7 @@ public:
     // --- 변환 결합 (A * B: B를 먼저 적용하고 A를 적용) ---
     FTransform operator*(const FTransform& Other) const;
     FTransform& operator*=(const FTransform& Other);
+    FTransform& operator=(const FTransform& Other);
 
     // --- 역변환 ---
     FTransform Inverse() const;

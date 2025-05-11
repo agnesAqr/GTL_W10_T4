@@ -65,6 +65,15 @@ FTransform& FTransform::operator*=(const FTransform& Other)
     return *this;
 }
 
+FTransform& FTransform::operator=(const FTransform& Other)
+{   
+    this->Translation = Other.Translation;
+    this->Rotation = Other.Rotation;
+    this->Scale3D = Other.Scale3D;
+
+    return *this;
+}
+
 // 역변환
 FTransform FTransform::Inverse() const
 {

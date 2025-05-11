@@ -4,6 +4,7 @@
 #include "UObject/ObjectMacros.h"
 #include "ActorComponentInfo.h"
 #include "Math/Rotator.h"
+#include "Math/Transform.h"
 #include "Misc/Guid.h"
 #include <sol\sol.hpp>
 
@@ -93,10 +94,12 @@ public:
     void SetRelativeRotation(const FRotator& InRotation);
     void SetRelativeRotation(const FQuat& InQuat);
     void SetRelativeScale(const FVector& InScale);
+    void SetRelativeTransform(const FTransform InTransform);
     
     FVector GetRelativeLocation() const;
     FRotator GetRelativeRotation() const;
     FVector GetRelativeScale() const;
+    FTransform GetRelativeTransform() const;
 
     FVector GetWorldForwardVector() const;
     FVector GetWorldRightVector() const;
@@ -105,6 +108,7 @@ public:
     FVector GetWorldLocation() const;
     FRotator GetWorldRotation() const;
     FVector GetWorldScale() const;
+    FTransform GetWorldTransform() const;
 
     void AddWorldLocation(const FVector& InAddValue);
     void AddWorldRotation(const FRotator& InAddValue);
@@ -114,6 +118,7 @@ public:
     void SetWorldRotation(const FRotator& InRotation);
     void SetWorldRotation(const FQuat& InQuat);
     void SetWorldScale(const FVector& InScale);
+    void SetWorldTransform(const FTransform& InTransform);
 
     FMatrix GetScaleMatrix() const;
     FMatrix GetRotationMatrix() const;

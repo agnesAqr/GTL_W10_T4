@@ -1,9 +1,10 @@
-﻿#pragma once
+#pragma once
 #include "Define.h"
 #include "Container/Array.h"
 #include "Container/Map.h"
 #include "Math/Matrix.h"
 #include "Math/Vector.h"
+#include "Math/Transform.h"
 
 struct FBone
 {

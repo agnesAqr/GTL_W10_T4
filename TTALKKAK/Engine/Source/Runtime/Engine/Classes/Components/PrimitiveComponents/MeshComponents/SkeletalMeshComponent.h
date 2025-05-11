@@ -1,6 +1,9 @@
 #pragma once
 #include "MeshComponent.h"
 #include "Components/Mesh/SkeletalMesh.h"
+#include "Animation/AnimSingleNodeInstance.h"
+#include "Classes/Engine/Assets/Animation/AnimationAsset.h"
+
 class UStaticMeshComponent;
 class UAnimInstance;
 
@@ -9,9 +12,8 @@ class USkeletalMeshComponent : public UMeshComponent
     DECLARE_CLASS(USkeletalMeshComponent, UMeshComponent)
 
 public:
-    USkeletalMeshComponent() = default;
+    USkeletalMeshComponent();
     USkeletalMeshComponent(const USkeletalMeshComponent& Other);
-
 
     virtual void BeginPlay() override;
 
@@ -37,13 +39,19 @@ public:
     void CreateBoneComponents();
     void UpdateBoneHierarchy();
 
+    void PlayAnimation(UAnimSequence* NewAnimToPlay);
+    UAnimInstance* GetAnimInstance() const { return OwningAnimInstance; }
+
+    void UpdateBoneTransformsFromAnim();
+
 private:
     TArray<UStaticMeshComponent*> BoneComponents;
     void SkinningVertex();
     
     UAnimInstance* OwningAnimInstance;
+    UAnimSequence* CurrentAnimSequence;
 
 protected:
-    USkeletalMesh* SkeletalMesh = nullptr;
+    USkeletalMesh* SkeletalMesh;
     int SelectedSubMeshIndex = -1;
 };

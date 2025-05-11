@@ -183,6 +183,23 @@ void USkeletalMesh::ApplyRotationToBone(int BoneIndex, float DeltaAngleInDegrees
         rotationMatrix * SkeletalMeshRenderData.Bones[BoneIndex].LocalTransform;
 }
 
+void USkeletalMesh::ResetToOriginalPose()
+{
+    // 본 트랜스폼 복원
+    for (int i = 0; i < OriginalLocalTransforms.Num() && i < SkeletalMeshRenderData.Bones.Num(); i++)
+    {
+        // 로컬 트랜스폼 복원
+        SkeletalMeshRenderData.Bones[i].LocalTransform = OriginalLocalTransforms[i];
+
+        SkeletalMeshRenderData.Bones[i].GlobalTransform = OriginalGlobalMatrices[i];
+    }
+
+
+    UpdateBoneHierarchy();
+    UpdateSkinnedVertices();
+}
+
+
 USkeletalMesh* USkeletalMesh::Duplicate(UObject* InOuter)
 {
     USkeletalMesh* NewObject = new USkeletalMesh();

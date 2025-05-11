@@ -2,6 +2,7 @@
 #include "UObject/Object.h"
 #include "UObject/ObjectMacros.h"
 #include "FBX/FBXDefine.h" // FIX-ME
+#include "Classes/Engine/Assets/Animation/AnimTypes.h"
 
 class UAnimInstance : public UObject
 {
@@ -15,14 +16,13 @@ public:
     void DuplicateSubObjects(const UObject* Source, UObject* InOuter) override;
     void PostDuplicate() override;
 
-//protected:
     virtual void NativeInitializeAnimation();
     virtual void NativeUpdateAnimation(float DeltaSeconds);
 
-    // 
-    // 프록시 타입
+    FRefSkeletal* TargetSkeleton;
+    virtual const FPoseData& GetCurrentPose() const;
 
 protected:
-    FRefSkeletal* TargetSkeleton;
+    FPoseData CurrentPoseData;
 };
 
