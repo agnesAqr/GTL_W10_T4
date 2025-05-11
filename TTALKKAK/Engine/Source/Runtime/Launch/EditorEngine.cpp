@@ -139,13 +139,17 @@ void UEditorEngine::PreparePIE()
     UWorld* PIEWorld = Cast<UWorld>(EditorWorldContext->GetWorld()->Duplicate(this));
     PIEWorld->WorldType = EWorldType::PIE;
     PIEWorld->InitWorld();
-    std::shared_ptr<FWorldContext> PIEWorldContext = CreateNewWorldContext(PIEWorld, EWorldType::PIE, LEVELTICK_All);
+    PIEWorldContext = CreateNewWorldContext(PIEWorld, EWorldType::PIE, LEVELTICK_All);
 }
 
 void UEditorEngine::StartPIE()
 {
     // 1. BeingPlay() 호출
     PIEWorldContext->GetWorld()->BeginPlay();
+    for (const auto& viewportClient: GetLevelEditor()->GetViewportClients(GEngineLoop.GetDefaultWindow()))
+    {
+        viewportClient->SetWorld(PIEWorldContext->GetWorld());
+    }
     UE_LOG(LogLevel::Error, "Start PIE");
 }
 
@@ -176,6 +180,11 @@ void UEditorEngine::StopPIE()
     }
 
     WorldContexts.Remove(PIEWorldContext->GetWorld());
+    
+    for (const auto& viewportClient: GetLevelEditor()->GetViewportClients(GEngineLoop.GetDefaultWindow()))
+    {
+        viewportClient->SetWorld(EditorWorldContext->GetWorld());
+    }
     
     PIEWorldContext->GetWorld()->Release();
     
@@ -222,7 +231,7 @@ UWorld* UEditorEngine::CreateWorld(EWorldType::Type WorldType, ELevelTick LevelT
     UWorld* World = FObjectFactory::ConstructObject<UWorld>(this);
     World->WorldType = WorldType;
     World->InitWorld();
-    std::shared_ptr<FWorldContext> EditorContext = CreateNewWorldContext(World, WorldType, LevelTick);
+    EditorWorldContext = CreateNewWorldContext(World, WorldType, LevelTick);
 
     return World;
 }

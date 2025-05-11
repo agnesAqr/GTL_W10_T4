@@ -88,7 +88,8 @@ void FEngineLoop::Tick()
         GEngine->Tick(DeltaTime);
 
         Render();
-        
+                        
+        GUObjectArray.ProcessPendingDestroyObjects();
         do
         {
             Sleep(0);
@@ -97,6 +98,7 @@ void FEngineLoop::Tick()
 
         }
         while (ElapsedTime < targetFrameTime);
+
 
         UEngine::GFrameCount++;
     }
@@ -168,13 +170,15 @@ void FEngineLoop::Render()
             }
             else if (TargetWorld->WorldType == EWorldType::PIE)
             {
-                if (LevelEditor->GetEditorStateManager().GetEditorState() != EEditorState::Playing || EditorEngine->bForceEditorUI == true)
-                {
-                }
-                else
-                {
-                    EditorEngine->ContentsUI->Render();
-                }
+                EditorEngine->GetUnrealEditor()->RenderInPIE();
+                // if (LevelEditor->GetEditorStateManager().GetEditorState() != EEditorState::Playing || EditorEngine->bForceEditorUI == true)
+                // {
+                //     EditorEngine->GetUnrealEditor()->RenderInPIE();
+                // }
+                // else
+                // {
+                //     //EditorEngine->ContentsUI->Render();
+                // }
             }
             else if (TargetWorld->WorldType == EWorldType::EditorPreview)
             {
