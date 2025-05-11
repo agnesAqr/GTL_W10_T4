@@ -41,7 +41,7 @@ public:
     // Getter, Setter
     FLinearColor GetShapeColor() const { return ShapeColor; }
     void SetShapeColor(const FLinearColor& InColor) { ShapeColor = InColor; }
-    FBoundingBox GetBroadAABB() const { return BroadAABB; }
+    FBoundingBox GetBroadAABB();
     bool IsDrawOnlyIfSelected() const { return bDrawOnlyIfSelected; }
     void SetbDrawOnlyIfSelected(bool bInDraw) { bDrawOnlyIfSelected = bInDraw; }
 
@@ -51,8 +51,8 @@ public:
 
     virtual const FShapeInfo* GetShapeInfo() const { return &ShapeInfo; }
 
-    virtual bool TestOverlaps(const UShapeComponent* OtherShape) const;
-    virtual bool BroadPhaseCollisionCheck(const UShapeComponent* OtherShape) const;
+    virtual bool TestOverlaps(UShapeComponent* OtherShape);
+    virtual bool BroadPhaseCollisionCheck(UShapeComponent* OtherShape);
     virtual bool NarrowPhaseCollisionCheck(const UShapeComponent* OtherShape) const { return false; }
 
 protected:

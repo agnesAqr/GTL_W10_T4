@@ -18,8 +18,9 @@ public:
     float GetSpacing() { return GridParam.GridSpacing; }
     void GenerateGrid(float spacing, int gridCount);
 
-    void AddAABB(const FBoundingBox& localAABB, const FVector& center, const FMatrix& modelMatrix);
-    void AddOBB(const FBoundingBox& localAABB, const FVector& center, const FMatrix& modelMatrix);
+    void AddWorldAABB(const FBoundingBox& WorldAABB, const FMatrix& modelMatrix);
+    void AddLocalAABB(const FBoundingBox& localAABB, const FVector& center, const FMatrix& modelMatrix);
+    void AddLocalOBB(const FBoundingBox& localAABB, const FVector& center, const FMatrix& modelMatrix);
     void AddCone(const FVector& start, float radius, const FVector& end, int segments, const FVector4& color);
     void AddSphere(const FVector& center, float radius, const FVector4& color);
     void AddLine(const FVector& StartPos, const FVector& Direction, const float Length, const FVector4& Color);

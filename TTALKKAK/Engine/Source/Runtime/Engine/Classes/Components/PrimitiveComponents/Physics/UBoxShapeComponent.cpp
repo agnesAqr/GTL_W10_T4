@@ -33,12 +33,13 @@ void UBoxShapeComponent::TickComponent(float DeltaTime)
 {
     Super::TickComponent(DeltaTime);
 
-    if (PrevExtent != BoxExtent)
-    {
-        UpdateBroadAABB();
 
-        PrevExtent = BoxExtent;
-    }
+    // if (PrevExtent != BoxExtent)
+    // {
+    //
+    //     UpdateBroadAABB();
+    //     PrevExtent = BoxExtent;
+    // }
 }
 
 UObject* UBoxShapeComponent::Duplicate(UObject* InOuter)
@@ -119,7 +120,7 @@ void UBoxShapeComponent::UpdateBroadAABB()
     BroadAABB.max = Center + Max;
 }
 
-bool UBoxShapeComponent::TestOverlaps(const UShapeComponent* OtherShape) const
+bool UBoxShapeComponent::TestOverlaps(UShapeComponent* OtherShape)
 {
     if (!BroadPhaseCollisionCheck(OtherShape))
     {

@@ -60,6 +60,7 @@ void UShapeComponent::TickComponent(float DeltaTime)
 
 void UShapeComponent::DestroyComponent()
 {
+    Super::DestroyComponent();
     UEditorEngine::CollisionManager.Unregister(this);
 }
 
@@ -82,12 +83,18 @@ void UShapeComponent::PostDuplicate()
     Super::PostDuplicate();
 }
 
-bool UShapeComponent::TestOverlaps(const UShapeComponent* OtherShape) const
+FBoundingBox UShapeComponent::GetBroadAABB()
+{
+    UpdateBroadAABB();
+    return BroadAABB;
+}
+
+bool UShapeComponent::TestOverlaps(UShapeComponent* OtherShape)
 {
     return false;
 }
 
-bool UShapeComponent::BroadPhaseCollisionCheck(const UShapeComponent* OtherShape) const
+bool UShapeComponent::BroadPhaseCollisionCheck(UShapeComponent* OtherShape)
 {
     return BroadAABB.IntersectAABB(OtherShape->GetBroadAABB());
 }

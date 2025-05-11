@@ -39,8 +39,8 @@ public:
     void UpdateCollision(float DeltaTime);
 
     // 충돌 대상 등록, 해제
-    void Register(const UPrimitiveComponent* InComponent);
-    void Unregister(const UPrimitiveComponent* InComponent);
+    void Register(UPrimitiveComponent* InComponent);
+    void Unregister(UPrimitiveComponent* InComponent);
 
 private:
     // Broad Phase -> Narrow Phase -> Sweep Check
@@ -62,7 +62,7 @@ private:
 
 private:
     // 등록된 컴포넌트
-    TArray<const UPrimitiveComponent*> RegisteredComponents;
+    TArray<UPrimitiveComponent*> RegisteredComponents;
 
     // Overlap 이벤트 판정을 위한 이전/현재 프레임 상태
     TArray<FComponentPair> PreviousOverlaps;

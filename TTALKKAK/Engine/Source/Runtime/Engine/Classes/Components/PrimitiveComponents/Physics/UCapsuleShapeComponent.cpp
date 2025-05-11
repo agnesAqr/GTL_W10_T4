@@ -91,7 +91,7 @@ void UCapsuleShapeComponent::UpdateBroadAABB()
     BroadAABB.max = Max;
 }
 
-bool UCapsuleShapeComponent::TestOverlaps(const UShapeComponent* OtherShape) const
+bool UCapsuleShapeComponent::TestOverlaps(UShapeComponent* OtherShape)
 {
     if (!BroadPhaseCollisionCheck(OtherShape))
     {
