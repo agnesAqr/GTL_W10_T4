@@ -172,4 +172,3 @@ uint64 FPlatformMemory::GetAllocationCount()
         return -1;
     }
 }
-
