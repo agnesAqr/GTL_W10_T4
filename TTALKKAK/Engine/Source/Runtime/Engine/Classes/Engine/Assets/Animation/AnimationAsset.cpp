@@ -1,7 +1,7 @@
-#include "UAnimationAsset.h"
+#include "AnimationAsset.h"
 
 #include "AnimDataModel.h"
-#include "TestFBXLoader.h"
+#include "FBXLoader.h"
 #include "UObject/Casts.h"
 
 UAnimationAsset::UAnimationAsset()
