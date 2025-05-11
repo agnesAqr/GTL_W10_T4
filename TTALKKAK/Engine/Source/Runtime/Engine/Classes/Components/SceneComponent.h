@@ -20,7 +20,6 @@ struct FSceneComponentInfo : public FActorComponentInfo
     FRotator RelativeRotation;
     FVector RelativeScale3D;
     FBoundingBox AABB;
-
     
     FGuid ParentComponentID;
     

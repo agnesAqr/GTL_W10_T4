@@ -88,7 +88,8 @@ void FEngineLoop::Tick()
         GEngine->Tick(DeltaTime);
 
         Render();
-        
+                        
+        GUObjectArray.ProcessPendingDestroyObjects();
         do
         {
             Sleep(0);
@@ -97,6 +98,7 @@ void FEngineLoop::Tick()
 
         }
         while (ElapsedTime < targetFrameTime);
+
 
         UEngine::GFrameCount++;
     }
@@ -168,13 +170,15 @@ void FEngineLoop::Render()
             }
             else if (TargetWorld->WorldType == EWorldType::PIE)
             {
-                if (LevelEditor->GetEditorStateManager().GetEditorState() != EEditorState::Playing || EditorEngine->bForceEditorUI == true)
-                {
-                }
-                else
-                {
-                    EditorEngine->ContentsUI->Render();
-                }
+                EditorEngine->GetUnrealEditor()->RenderInPIE();
+                // if (LevelEditor->GetEditorStateManager().GetEditorState() != EEditorState::Playing || EditorEngine->bForceEditorUI == true)
+                // {
+                //     EditorEngine->GetUnrealEditor()->RenderInPIE();
+                // }
+                // else
+                // {
+                //     //EditorEngine->ContentsUI->Render();
+                // }
             }
             else if (TargetWorld->WorldType == EWorldType::EditorPreview)
             {
@@ -224,7 +228,6 @@ HWND FEngineLoop::CreateEngineWindow(HINSTANCE hInstance, WCHAR WindowClass[], W
 
     // 순서 조심
     GraphicDevice.AddWindow(AppWnd);
-    AppMessageHandler->AddWindow(AppWnd);
 
     ImGuiManager::Get().AddWindow(AppWnd, GraphicDevice.Device, GraphicDevice.DeviceContext);
 
@@ -239,7 +242,6 @@ void FEngineLoop::DestroyEngineWindow(HWND AppWnd, HINSTANCE hInstance, WCHAR Wi
     UnregisterClassW(WindowClass, hInstance);
     AppWindows.Remove(AppWnd);
     GraphicDevice.RemoveWindow(AppWnd);
-    AppMessageHandler->RemoveWindow(AppWnd);
     
     ImGuiManager::Get().RemoveWindow(AppWnd);
 }

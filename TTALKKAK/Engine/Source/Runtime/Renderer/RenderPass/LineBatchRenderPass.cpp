@@ -71,25 +71,25 @@ void FLineBatchRenderPass::AddRenderObjectsToRenderPass(UWorld* World)
         const FBoundingBox& Box = ShapeComponent->GetBroadAABB();
         FVector Center = ShapeComponent->GetWorldLocation();
 
-        PrimitiveBatch.AddAABB(Box, Center, FMatrix::Identity);
+        PrimitiveBatch.AddWorldAABB(Box, FMatrix::Identity);
 
         switch (BaseShapeInfo->Type)
         {
         case EShapeType::Box:
-            {
-                const FBoxShapeInfo* BoxInfo = static_cast<const FBoxShapeInfo*>(BaseShapeInfo);
+        {
+            const FBoxShapeInfo* BoxInfo = static_cast<const FBoxShapeInfo*>(BaseShapeInfo);
 
-                FVector BoxExtent = BoxInfo->Extent;
-                FVector Center = BoxInfo->Center;
-                FMatrix WorldMatrix = BoxInfo->WorldMatrix;
+            FVector BoxExtent = BoxInfo->Extent;
+            FVector Center = BoxInfo->Center;
+            FMatrix WorldMatrix = BoxInfo->WorldMatrix;
 
-                FBoundingBox localOBB;
-                localOBB.min = FVector(-BoxExtent.X, -BoxExtent.Y, -BoxExtent.Z);
-                localOBB.max = FVector(BoxExtent.X, BoxExtent.Y, BoxExtent.Z);
+            FBoundingBox localOBB;
+            localOBB.min = FVector(-BoxExtent.X, -BoxExtent.Y, -BoxExtent.Z);
+            localOBB.max = FVector(BoxExtent.X, BoxExtent.Y, BoxExtent.Z);
 
-                PrimitiveBatch.AddOBB(localOBB, Center, WorldMatrix);
-                break;
-            }
+            PrimitiveBatch.AddLocalOBB(localOBB, Center, WorldMatrix);
+            break;
+        }
         case EShapeType::Sphere:
             {
                 const FSphereShapeInfo* SphereInfo = static_cast<const FSphereShapeInfo*>(BaseShapeInfo);

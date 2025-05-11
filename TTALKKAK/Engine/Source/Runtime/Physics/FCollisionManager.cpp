@@ -27,7 +27,7 @@ void FCollisionManager::Release()
     PendingEndOverlapEvents.Empty();
 }
 
-void FCollisionManager::Register(const UPrimitiveComponent* InComponent)
+void FCollisionManager::Register(UPrimitiveComponent* InComponent)
 {
     if (InComponent && !RegisteredComponents.Contains(InComponent))
     {
@@ -37,7 +37,7 @@ void FCollisionManager::Register(const UPrimitiveComponent* InComponent)
     }
 }
 
-void FCollisionManager::Unregister(const UPrimitiveComponent* InComponent)
+void FCollisionManager::Unregister(UPrimitiveComponent* InComponent)
 {
     if (InComponent && RegisteredComponents.Contains(InComponent))
     {
@@ -123,16 +123,16 @@ void FCollisionManager::BroadPhaseCollisionCheck(float DeltaTime)
     {
         for (size_t j = i + 1; j < Num; j++)
         {
-            const UPrimitiveComponent* CompA = RegisteredComponents[i];
-            const UPrimitiveComponent* CompB = RegisteredComponents[j];
+            UPrimitiveComponent* CompA = RegisteredComponents[i];
+            UPrimitiveComponent* CompB = RegisteredComponents[j];
 
             // 충돌 채널 필터링
             if (!ShouldCollide(CompA, CompB))
                 continue;
 
             // ShapeComponent 끼리만 검사
-            const UShapeComponent* ShapeA = dynamic_cast<const UShapeComponent*>(CompA);
-            const UShapeComponent* ShapeB = dynamic_cast<const UShapeComponent*>(CompB);
+            UShapeComponent* ShapeA = dynamic_cast<UShapeComponent*>(CompA);
+            UShapeComponent* ShapeB = dynamic_cast<UShapeComponent*>(CompB);
             if (ShapeA && ShapeB)
             {
                 if (ShapeA->BroadPhaseCollisionCheck(ShapeB))

@@ -23,33 +23,15 @@ void UPrimitiveBatch::GenerateGrid(float spacing, int gridCount)
     GridParam.GridOrigin = { 0,0,0 };
 }
 
-// void UPrimitiveBatch::RenderBatch(ID3D11Buffer* ConstantBuffer, const FMatrix& View, const FMatrix& Projection)
-// {
-//     UEditorEngine::renderer.PrepareLineShader();
-//
-//     InitializeVertexBuffer();
-//
-//     FMatrix Model = FMatrix::Identity;
-//     FMatrix ViewProj = View * Projection;
-//     FMatrix NormalMatrix = FMatrix::Transpose(FMatrix::Inverse(Model));
-//     UEditorEngine::renderer.GetConstantBufferUpdater().UpdateConstant(ConstantBuffer, Model, ViewProj, NormalMatrix, FVector4(0, 0, 0, 0), false);
-//     UEditorEngine::renderer.UpdateGridConstantBuffer(GridParam);
-//
-//     UpdateBoundingBoxResources();
-//     UpdateConeResources();
-//     UpdateOBBResources();
-//     int boundingBoxSize = static_cast<int>(BoundingBoxes.Num());
-//     int coneSize = static_cast<int>(Cones.Num());
-//     int obbSize = static_cast<int>(OrientedBoundingBoxes.Num());
-//     UEditorEngine::renderer.UpdateLinePrimitveCountBuffer(boundingBoxSize, coneSize);
-//     UEditorEngine::renderer.RenderBatch(GridParam, pVertexBuffer, boundingBoxSize, coneSize, ConeSegmentCount, obbSize);
-//     BoundingBoxes.Empty();
-//     Cones.Empty();
-//     OrientedBoundingBoxes.Empty();
-//     UEditorEngine::renderer.PrepareShader();
-// }
+void UPrimitiveBatch::AddWorldAABB(const FBoundingBox& WorldAABB, const FMatrix& modelMatrix)
+{
+    FBoundingBox BoundingBox;
+    BoundingBox.min = WorldAABB.min;
+    BoundingBox.max = WorldAABB.max;
+    BoundingBoxes.Add(BoundingBox);
+}
 
-void UPrimitiveBatch::AddAABB(const FBoundingBox& localAABB, const FVector& center, const FMatrix& modelMatrix)
+void UPrimitiveBatch::AddLocalAABB(const FBoundingBox& localAABB, const FVector& center, const FMatrix& modelMatrix)
 {
     FVector localVertices[8] = {
          { localAABB.min.X, localAABB.min.Y, localAABB.min.Z },
@@ -85,7 +67,7 @@ void UPrimitiveBatch::AddAABB(const FBoundingBox& localAABB, const FVector& cent
     BoundingBox.max = max;
     BoundingBoxes.Add(BoundingBox);
 }
-void UPrimitiveBatch::AddOBB(const FBoundingBox& localAABB, const FVector& center, const FMatrix& modelMatrix)
+void UPrimitiveBatch::AddLocalOBB(const FBoundingBox& localAABB, const FVector& center, const FMatrix& modelMatrix)
 {
     // 1) 로컬 AABB의 8개 꼭짓점
     FVector localVertices[8] =

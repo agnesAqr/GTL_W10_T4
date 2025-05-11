@@ -103,7 +103,7 @@ void USphereShapeComponent::UpdateBroadAABB()
     BroadAABB.max = Max;
 }
 
-bool USphereShapeComponent::TestOverlaps(const UShapeComponent* OtherShape) const
+bool USphereShapeComponent::TestOverlaps(UShapeComponent* OtherShape)
 {
     if (!BroadPhaseCollisionCheck(OtherShape))
     {

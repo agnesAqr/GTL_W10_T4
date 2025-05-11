@@ -268,8 +268,9 @@ struct FBoundingBox
     FBoundingBox(){}
     FBoundingBox(FVector _min, FVector _max) : min(_min), max(_max) {}
 	FVector min; // Minimum extents
+    float padding;
 	FVector max; // Maximum extents
-    float padding[2];
+    float padding1;
     bool IntersectRay(const FVector& rayOrigin, const FVector& rayDir, float& outDistance) const
     {
         float tmin = -FLT_MAX;

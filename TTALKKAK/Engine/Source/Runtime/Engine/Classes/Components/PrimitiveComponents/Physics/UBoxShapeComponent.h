@@ -42,7 +42,7 @@ public:
     virtual const FShapeInfo* GetShapeInfo() const override;
     virtual void UpdateBroadAABB() override;
 
-    virtual bool TestOverlaps(const UShapeComponent* OtherShape) const override;
+    virtual bool TestOverlaps(UShapeComponent* OtherShape) override;
     virtual bool NarrowPhaseCollisionCheck(const UShapeComponent* OtherShape) const override;
 
 private:

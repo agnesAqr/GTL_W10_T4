@@ -163,7 +163,7 @@ void FStaticMeshRenderPass::Execute(const std::shared_ptr<FViewportClient> InVie
             TSet<AActor*> Actors = InViewportClient->GetWorld()->GetSelectedActors();
             if (!Actors.IsEmpty() && *Actors.begin() == StaticMeshComp->GetOwner())
             {
-                UPrimitiveBatch::GetInstance().AddAABB(
+                UPrimitiveBatch::GetInstance().AddLocalAABB(
                     StaticMeshComp->GetBoundingBox(),
                     StaticMeshComp->GetWorldLocation(),
                     Model

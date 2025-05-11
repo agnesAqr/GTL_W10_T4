@@ -133,11 +133,7 @@ void FSkeletalMeshRenderPass::Execute(const std::shared_ptr<FViewportClient> InV
             TSet<AActor*> Actors = InViewportClient->GetWorld()->GetSelectedActors();
             if (!Actors.IsEmpty() && *Actors.begin() == SkeletalMeshComponent->GetOwner())
             {
-                UPrimitiveBatch::GetInstance().AddAABB(
-                    SkeletalMeshComponent->GetBoundingBox(),
-                    SkeletalMeshComponent->GetWorldLocation(),
-                    Model
-                );
+                UPrimitiveBatch::GetInstance().AddLocalAABB(SkeletalMeshComponent->GetBoundingBox(), SkeletalMeshComponent->GetWorldLocation(), Model);
             }
         }
 

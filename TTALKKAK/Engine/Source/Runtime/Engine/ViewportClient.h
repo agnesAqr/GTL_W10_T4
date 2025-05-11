@@ -12,7 +12,7 @@ public:
     //virtual void OnInput(const FInputEvent& Event) = 0;
     virtual void Draw(FViewport* Viewport) = 0;
     virtual void Initialize(HWND AppWnd, uint32 InViewportIndex, UWorld* World) = 0;
-    virtual UWorld* GetWorld() const { return nullptr; }
+    virtual UWorld* GetWorld() const { return World; }
     // FViewport에 대한 참조 (혹은 소유)
 
     // TODO 이렇게 하는게 맞으려나 모르겠다 Owner
