@@ -71,8 +71,6 @@ FSkeletalMeshRenderData* FBXLoader::ParseFBX(const FString& FilePath, bool bIsAb
     }
     
     UnrealAxisSystem.ConvertScene(Scene);
-    
-    Importer->Import(Scene);
 
     FSkeletalMeshRenderData* NewMeshData = new FSkeletalMeshRenderData();
     FRefSkeletal* RefSkeletal = new FRefSkeletal();
@@ -81,6 +79,7 @@ FSkeletalMeshRenderData* FBXLoader::ParseFBX(const FString& FilePath, bool bIsAb
     RefSkeletal->Name = FilePath;
 
     TMap<FString, FbxNode*> NodeMap;
+    ExtractSkeleton(Scene, NewMeshData, RefSkeletal);
     ExtractFBXMeshData(Scene, NewMeshData, RefSkeletal, NodeMap);
 
     for (int i = 0; i < NewMeshData->Vertices.Num(); ++i)
@@ -165,8 +164,68 @@ void FBXLoader::ExtractFBXMeshData(const FbxScene* Scene, FSkeletalMeshRenderDat
 
 void FBXLoader::ExtractSkeleton(FbxScene* Scene, FSkeletalMeshRenderData* MeshData, FRefSkeletal* RefSkeletal)
 {
-}
+    // 1) 초기화
+    MeshData->Bones.Empty();
+    RefSkeletal->BoneTree.Empty();
+    RefSkeletal->BoneNameToIndexMap.Empty();
+    RefSkeletal->RootBoneIndices.Empty();
 
+    // 2) 모든 스켈레톤 노드 수집
+    TArray<FbxNode*> BoneNodes;
+    std::function<void(FbxNode*)> Traverse = [&](FbxNode* Node)
+    {
+        if (auto* Attr = Node->GetNodeAttribute();
+            Attr && Attr->GetAttributeType() == FbxNodeAttribute::eSkeleton)
+        {
+            BoneNodes.Add(Node);
+        }
+        for (int i = 0; i < Node->GetChildCount(); ++i)
+            Traverse(Node->GetChild(i));
+    };
+    Traverse(Scene->GetRootNode());
+
+    // 3) FBone / FBoneNode 생성 (바인드 포즈 및 스키닝 매트릭스는 나중에 채움)
+    for (int32 i = 0; i < BoneNodes.Num(); ++i)
+    {
+        FbxNode* Node = BoneNodes[i];
+        FBone NewBone;
+        NewBone.BoneName              = Node->GetName();
+        NewBone.ParentIndex           = INDEX_NONE;
+
+        if (auto* Parent = Node->GetParent())
+        {
+            int32 Idx = BoneNodes.Find(Parent);
+            if (Idx != INDEX_NONE)
+                NewBone.ParentIndex = Idx;
+        }
+
+        // 로컬/글로벌 트랜스폼만 세팅
+        NewBone.GlobalTransform       = ConvertFbxMatrix(Node->EvaluateGlobalTransform());
+        NewBone.LocalTransform        = ConvertFbxMatrix(Node->EvaluateLocalTransform());
+
+        // 바인드 포즈 역행렬과 스키닝 매트릭스는 ProcessSkinning 에서 업데이트
+        NewBone.InverseBindPoseMatrix = FMatrix::Identity;
+        NewBone.SkinningMatrix        = FMatrix::Identity;
+
+        int32 BoneIndex = MeshData->Bones.Add(NewBone);
+        RefSkeletal->BoneNameToIndexMap.Add(NewBone.BoneName, BoneIndex);
+
+        FBoneNode NodeInfo;
+        NodeInfo.BoneName  = NewBone.BoneName;
+        NodeInfo.BoneIndex = BoneIndex;
+        RefSkeletal->BoneTree.Add(NodeInfo);
+    }
+
+    // 4) 자식 리스트 구성 및 루트 본 수집
+    for (int32 i = 0; i < MeshData->Bones.Num(); ++i)
+    {
+        int32 Parent = MeshData->Bones[i].ParentIndex;
+        if (Parent == INDEX_NONE)
+            RefSkeletal->RootBoneIndices.Add(i);
+        else
+            RefSkeletal->BoneTree[Parent].ChildIndices.Add(i);
+    }
+}
 /* Extract할 때 FBX의 Mapping Mode와 Reference Mode에 따라 모두 다르게 파싱을 진행해야 함!! */
 void FBXLoader::ExtractMeshFromNode(FbxNode* Node, FSkeletalMeshRenderData* MeshData, FRefSkeletal* RefSkeletal, TMap<FString, FbxNode*>& OutNodeMap)
 {
@@ -650,153 +709,62 @@ void FBXLoader::ProcessSkinning(FbxSkin* Skin, FSkeletalMeshRenderData* MeshData
 {
     int ClusterCount = Skin->GetClusterCount();
 
-    // Clear existing bone tree data
-    RefSkeletal->BoneTree.Empty();
-    RefSkeletal->RootBoneIndices.Empty();
-    RefSkeletal->BoneNameToIndexMap.Empty();
-    
-    // First pass - collect all bone nodes from clusters and add to flat bone array
-    for (int ClusterIndex = 0; ClusterIndex < ClusterCount; ClusterIndex++)
+    // 1) Cluster 기반으로 InverseBindPoseMatrix 와 SkinningMatrix 계산
+    for (int c = 0; c < ClusterCount; ++c)
     {
-        FbxCluster* Cluster = Skin->GetCluster(ClusterIndex);
+        FbxCluster* Cluster = Skin->GetCluster(c);
         FbxNode* BoneNode = Cluster->GetLink();
-        
-        if (!BoneNode)
-            continue;
-            
-        FString BoneName = BoneNode->GetName();
-        
-        // Check if this bone already exists
-        int* ExistingBoneIndex = RefSkeletal->BoneNameToIndexMap.Find(BoneName);
-        if (ExistingBoneIndex)
-            continue;
-            
-        // Create new bone and add to array
-        FBone NewBone;
-        NewBone.BoneName = BoneName;
-        NewBone.ParentIndex = -1; // Will be set in second pass
-        
-        // Get transform matrices
-        FbxAMatrix GlobalTransform = BoneNode->EvaluateGlobalTransform();
-        FbxAMatrix LocalTransform = BoneNode->EvaluateLocalTransform();
-        
-        // Store transforms
-        for (int i = 0; i < 4; i++)
-        {
-            for (int j = 0; j < 4; j++)
-            {
-                NewBone.GlobalTransform.M[i][j] = static_cast<float>(GlobalTransform.Get(i, j));
-                NewBone.LocalTransform.M[i][j] = static_cast<float>(LocalTransform.Get(i, j));
-            }
-        }
-        
-        // Get binding pose transformation
-      //  NewBone.InverseBindPoseMatrix = FMatrix::Inverse(NewBone.GlobalTransform);
-        FbxAMatrix MeshTransform; // Mesh의 바인드 시점의 Global Transform
-        Cluster->GetTransformMatrix(MeshTransform); // 메시의 변환 행렬 (기준점)
+        if (!BoneNode) continue;
 
-        FbxAMatrix LinkTransform; // Bone의 바인드 시점의 Global Transform
-        Cluster->GetTransformLinkMatrix(LinkTransform); // 본의 바인드 포즈 행렬
-        
-        FbxAMatrix InverseBindMatrix = LinkTransform.Inverse() * MeshTransform;
-
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 4; j++) {
-                NewBone.InverseBindPoseMatrix.M[i][j] = static_cast<float>(InverseBindMatrix.Get(i, j));
-            }
-        }
-        
-        NewBone.SkinningMatrix = NewBone.InverseBindPoseMatrix * NewBone.GlobalTransform;
-        
-        // Add bone to array and create mapping
-        int BoneIndex = MeshData->Bones.Add(NewBone);
-        RefSkeletal->BoneNameToIndexMap.Add(BoneName, BoneIndex);
-        
-        // Create corresponding bone tree node
-        FBoneNode NewNode;
-        NewNode.BoneName = BoneName;
-        NewNode.BoneIndex = BoneIndex;
-        RefSkeletal->BoneTree.Add(NewNode);
-    }
-    
-    // Second pass - establish parent-child relationships
-    for (int ClusterIndex = 0; ClusterIndex < ClusterCount; ClusterIndex++)
-    {
-        FbxCluster* Cluster = Skin->GetCluster(ClusterIndex);
-        FbxNode* BoneNode = Cluster->GetLink();
-        
-        if (!BoneNode)
-            continue;
-            
         FString BoneName = BoneNode->GetName();
-        FbxNode* ParentNode = BoneNode->GetParent();
-        
-        if (!RefSkeletal->BoneNameToIndexMap.Contains(BoneName))
-            continue;
-            
-        int BoneIndex = RefSkeletal->BoneNameToIndexMap[BoneName];
-        
-        if (ParentNode)
-        {
-            FString ParentName = ParentNode->GetName();
-            
-            // If parent is also a bone, establish the relationship
-            if (RefSkeletal->BoneNameToIndexMap.Contains(ParentName))
-            {
-                int ParentIndex = RefSkeletal->BoneNameToIndexMap[ParentName];
-                
-                // Update parent index in the bone
-                MeshData->Bones[BoneIndex].ParentIndex = ParentIndex;
-                
-                // Add this bone as a child of the parent in the tree structure
-                RefSkeletal->BoneTree[ParentIndex].ChildIndices.Add(BoneIndex);
-            }
-        }
+        int32* BoneIdxPtr = RefSkeletal->BoneNameToIndexMap.Find(BoneName);
+        if (!BoneIdxPtr) continue;
+        int32 BI = *BoneIdxPtr;
+
+        // FBX가 기록한 정확한 바인드 포즈 역행렬
+        FbxAMatrix MeshTransform, LinkTransform;
+        Cluster->GetTransformMatrix(MeshTransform);         // 메시 바인드 기준
+        Cluster->GetTransformLinkMatrix(LinkTransform);     // 본 바인드 기준
+        FMatrix InvBind = ConvertFbxMatrix(LinkTransform.Inverse() * MeshTransform);
+
+        // 현재 프레임 글로벌 트랜스폼
+        FMatrix CurrGlobal = ConvertFbxMatrix(BoneNode->EvaluateGlobalTransform());
+
+        // 업데이트
+        MeshData->Bones[BI].InverseBindPoseMatrix = InvBind;
+        MeshData->Bones[BI].SkinningMatrix        = CurrGlobal * InvBind;
     }
-    
-    // Find root bones (bones with no parents in our bone set)
-    for (int i = 0; i < MeshData->Bones.Num(); i++)
+
+    // 2) 정점별 본 가중치 적용
+    for (int c = 0; c < ClusterCount; ++c)
     {
-        if (MeshData->Bones[i].ParentIndex == -1)
-        {
-            RefSkeletal->RootBoneIndices.Add(i);
-        }
-    }
-    
-    // Process vertex weights
-    for (int ClusterIndex = 0; ClusterIndex < ClusterCount; ClusterIndex++)
-    {
-        FbxCluster* Cluster = Skin->GetCluster(ClusterIndex);
+        FbxCluster* Cluster = Skin->GetCluster(c);
         FbxNode* BoneNode = Cluster->GetLink();
-        
-        if (!BoneNode || !RefSkeletal->BoneNameToIndexMap.Contains(BoneNode->GetName()))
-            continue;
-        
-        int BoneIndex = RefSkeletal->BoneNameToIndexMap[BoneNode->GetName()];
-        
-        // Get control point indices and weights
-        int VertexCount = Cluster->GetControlPointIndicesCount();
-        int* ControlPointIndices = Cluster->GetControlPointIndices();
-        double* ControlPointWeights = Cluster->GetControlPointWeights();
-        
-        // Apply weights to vertices
-        for (int i = 0; i < VertexCount; i++)
+        if (!BoneNode) continue;
+
+        FString BoneName = BoneNode->GetName();
+        int32* BoneIdxPtr = RefSkeletal->BoneNameToIndexMap.Find(BoneName);
+        if (!BoneIdxPtr) continue;
+        int32 BI = *BoneIdxPtr;
+
+        int    VertCount = Cluster->GetControlPointIndicesCount();
+        int*   IdxArray  = Cluster->GetControlPointIndices();
+        double* WtArray  = Cluster->GetControlPointWeights();
+
+        for (int i = 0; i < VertCount; ++i)
         {
-            int VertexIndex = BaseVertexIndex + ControlPointIndices[i];
-            float Weight = static_cast<float>(ControlPointWeights[i]);
-            
-            // Make sure vertex index is valid
-            if (VertexIndex >= 0 && VertexIndex < MeshData->Vertices.Num())
+            int32 VIdx = BaseVertexIndex + IdxArray[i];
+            if (VIdx < 0 || VIdx >= MeshData->Vertices.Num()) continue;
+
+            float W = static_cast<float>(WtArray[i]);
+            auto& V = MeshData->Vertices[VIdx];
+            for (int j = 0; j < 4; ++j)
             {
-                // Find first empty weight slot
-                for (int j = 0; j < 4; j++)
+                if (V.BoneWeights[j] == 0.0f)
                 {
-                    if (MeshData->Vertices[VertexIndex].BoneWeights[j] == 0.0f)
-                    {
-                        MeshData->Vertices[VertexIndex].BoneIndices[j] = BoneIndex;
-                        MeshData->Vertices[VertexIndex].BoneWeights[j] = Weight;
-                        break;
-                    }
+                    V.BoneIndices[j] = BI;
+                    V.BoneWeights[j] = W;
+                    break;
                 }
             }
         }
@@ -1396,3 +1364,14 @@ bool FBXLoader::ImportFBX(const FString& FilePath)
     
     return true;
 }
+
+FMatrix FBXLoader::ConvertFbxMatrix(const FbxAMatrix& M)
+{
+    FMatrix Out;
+    for (int r = 0; r < 4; ++r)
+        for (int c = 0; c < 4; ++c)
+            Out.M[r][c] = static_cast<float>(M.Get(r, c));
+    return Out;
+}
+
+

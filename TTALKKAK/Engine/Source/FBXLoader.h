@@ -58,6 +58,9 @@ public:
     // 일단 SkeletalMesh 안 만들어지면 false 반환
     static bool ImportFBX(const FString& FilePath);
 private:
+    // Helper: convert FbxAMatrix to Unreal FMatrix
+    static FMatrix ConvertFbxMatrix(const FbxAMatrix& M);
+    
     static FbxManager* FbxManager;
     
     static TMap<FName, FSkeletalMeshRenderData*> SkeletalMeshData;
