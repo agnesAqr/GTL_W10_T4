@@ -119,3 +119,5 @@ inline ANSICHAR* ConvertWcharToAnsi(const WCHAR* wideStr)
 // 임시로 사용
 #include <string>
 using FWString = std::wstring;
+
+enum { INDEX_NONE = -1 };

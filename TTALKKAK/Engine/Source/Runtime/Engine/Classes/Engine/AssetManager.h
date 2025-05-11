@@ -1,27 +1,11 @@
-﻿#pragma once
+#pragma once
+#include "Assets/UAsset.h"
 #include "UObject/Object.h"
 #include "UObject/ObjectMacros.h"
 
-enum class EAssetType : uint8
-{
-    StaticMesh,
-    SkeletalMesh,
-    Texture2D,
-    Material,
-    Curve,
-};
-
-struct FAssetInfo
-{
-    FName AssetName;      // Asset의 이름
-    FName PackagePath;    // Asset의 패키지 경로
-    EAssetType AssetType; // Asset의 타입
-    uint32 Size;          // Asset의 크기 (바이트 단위)
-};
-
 struct FAssetRegistry
 {
-    TMap<FName, FAssetInfo> PathNameToAssetInfo;
+    TMap<FName, FAssetMetaData> PathNameToAssetInfo;
 };
 
 class UAssetManager : public UObject
@@ -44,7 +28,7 @@ public:
     
     void InitAssetManager();
 
-    const TMap<FName, FAssetInfo>& GetAssetRegistry();
+    const TMap<FName, FAssetMetaData>& GetAssetRegistry();
 
 public:
     void LoadObjFiles();
