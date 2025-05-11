@@ -6,5 +6,5 @@ ASkeletalMeshActor::ASkeletalMeshActor()
 {
     USkeletalMeshComponent* SkeletalMeshComp = AddComponent<USkeletalMeshComponent>(EComponentOrigin::Constructor);
     RootComponent = SkeletalMeshComp;
-    SkeletalMeshComp->LoadSkeletalMesh(TEXT("FBX/man.fbx"));
+    SkeletalMeshComp->LoadSkeletalMesh(TEXT("FBX/mixmix2.fbx"));
 }

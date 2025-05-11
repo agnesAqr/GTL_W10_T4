@@ -455,7 +455,6 @@
     <ClInclude Include="Engine\Source\Runtime\Windows\WindowsPlatformTime.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\Mesh\SkeletalMesh.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\PrimitiveComponents\MeshComponents\SkeletalMeshComponent.h" />
-    <ClInclude Include="Engine\Source\Runtime\Engine\FBX\FBXDefine.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\RenderPass\SkeletalMeshRenderPass.h" />
     <ClInclude Include="Engine\Source\Editor\PropertyEditor\PreviewControlEditorPanel.h" />
     <ClInclude Include="Engine\Source\Editor\PropertyEditor\SkeletalPreviewPropertyEditorPanel.h" />
@@ -500,6 +499,14 @@
     <ClInclude Include="Engine\Source\Runtime\Core\Math\Transform.h">
       <Filter>Engine\Source\Runtime\Core\Math</Filter>
     </ClInclude>
+    <ClInclude Include="Engine\Source\Editor\PropertyEditor\PreviewControlEditorPanel.h" />
+    <ClInclude Include="Engine\Source\Editor\PropertyEditor\SkeletalPreviewPropertyEditorPanel.h" />
+    <ClInclude Include="Engine\Source\Editor\UnrealEd\SkeletalPreviewUI.h" />
+    <ClInclude Include="Engine\Source\Runtime\Core\Math\Point.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Actors\SkeletalMeshActor.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\FBX\SkeletalDefine.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Viewport.h" />
+    <ClInclude Include="Engine\Source\Runtime\SlateCore\Layout\SlateRect.h" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\Source\ThirdParty\DirectXTK\Include\DDSTextureLoader.h" />
@@ -698,7 +705,6 @@
     <ClCompile Include="Engine\Source\Runtime\Windows\WindowsPlatformTime.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\Mesh\SkeletalMesh.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\PrimitiveComponents\MeshComponents\SkeletalMeshComponent.cpp" />
-    <ClCompile Include="Engine\Source\Runtime\Engine\FBX\FBXDefine.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\RenderPass\SkeletalMeshRenderPass.cpp" />
     <ClCompile Include="Engine\Source\Editor\PropertyEditor\PreviewControlEditorPanel.cpp" />
     <ClCompile Include="Engine\Source\Editor\PropertyEditor\SkeletalPreviewPropertyEditorPanel.cpp" />
@@ -738,6 +744,14 @@
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Engine\Assets\Animation\AnimTypes.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Engine\Assets\Animation\IAnimationDataModel.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Engine\Assets\UAsset.cpp" />
+    <ClCompile Include="Engine\Source\Editor\PropertyEditor\PreviewControlEditorPanel.cpp" />
+    <ClCompile Include="Engine\Source\Editor\PropertyEditor\SkeletalPreviewPropertyEditorPanel.cpp" />
+    <ClCompile Include="Engine\Source\Editor\UnrealEd\SkeletalPreviewUI.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Core\Math\Point.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Actors\SkeletalMeshActor.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\FBX\SkeletalDefine.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Viewport.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\SlateCore\Layout\SlateRect.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Engine\Assets\Animation\AnimationAsset.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Core\Math\Transform.cpp">
       <Filter>Engine\Source\Runtime\Core\Math</Filter>
