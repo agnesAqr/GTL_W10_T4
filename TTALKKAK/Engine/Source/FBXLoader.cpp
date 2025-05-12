@@ -133,12 +133,21 @@ FSkeletalMeshRenderData* FBXLoader::ParseFBX(const FString& FilePath, bool bIsAb
         // 2-3) NumberOfFrames 계산 (프레임 사이 간격 1/FrameRate)
         AnimModel->NumberOfFrames = AnimModel->FrameRate.AsFrames(AnimModel->PlayLength) + 1;
 
+        // 1) 기준 타임 리스트 생성 (KeyTime 합집합 or Uniform)
+        TArray<FbxTime> SampleTimes = CollectSampleTimes(Layer, Scene, TimeMode, false);
 
-        // 3) 루트 본부터 재귀하며 키 트랙 추출
+        // 2) 루트 본부터 순회하며 ExtractAnimation 호출
         for (const int RootIdx : RefSkeletal->RootBoneIndices)
         {
-            ExtractAnimation(RootIdx, *RefSkeletal, Layer, AnimModel, NodeMap);
+            ExtractAnimation(0, *RefSkeletal, Layer, AnimModel, NodeMap, SampleTimes);
         }
+
+        //
+        // // 3) 루트 본부터 재귀하며 키 트랙 추출
+        // for (const int RootIdx : RefSkeletal->RootBoneIndices)
+        // {
+        //     ExtractAnimation(RootIdx, *RefSkeletal, Layer, AnimModel, NodeMap);
+        // }
 
         DebugWriteAnimationModel(AnimModel);
 
@@ -834,105 +843,99 @@ void FBXLoader::ExtractMaterials(
     }
 }
 
-void FBXLoader::ExtractAnimation(const int BoneTreeIndex, const FRefSkeletal& RefSkeletal, FbxAnimLayer* AnimLayer, UAnimDataModel* AnimModel,
-    const TMap<FString, FbxNode*>& NodeMap)
+void FBXLoader::ExtractAnimation(int BoneTreeIndex, const FRefSkeletal& RefSkeletal, FbxAnimLayer* AnimLayer, UAnimDataModel* AnimModel,
+    const TMap<FString, FbxNode*>& NodeMap, const TArray<FbxTime>& SampleTimes)
 {
-        // 1) 엔진 본 노드 정보 가져오기
     const FBoneNode& BoneNode = RefSkeletal.BoneTree[BoneTreeIndex];
-    // FBX 노드 매핑 테이블에서 해당 이름의 FbxNode*를 찾음
     FbxNode* Node = NodeMap.FindRef(BoneNode.BoneName);
-    if (Node)
+    if (!Node) return;
+
+    FBoneAnimationTrack Track;
+    Track.Name          = FName(*BoneNode.BoneName);
+    Track.BoneTreeIndex = BoneTreeIndex;
+    FRawAnimSequenceTrack& Raw = Track.InternalTrackData;
+
+    for (const FbxTime& t : SampleTimes) {
+        float Sec = static_cast<float>(t.GetSecondDouble());
+        Raw.KeyTimes.Add(Sec);
+
+        // 로컬 변환 한 번에 샘플링
+        FbxAMatrix M = Node->EvaluateLocalTransform(t);
+
+        // Translation
+        auto T = M.GetT();
+        Raw.PosKeys.Add(FVector((float)T[0], (float)T[1], (float)T[2]));
+
+        // Rotation (Quat)
+        auto Q = M.GetQ();
+        Raw.RotKeys.Add(FQuat((float)Q[3], (float)Q[0], (float)Q[1], (float)Q[2]));
+
+        // Scale
+        auto S = M.GetS();
+        Raw.ScaleKeys.Add(FVector((float)S[0], (float)S[1], (float)S[2]));
+    }
+
+    AnimModel->BoneAnimationTracks.Add(Track);
+
+    for (int Child : BoneNode.ChildIndices)
     {
-        // 2) 트랙 생성 및 기본 정보 설정
-        FBoneAnimationTrack Track;
-        Track.Name          = FName(*BoneNode.BoneName);
-        Track.BoneTreeIndex = BoneTreeIndex;
-        FRawAnimSequenceTrack& Raw = Track.InternalTrackData;
+        ExtractAnimation(Child, RefSkeletal, AnimLayer, AnimModel, NodeMap, SampleTimes);
+    }
+}
 
-        // 3) Translation/Rotation/Scale 커브 가져오기
-        const FbxAnimCurve* Tx = Node->LclTranslation.GetCurve(AnimLayer, FBXSDK_CURVENODE_COMPONENT_X);
-        const FbxAnimCurve* Ty = Node->LclTranslation.GetCurve(AnimLayer, FBXSDK_CURVENODE_COMPONENT_Y);
-        const FbxAnimCurve* Tz = Node->LclTranslation.GetCurve(AnimLayer, FBXSDK_CURVENODE_COMPONENT_Z);
-        
-        const FbxAnimCurve* Rx = Node->LclRotation.GetCurve(AnimLayer, FBXSDK_CURVENODE_COMPONENT_X);
-        const FbxAnimCurve* Ry = Node->LclRotation.GetCurve(AnimLayer, FBXSDK_CURVENODE_COMPONENT_Y);
-        const FbxAnimCurve* Rz = Node->LclRotation.GetCurve(AnimLayer, FBXSDK_CURVENODE_COMPONENT_Z);
-        
-        const FbxAnimCurve* Sx = Node->LclScaling.GetCurve(AnimLayer, FBXSDK_CURVENODE_COMPONENT_X);
-        const FbxAnimCurve* Sy = Node->LclScaling.GetCurve(AnimLayer, FBXSDK_CURVENODE_COMPONENT_Y);
-        const FbxAnimCurve* Sz = Node->LclScaling.GetCurve(AnimLayer, FBXSDK_CURVENODE_COMPONENT_Z);
+TArray<FbxTime> FBXLoader::CollectSampleTimes(FbxAnimLayer* AnimLayer, FbxScene* Scene, FbxTime::EMode pTimeMode, bool bUseKeyTimes)
+{
+    std::set<FbxTime> TimeSet;
 
-        // 4) 키 개수 결정 (Translation 중 하나의 커브 개수를 기준으로)
-        int KeyCount = 0;
-        if (Tx)       KeyCount = Tx->KeyGetCount();
-        else if (Ty)  KeyCount = Ty->KeyGetCount();
-        else if (Tz)  KeyCount = Tz->KeyGetCount();
-
-        // 5) 키프레임별로 값 읽어서 Raw에 추가
-        for (int k = 0; k < KeyCount; ++k)
+    if (bUseKeyTimes)
+    {
+        // 모든 노드의 모든 커브에서 키타임 수집
+        int nodeCount = Scene->GetNodeCount();
+        for (int i = 0; i < nodeCount; ++i)
         {
-            // 시간 (초 단위)
-            FbxTime t = Tx ? Tx->KeyGetTime(k)
-                                  : Ty ? Ty->KeyGetTime(k)
-                                  : Tz->KeyGetTime(k);
-            float Time = static_cast<float>(t.GetSecondDouble());
-            Raw.KeyTimes.Add(Time);
-
-            // 위치
-            Raw.PosKeys.Add(FVector(
-                Tx ? (float)Tx->KeyGetValue(k) : Node->LclTranslation.Get()[0],
-                Ty ? (float)Ty->KeyGetValue(k) : Node->LclTranslation.Get()[1],
-                Tz ? (float)Tz->KeyGetValue(k) : Node->LclTranslation.Get()[2]
-            ));
-
-            // 회전 (Euler → Quat)
-            FbxQuaternion q;
-            if (Rx || Ry || Rz)
-            {
-                double ex = Rx ? Rx->KeyGetValue(k) : Node->LclRotation.Get()[0];
-                double ey = Ry ? Ry->KeyGetValue(k) : Node->LclRotation.Get()[1];
-                double ez = Rz ? Rz->KeyGetValue(k) : Node->LclRotation.Get()[2];
-                
-                // ex, ey, ez 는 Degree 단위 Euler 각
-                FbxDouble3 EulerAngles(ex, ey, ez);
-
-                // 매트릭스에 Euler 세팅
-                FbxAMatrix RotMat;
-                RotMat.SetR(EulerAngles);
-
-                // 매트릭스에서 쿼터니언 추출
-                q = RotMat.GetQ();
-            }
-            else
-            {
-                FbxDouble3 euler = Node->LclRotation.Get();
-                
-                // 매트릭스에 Euler 세팅
-                FbxAMatrix RotMat;
-                RotMat.SetR(euler);
-
-                // 매트릭스에서 쿼터니언 추출
-                q = RotMat.GetQ();
-            }
-            Raw.RotKeys.Add(FQuat(static_cast<float>(q[3]), static_cast<float>(q[0]), static_cast<float>(q[1]), static_cast<float>(q[2])));
-
-            // 스케일
-            Raw.ScaleKeys.Add(FVector(
-                Sx ? (float)Sx->KeyGetValue(k) : Node->LclScaling.Get()[0],
-                Sy ? (float)Sy->KeyGetValue(k) : Node->LclScaling.Get()[1],
-                Sz ? (float)Sz->KeyGetValue(k) : Node->LclScaling.Get()[2]
-            ));
+            FbxNode* Node = Scene->GetNode(i);
+            
+            auto Collect = [&](const FbxAnimCurve* C){
+                if (!C) return;
+                for (int k = 0; k < C->KeyGetCount(); ++k)
+                    TimeSet.insert(C->KeyGetTime(k));
+            };
+            
+            Collect(Node->LclTranslation.GetCurve(AnimLayer,FBXSDK_CURVENODE_COMPONENT_X));
+            Collect(Node->LclTranslation.GetCurve(AnimLayer,FBXSDK_CURVENODE_COMPONENT_Y));
+            Collect(Node->LclTranslation.GetCurve(AnimLayer,FBXSDK_CURVENODE_COMPONENT_Z));
+            Collect(Node->LclRotation   .GetCurve(AnimLayer,FBXSDK_CURVENODE_COMPONENT_X));
+            Collect(Node->LclRotation   .GetCurve(AnimLayer,FBXSDK_CURVENODE_COMPONENT_Y));
+            Collect(Node->LclRotation   .GetCurve(AnimLayer,FBXSDK_CURVENODE_COMPONENT_Z));
+            Collect(Node->LclScaling    .GetCurve(AnimLayer,FBXSDK_CURVENODE_COMPONENT_X));
+            Collect(Node->LclScaling    .GetCurve(AnimLayer,FBXSDK_CURVENODE_COMPONENT_Y));
+            Collect(Node->LclScaling    .GetCurve(AnimLayer,FBXSDK_CURVENODE_COMPONENT_Z));
         }
-
-        // 6) 완성된 트랙을 모델에 추가
-        AnimModel->BoneAnimationTracks.Add(Track);
     }
-
-    // 7) 자식 본 트리 순회
-    for (const int ChildIdx : BoneNode.ChildIndices)
+    else
     {
-        ExtractAnimation(ChildIdx, RefSkeletal, AnimLayer, AnimModel, NodeMap);
+        // Uniform sampling: AnimStack 전체 범위에서 1/FPS 간격
+        // 첫 번째 AnimStack을 가져온다고 가정
+        FbxTime step;
+        step.SetFrame(1, pTimeMode);
+
+        // 애니메이션 범위
+        FbxAnimStack* Stack = Scene->GetSrcObject<FbxAnimStack>(0);
+        FbxTime start = Stack->LocalStart;
+        FbxTime stop  = Stack->LocalStop;
+        
+        for (FbxTime t = start; t <= stop; t += step)
+            TimeSet.insert(t);
     }
+
+    // 정렬된 배열로 변환
+    TArray<FbxTime> SampleTimes;
+    SampleTimes.Reserve(TimeSet.size());
+    for (auto& t : TimeSet) {
+        SampleTimes.Add(t);
+    }
+    
+    return SampleTimes;
 }
 
 void FBXLoader::UpdateBoundingBox(FSkeletalMeshRenderData MeshData)
