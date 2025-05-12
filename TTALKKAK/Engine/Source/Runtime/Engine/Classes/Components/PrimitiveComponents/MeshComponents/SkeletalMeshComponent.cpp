@@ -211,9 +211,9 @@ void USkeletalMeshComponent::CreateBoneComponents()
 USkeletalMesh* USkeletalMeshComponent::LoadSkeletalMesh(const FString& FilePath)
 {
     // FBXLoader가 USkeletalMesh를 생성하고 내부적으로 RefSkeletal도 채운다고 가정
-    USkeletalMesh* NewSkeletalMesh = FBXLoader::CreateSkeletalMesh(FilePath);
+    USkeletalMesh* NewSkeletalMesh = FBXLoader::GetSkeletalMesh(FilePath);
     // 애니메이션은 별도로 로드하고 관리
-    FBXLoader::CreateAnimationSequence(FilePath);
+    FBXLoader::GetAnimationSequence(FilePath);
 
     if (NewSkeletalMesh)
     {
@@ -303,7 +303,7 @@ void USkeletalMeshComponent::BeginPlay()
 {
     Super::BeginPlay(); 
 
-    CurrentAnimSequence = FBXLoader::CreateAnimationSequence("FBX/mixmix2_2.fbx");
+    CurrentAnimSequence = FBXLoader::GetAnimationSequence("FBX/mixmix2_2.fbx");
 
     if (OwningAnimInstance)
     {

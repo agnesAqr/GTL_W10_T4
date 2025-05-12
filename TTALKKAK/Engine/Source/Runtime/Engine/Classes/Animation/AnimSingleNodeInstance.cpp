@@ -111,7 +111,7 @@ void UAnimSingleNodeInstance::NativeInitializeAnimation()
         }
     }
 
-    UAnimSequence* AnimSequence = FBXLoader::CreateAnimationSequence("FBX/Walking.fbx");
+    UAnimSequence* AnimSequence = FBXLoader::GetAnimationSequence("FBX/Walking.fbx");
     //AnimSequence->GetPlayLength();// 이거 왜 0으로 뽑히지
     SetAnimation(AnimSequence, true);
 }

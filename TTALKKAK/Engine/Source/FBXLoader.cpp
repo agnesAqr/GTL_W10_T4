@@ -118,7 +118,7 @@ FSkeletalMeshRenderData* FBXLoader::ParseFBX(const FString& FilePath, bool bIsAb
         else
         {
             // TakeInfo가 없으면 글로벌 타임라인 사용
-            Scene->GetGlobalSettings().GetTimelineDefaultTimeSpan(TimeSpan);
+            TimeSpan.Set(AnimStack->LocalStart, AnimStack->LocalStop);
         }
 
         // 2. 재생 길이 계산
@@ -137,12 +137,12 @@ FSkeletalMeshRenderData* FBXLoader::ParseFBX(const FString& FilePath, bool bIsAb
         AnimModel->NumberOfFrames = AnimModel->FrameRate.AsFrames(AnimModel->PlayLength) + 1;
 
         // 1) 기준 타임 리스트 생성 (KeyTime 합집합 or Uniform)
-        TArray<FbxTime> SampleTimes = CollectSampleTimes(Layer, Scene, TimeMode, false);
+        TArray<FbxTime> SampleTimes = CollectSampleTimes(AnimStack, Layer, Scene, TimeMode, false);
 
         // 2) 루트 본부터 순회하며 ExtractAnimation 호출
         for (const int RootIdx : RefSkeletal->RootBoneIndices)
         {
-            ExtractAnimation(0, *RefSkeletal, Layer, AnimModel, NodeMap, SampleTimes);
+            ExtractAnimation(RootIdx, *RefSkeletal, Layer, AnimModel, NodeMap, SampleTimes);
         }
 
         //
@@ -846,7 +846,7 @@ void FBXLoader::ExtractMaterials(
     }
 }
 
-void FBXLoader::ExtractAnimation(int BoneTreeIndex, const FRefSkeletal& RefSkeletal, FbxAnimLayer* AnimLayer, UAnimDataModel* AnimModel,
+void FBXLoader:: ExtractAnimation(int BoneTreeIndex, const FRefSkeletal& RefSkeletal, FbxAnimLayer* AnimLayer, UAnimDataModel* AnimModel,
     const TMap<FString, FbxNode*>& NodeMap, const TArray<FbxTime>& SampleTimes)
 {
     const FBoneNode& BoneNode = RefSkeletal.BoneTree[BoneTreeIndex];
@@ -886,7 +886,7 @@ void FBXLoader::ExtractAnimation(int BoneTreeIndex, const FRefSkeletal& RefSkele
     }
 }
 
-TArray<FbxTime> FBXLoader::CollectSampleTimes(FbxAnimLayer* AnimLayer, FbxScene* Scene, FbxTime::EMode pTimeMode, bool bUseKeyTimes)
+TArray<FbxTime> FBXLoader::CollectSampleTimes(FbxAnimStack* AnimStack, FbxAnimLayer* AnimLayer, FbxScene* Scene, FbxTime::EMode pTimeMode, bool bUseKeyTimes)
 {
     std::set<FbxTime> TimeSet;
 
@@ -921,11 +921,9 @@ TArray<FbxTime> FBXLoader::CollectSampleTimes(FbxAnimLayer* AnimLayer, FbxScene*
         // 첫 번째 AnimStack을 가져온다고 가정
         FbxTime step;
         step.SetFrame(1, pTimeMode);
-
-        // 애니메이션 범위
-        FbxAnimStack* Stack = Scene->GetSrcObject<FbxAnimStack>(0);
-        FbxTime start = Stack->LocalStart;
-        FbxTime stop  = Stack->LocalStop;
+        
+        FbxTime start = AnimStack->LocalStart;
+        FbxTime stop  = AnimStack->LocalStop;
         
         for (FbxTime t = start; t <= stop; t += step)
             TimeSet.insert(t);
@@ -1098,16 +1096,8 @@ USkeletalMesh* FBXLoader::CreateSkeletalMesh(const FString& FilePath)
     FSkeletalMeshRenderData* MeshData = ParseFBX(FilePath);
     if (MeshData == nullptr)
         return nullptr;
-
-    USkeletalMesh* SkeletalMesh = GetSkeletalMesh(MeshData->Name);
-    if (SkeletalMesh != nullptr)
-    {
-        USkeletalMesh* NewSkeletalMesh = SkeletalMesh->Duplicate(nullptr);
-        NewSkeletalMesh->SetData(FilePath);
-        return NewSkeletalMesh;
-    }
     
-    SkeletalMesh = FObjectFactory::ConstructObject<USkeletalMesh>(nullptr);
+    USkeletalMesh* SkeletalMesh = FObjectFactory::ConstructObject<USkeletalMesh>(nullptr);
     SkeletalMesh->SetData(FilePath);
     
     SkeletalMeshMap.Add(FilePath, SkeletalMesh);
@@ -1117,9 +1107,13 @@ USkeletalMesh* FBXLoader::CreateSkeletalMesh(const FString& FilePath)
 USkeletalMesh* FBXLoader::GetSkeletalMesh(const FString& FilePath)
 {
     if (SkeletalMeshMap.Contains(FilePath))
+    {
         return SkeletalMeshMap[FilePath];
-
-    return nullptr;
+    }
+    else
+    {
+        return CreateSkeletalMesh(FilePath);
+    }
 }
 
 FSkeletalMeshRenderData FBXLoader::GetCopiedSkeletalRenderData(FString FilePath)
@@ -1149,16 +1143,11 @@ UAnimSequence* FBXLoader::CreateAnimationSequence(const FString& FilePath)
 {
     ParseFBX(FilePath);
 
-    UAnimSequence* AnimSequence = GetAnimationSequence(FilePath);
-    
-    if (AnimSequence == nullptr)
-    {
-        AnimSequence = FObjectFactory::ConstructObject<UAnimSequence>(nullptr);
+    UAnimSequence* AnimSequence = FObjectFactory::ConstructObject<UAnimSequence>(nullptr);
 
-        UAnimDataModel* AnimDataModel = GetAnimDataModel(FilePath);
-        AnimSequence->SetAnimDataModel(AnimDataModel);
-        SkeletalAnimSequences.Add(FilePath, AnimSequence);
-    }
+    UAnimDataModel* AnimDataModel = GetAnimDataModel(FilePath);
+    AnimSequence->SetAnimDataModel(AnimDataModel);
+    SkeletalAnimSequences.Add(FilePath, AnimSequence);
     
     return AnimSequence;
 }
@@ -1166,9 +1155,11 @@ UAnimSequence* FBXLoader::CreateAnimationSequence(const FString& FilePath)
 UAnimSequence* FBXLoader::GetAnimationSequence(const FString& FilePath)
 {
     if (SkeletalAnimSequences.Contains(FilePath))
+    {
         return SkeletalAnimSequences[FilePath];
+    }
 
-    return nullptr;
+    return CreateAnimationSequence(FilePath);
 }
 
 UAnimDataModel* FBXLoader::GetAnimDataModel(const FString& FilePath)

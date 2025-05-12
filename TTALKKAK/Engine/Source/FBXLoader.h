@@ -29,7 +29,8 @@ public:
     
     static void ExtractAnimation(int BoneTreeIndex, const FRefSkeletal& RefSkeletal, FbxAnimLayer* AnimLayer, UAnimDataModel* AnimModel, const TMap<FString, FbxNode*>& NodeMap, const TArray<FbxTime>& SampleTimes);
 
-    static TArray<FbxTime> CollectSampleTimes(FbxAnimLayer* AnimLayer, FbxScene* Scene, FbxTime::EMode pTimeMode = FbxTime::eFrames60 , bool bUseKeyTimes = true);
+    static TArray<FbxTime> CollectSampleTimes(FbxAnimStack* AnimStack, FbxAnimLayer* AnimLayer, FbxScene* Scene, FbxTime::EMode pTimeMode = FbxTime::eFrames60, bool
+                                              bUseKeyTimes = true);
     
     static void UpdateBoundingBox(FSkeletalMeshRenderData* MeshData);
 
