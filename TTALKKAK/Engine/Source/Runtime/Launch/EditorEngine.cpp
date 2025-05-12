@@ -281,6 +281,5 @@ std::shared_ptr<FWorldContext> UEditorEngine::CreateNewWorldContext(UWorld* InWo
     NewWorldContext->LevelType = LevelType;
     NewWorldContext->SetWorld(InWorld);
     
-
     return NewWorldContext;
 }

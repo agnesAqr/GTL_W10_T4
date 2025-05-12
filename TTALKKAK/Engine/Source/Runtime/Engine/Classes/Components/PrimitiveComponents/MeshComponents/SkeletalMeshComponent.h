@@ -41,6 +41,7 @@ public:
 
     void PlayAnimation(UAnimSequence* NewAnimToPlay);
     UAnimInstance* GetAnimInstance() const { return OwningAnimInstance; }
+    UAnimSequence* GetAnimSequence() const { return CurrentAnimSequence; }
 
     void UpdateBoneTransformsFromAnim();
     void HandleAnimNotify(const FAnimNotifyEvent& Notify);

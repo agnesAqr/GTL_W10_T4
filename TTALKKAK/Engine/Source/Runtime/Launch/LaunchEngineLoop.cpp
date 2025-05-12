@@ -6,6 +6,7 @@
 #include "Contents/UI/ContentsUI.h"
 #include "ImGUI/imgui.h"
 #include "FBXLoader.h"
+#include "ImGuizmoManager.h"
 #include "LevelEditor/SLevelEditor.h"
 #include "PropertyEditor/ViewportTypePanel.h"
 #include "Renderer/Renderer.h"
@@ -149,12 +150,11 @@ void FEngineLoop::Render()
         }
 
         ImGuiManager::Get().BeginFrame(AppWindow);
+        ImGuizmoManager::Get().BeginFrame(AppWindow);
         if (ViewportClients.Num() > 0)
         {
             // TODO 다른 방법으로 World 구하기
             UWorld* TargetWorld = ViewportClients[0]->GetWorld();
-            if (TargetWorld == nullptr)
-                UE_LOG(LogLevel::Display, "target world is null");
             EditorEngine->GetUnrealEditor()->SetWorld(TargetWorld);
             EditorEngine->GetSkeletalPreviewUI()->SetWorld(TargetWorld);
             EditorEngine->ContentsUI->SetWorld(TargetWorld);

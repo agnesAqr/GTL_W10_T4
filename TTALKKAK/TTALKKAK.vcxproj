@@ -190,6 +190,7 @@ robocopy "$(ProjectDir)Icon"     "$(OutDir)\Icon"     *.* /E /R:3 /W:5 /NFL /NDL
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Engine\Source\Editor\LevelEditor\SlateAppMessageHandler.cpp" />
+    <ClCompile Include="Engine\Source\Editor\PropertyEditor\AnimTimelinePanel.cpp" />
     <ClCompile Include="Engine\Source\Editor\PropertyEditor\PreviewControlEditorPanel.cpp" />
     <ClCompile Include="Engine\Source\Editor\PropertyEditor\SkeletalPreviewPropertyEditorPanel.cpp" />
     <ClCompile Include="Engine\Source\Editor\UnrealEd\AnimationPreviewUI.cpp" />
@@ -418,6 +419,7 @@ robocopy "$(ProjectDir)Icon"     "$(OutDir)\Icon"     *.* /E /R:3 /W:5 /NFL /NDL
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\Source\Editor\LevelEditor\SlateAppMessageHandler.h" />
+    <ClInclude Include="Engine\Source\Editor\PropertyEditor\AnimTimelinePanel.h" />
     <ClInclude Include="Engine\Source\Editor\PropertyEditor\PreviewControlEditorPanel.h" />
     <ClInclude Include="Engine\Source\Editor\PropertyEditor\SkeletalPreviewPropertyEditorPanel.h" />
     <ClInclude Include="Engine\Source\Editor\UnrealEd\AnimationPreviewUI.h" />

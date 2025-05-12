@@ -18,6 +18,8 @@ void ImGuizmoManager::BeginFrame(HWND hWnd)
     ::GetClientRect(hWnd, &rect);
     float width  = static_cast<float>(rect.right  - rect.left);
     float height = static_cast<float>(rect.bottom - rect.top);
+
+    ImGuiIO& io = ImGui::GetIO();
     
     ImGuizmo::SetOrthographic(false);
     ImGuizmo::SetDrawlist(ImGui::GetCurrentWindow()->DrawList);
