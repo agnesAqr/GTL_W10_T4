@@ -124,6 +124,9 @@
     <Filter Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework">
       <UniqueIdentifier>{37b438ba-687a-4ab8-b921-02ed2635d25b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine\Source\ThirdParty\include\ImGuizmo">
+      <UniqueIdentifier>{e6aeb588-3bec-4485-8907-6d1da045ef14}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\Source\Editor\PropertyEditor\IWindowToggleable.h">
@@ -504,9 +507,28 @@
     <ClInclude Include="Engine\Source\Editor\UnrealEd\SkeletalPreviewUI.h" />
     <ClInclude Include="Engine\Source\Runtime\Core\Math\Point.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Actors\SkeletalMeshActor.h" />
-    <ClInclude Include="Engine\Source\Runtime\Engine\FBX\SkeletalDefine.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Viewport.h" />
     <ClInclude Include="Engine\Source\Runtime\SlateCore\Layout\SlateRect.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\FBX\FBXDefine.h" />
+    <ClInclude Include="Engine\Source\Runtime\Launch\ImGuizmoManager.h" />
+    <ClInclude Include="Engine\Source\ThirdParty\include\ImGuizmo\GraphEditor.h">
+      <Filter>Engine\Source\ThirdParty\include\ImGuizmo</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Source\ThirdParty\include\ImGuizmo\ImCurveEdit.h">
+      <Filter>Engine\Source\ThirdParty\include\ImGuizmo</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Source\ThirdParty\include\ImGuizmo\ImGradient.h">
+      <Filter>Engine\Source\ThirdParty\include\ImGuizmo</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Source\ThirdParty\include\ImGuizmo\ImGuizmo.h">
+      <Filter>Engine\Source\ThirdParty\include\ImGuizmo</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Source\ThirdParty\include\ImGuizmo\ImSequencer.h">
+      <Filter>Engine\Source\ThirdParty\include\ImGuizmo</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Source\ThirdParty\include\ImGuizmo\ImZoomSlider.h">
+      <Filter>Engine\Source\ThirdParty\include\ImGuizmo</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\Source\ThirdParty\DirectXTK\Include\DDSTextureLoader.h" />
@@ -749,12 +771,28 @@
     <ClCompile Include="Engine\Source\Editor\UnrealEd\SkeletalPreviewUI.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Core\Math\Point.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Actors\SkeletalMeshActor.cpp" />
-    <ClCompile Include="Engine\Source\Runtime\Engine\FBX\SkeletalDefine.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Viewport.cpp" />
     <ClCompile Include="Engine\Source\Runtime\SlateCore\Layout\SlateRect.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Engine\Assets\Animation\AnimationAsset.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Core\Math\Transform.cpp">
       <Filter>Engine\Source\Runtime\Core\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Source\Runtime\Engine\FBX\FBXDefine.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Launch\ImGuizmoManager.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\include\ImGuizmo\GraphEditor.cpp">
+      <Filter>Engine\Source\ThirdParty\include\ImGuizmo</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Source\ThirdParty\include\ImGuizmo\ImCurveEdit.cpp">
+      <Filter>Engine\Source\ThirdParty\include\ImGuizmo</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Source\ThirdParty\include\ImGuizmo\ImGradient.cpp">
+      <Filter>Engine\Source\ThirdParty\include\ImGuizmo</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Source\ThirdParty\include\ImGuizmo\ImGuizmo.cpp">
+      <Filter>Engine\Source\ThirdParty\include\ImGuizmo</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Source\ThirdParty\include\ImGuizmo\ImSequencer.cpp">
+      <Filter>Engine\Source\ThirdParty\include\ImGuizmo</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
