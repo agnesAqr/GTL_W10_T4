@@ -18,7 +18,8 @@ public:
 
     virtual void NativeInitializeAnimation();
     virtual void NativeUpdateAnimation(float DeltaSeconds);
-
+    virtual void TriggerAnimNotifies(float PrevTime, float CurrTime);
+    
     FRefSkeletal* TargetSkeleton;
     virtual const FPoseData& GetCurrentPose() const;
 

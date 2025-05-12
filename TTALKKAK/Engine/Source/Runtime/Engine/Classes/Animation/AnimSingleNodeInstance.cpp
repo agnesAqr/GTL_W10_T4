@@ -63,6 +63,7 @@ void UAnimSingleNodeInstance::SetAnimation(UAnimSequence* AnimSequence)
 {
     CurrentAnimationSeq = AnimSequence;
     CurrentTime = 0.0f;
+    PreviousTime = 0.0f;
 
     if (CurrentAnimationSeq && TargetSkeleton)
     {
@@ -100,6 +101,7 @@ void UAnimSingleNodeInstance::NativeInitializeAnimation()
 {
     Super::NativeInitializeAnimation();
     CurrentTime = 0.0f;
+    PreviousTime = 0.0f;
     CurrentPoseData.Reset();
 
     // TargetSkeleton should be set by the component/system that owns this AnimInstance.
@@ -120,6 +122,8 @@ void UAnimSingleNodeInstance::NativeUpdateAnimation(float DeltaSeconds)
 
     if (CurrentAnimationSeq && TargetSkeleton)
     {
+        PreviousTime = CurrentTime;
+        
         const float PlayLength = CurrentAnimationSeq->GetPlayLength();
         float ActualRateScale = 1.0f;
 
@@ -170,7 +174,7 @@ void UAnimSingleNodeInstance::NativeUpdateAnimation(float DeltaSeconds)
                 Bone = FCompactPoseBone(); // Identity transform
             }
         }
-
+        TriggerAnimNotifies(PreviousTime, CurrentTime);
         CurrentAnimationSeq->SamplePoseAtTime(CurrentTime, TargetSkeleton, CurrentPoseData);
     }
     else
@@ -183,6 +187,24 @@ void UAnimSingleNodeInstance::NativeUpdateAnimation(float DeltaSeconds)
             {
                 CurrentPoseData.LocalBoneTransforms.Init(FCompactPoseBone(), TargetSkeleton->BoneTree.Num());
             }
+        }
+    }
+}
+
+void UAnimSingleNodeInstance::TriggerAnimNotifies(float PrevTime, float CurrTime)
+{
+    const float Length = CurrentAnimationSeq->GetPlayLength();
+    bool bWrapped = CurrTime < PrevTime;
+
+    for (auto& Notify : CurrentAnimationSeq->GetNotifies())
+    {
+        if (!bWrapped)
+        {
+                
+        }
+        else
+        {
+            
         }
     }
 }

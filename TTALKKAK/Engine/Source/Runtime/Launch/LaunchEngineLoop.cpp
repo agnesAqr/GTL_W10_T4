@@ -9,6 +9,7 @@
 #include "LevelEditor/SLevelEditor.h"
 #include "PropertyEditor/ViewportTypePanel.h"
 #include "Renderer/Renderer.h"
+#include "UnrealEd/AnimationPreviewUI.h"
 #include "UnrealEd/SkeletalPreviewUI.h"
 #include "UnrealEd/UnrealEd.h"
 #include "UObject/Casts.h"
@@ -36,7 +37,6 @@ int32 FEngineLoop::Init(HINSTANCE hInstance)
     Renderer.Initialize(&GraphicDevice);
     ResourceManager.Initialize(&GraphicDevice);
 
-    
     // if (bIsEditor)
     {
         GEngine = FObjectFactory::ConstructObject<UEditorEngine>(nullptr);
@@ -153,6 +153,8 @@ void FEngineLoop::Render()
         {
             // TODO 다른 방법으로 World 구하기
             UWorld* TargetWorld = ViewportClients[0]->GetWorld();
+            if (TargetWorld == nullptr)
+                UE_LOG(LogLevel::Display, "target world is null");
             EditorEngine->GetUnrealEditor()->SetWorld(TargetWorld);
             EditorEngine->GetSkeletalPreviewUI()->SetWorld(TargetWorld);
             EditorEngine->ContentsUI->SetWorld(TargetWorld);
@@ -182,7 +184,15 @@ void FEngineLoop::Render()
             }
             else if (TargetWorld->WorldType == EWorldType::EditorPreview)
             {
-                EditorEngine->GetSkeletalPreviewUI()->Render();
+                switch (EditorEngine->GetPreviewMode())
+                {
+                    case EEditorPreviewMode::SkeletalMesh:
+                        EditorEngine->GetSkeletalPreviewUI()->Render();
+                        break;
+                    case EEditorPreviewMode::Animation:
+                        EditorEngine->GetAnimationPreviewUI()->Render();
+                        break;
+                }
             }
         }
         ImGuiManager::Get().EndFrame(AppWindow);

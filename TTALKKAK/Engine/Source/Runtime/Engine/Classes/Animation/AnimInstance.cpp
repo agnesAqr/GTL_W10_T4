@@ -40,3 +40,7 @@ const FPoseData& UAnimInstance::GetCurrentPose() const
 {
     return CurrentPoseData;
 }
+
+void UAnimInstance::TriggerAnimNotifies(float PrevTime, float CurrTime)
+{
+}

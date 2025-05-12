@@ -19,10 +19,12 @@ public:
 protected:
     virtual void NativeInitializeAnimation() override;
     virtual void NativeUpdateAnimation(float DeltaSeconds) override;
-
+    virtual void TriggerAnimNotifies(float PrevTime, float CurrTime) override;
+    
 private:
     UAnimSequence* CurrentAnimationSeq;
     float CurrentTime;
+    float PreviousTime;
 
 public:
     UAnimSequence* GetAnimation() const { return CurrentAnimationSeq; }

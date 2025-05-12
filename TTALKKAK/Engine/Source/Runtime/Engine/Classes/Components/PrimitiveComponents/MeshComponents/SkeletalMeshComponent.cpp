@@ -148,7 +148,7 @@ void USkeletalMeshComponent::SetSkeletalMesh(USkeletalMesh* value)
     if (SkeletalMesh)
     {
         VBIBTopologyMappingName = SkeletalMesh->GetFName();
-         SkeletalMesh->UpdateBoneHierarchy();
+        SkeletalMesh->UpdateBoneHierarchy();
 
         // 머티리얼 오버라이드 배열 크기 조정
         OverrideMaterials.Init(nullptr, SkeletalMesh->GetMaterials().Num());
@@ -457,4 +457,9 @@ void USkeletalMeshComponent::UpdateBoneTransformsFromAnim()
 
         RenderData.Bones[BoneTreeIndex].SkinningMatrix = RenderData.Bones[BoneTreeIndex].InverseBindPoseMatrix * RenderData.Bones[BoneTreeIndex].GlobalTransform;
     }
+}
+
+void USkeletalMeshComponent::HandleAnimNotify(const FAnimNotifyEvent& Notify)
+{
+    //Owner->HandleAnimNotify(Notify);
 }

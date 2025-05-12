@@ -43,6 +43,8 @@ public:
     UAnimInstance* GetAnimInstance() const { return OwningAnimInstance; }
 
     void UpdateBoneTransformsFromAnim();
+    void HandleAnimNotify(const FAnimNotifyEvent& Notify);
+    bool HasAnimation() const { return OwningAnimInstance != nullptr && CurrentAnimSequence != nullptr; }
 
 private:
     TArray<UStaticMeshComponent*> BoneComponents;
