@@ -46,7 +46,7 @@ EAssetType UAnimationAsset::GetAssetType() const
     return EAssetType::Animation;
 }
 
-void UAnimationAsset::SetSkeletal(FRefSkeletal* InRefSkeletal)
+void UAnimationAsset::SetSkeletal(const FRefSkeletal* InRefSkeletal)
 {
     RefSkeletal = InRefSkeletal;
 }
@@ -146,6 +146,7 @@ void UAnimSequence::SetAnimDataModel(UAnimDataModel* AnimDataModel)
     NumFrames = AnimDataModel->NumberOfFrames;
     NumberOfSampledKeys = AnimDataModel->NumberOfKeys;
     SamplingFrameRate = AnimDataModel->FrameRate;
+    SequenceLength = AnimDataModel->PlayLength;
     
     for (auto BoneAnimTrack : AnimDataModel->BoneAnimationTracks)
     {
@@ -316,6 +317,9 @@ void UAnimSequence::PopulateModel()
 
      float CurrentTime = FMath::Fmod(Time, SequenceLength);
      if (CurrentTime < 0.0f) CurrentTime += SequenceLength;
+
+     UE_LOG(LogLevel::Display, "UAnimSequence-Time: %f", Time);
+     UE_LOG(LogLevel::Display, "UAnimSequence-CurrentTime: %f", CurrentTime);
 
      for (int32 BoneIndex = 0; BoneIndex < NumSkeletonBones; ++BoneIndex)
      {

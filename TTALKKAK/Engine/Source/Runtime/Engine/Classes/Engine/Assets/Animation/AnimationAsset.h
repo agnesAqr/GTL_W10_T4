@@ -23,14 +23,14 @@ public:
     void Unload() override;
     EAssetType GetAssetType() const override;
 
-    void SetSkeletal(FRefSkeletal* InRefSkeletal);
+    void SetSkeletal(const FRefSkeletal* InRefSkeletal);
     const FRefSkeletal* GetReferenceSkeleton() const
     {
         return RefSkeletal;
     }
 protected:
     /** 이 애셋을 플레이할 수 있는 스켈레톤에 대한 포인터 */
-    FRefSkeletal* RefSkeletal;    
+    const FRefSkeletal* RefSkeletal;    
 };
 
 class UAnimSequenceBase : public UAnimationAsset
@@ -71,7 +71,7 @@ protected:
     float SequenceLength;
     
     /** 이 애니메이션의 전체 재생 속도를 조정하기 위한 값 */
-    float RateScale;
+    float RateScale = 1.f;
     bool bLoop;
 
     // 소스 애니메이션 데이터

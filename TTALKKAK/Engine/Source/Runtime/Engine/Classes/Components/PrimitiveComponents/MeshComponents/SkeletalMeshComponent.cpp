@@ -175,7 +175,7 @@ void USkeletalMeshComponent::SetSkeletalMesh(USkeletalMesh* value)
 
             // 만약 기본 애니메이션이 있다면 여기서 설정
             if (CurrentAnimSequence) {
-                PlayAnimation(CurrentAnimSequence); 
+                //PlayAnimation(CurrentAnimSequence); 
             }
             else {
                 // 기본 애니메이션이 없다면, 참조 포즈로 본 트랜스폼 초기화

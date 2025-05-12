@@ -4,6 +4,7 @@
 #include "FBX/FBXDefine.h"
 #include "Math/MathUtility.h"
 #include "FBXLoader.h"
+#include "Classes/Engine/Assets/Animation/AnimDataModel.h"
 
 // NOTE: For CurrentAnimationSeq->GetRateScale() to work as in UCustomAnimInstance,
 // UAnimSequenceBase would need a public GetRateScale() method like:
@@ -119,12 +120,16 @@ void UAnimSingleNodeInstance::NativeInitializeAnimation()
 void UAnimSingleNodeInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
     Super::NativeUpdateAnimation(DeltaSeconds);
-
+    CurrentAnimationSeq->SetSkeletal(TargetSkeleton);
     if (CurrentAnimationSeq && TargetSkeleton)
     {
-        const float PlayLength = CurrentAnimationSeq->GetPlayLength();
+        const float PlayLength = CurrentAnimationSeq->GetPlayLength(); // Begin Test
+        //const float PlayLength = CurrentAnimationSeq->GetAnimDataModel()->PlayLength; // 이걸 이런식으로 접근해야 하는거면 다른 것들은 왜 있는거지
         float ActualRateScale = 1.0f;
         if (CurrentAnimationSeq) ActualRateScale = CurrentAnimationSeq->GetRateScale();
+
+        UE_LOG(LogLevel::Display, "UAnimSingleNodeInstance-ActualRateScale: %f", ActualRateScale);
+        UE_LOG(LogLevel::Display, "UAnimSingleNodeInstance-PlayLength: %f", PlayLength);
 
         if (PlayLength > KINDA_SMALL_NUMBER)
         {
@@ -143,6 +148,7 @@ void UAnimSingleNodeInstance::NativeUpdateAnimation(float DeltaSeconds)
         {
             this->CurrentPoseData.LocalBoneTransforms.Init(FCompactPoseBone(), TargetSkeleton->BoneTree.Num());
         }
+        //UE_LOG(LogLevel::Display, "UAnimSingleNodeInstance-CurrentTime: %f", CurrentTime);
         CurrentAnimationSeq->SamplePoseAtTime(CurrentTime, TargetSkeleton, this->CurrentPoseData);
     }
     else
