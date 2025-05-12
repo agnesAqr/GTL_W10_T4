@@ -871,7 +871,7 @@ void FBXLoader:: ExtractAnimation(int BoneTreeIndex, const FRefSkeletal& RefSkel
 
         // Rotation (Quat)
         auto Q = M.GetQ();
-        Raw.RotKeys.Add(FQuat((float)Q[3], (float)Q[0], (float)Q[1], (float)Q[2]));
+        Raw.RotKeys.Add(FQuat(-(float)Q[3], (float)Q[0], (float)Q[1], (float)Q[2]));
 
         // Scale
         auto S = M.GetS();
