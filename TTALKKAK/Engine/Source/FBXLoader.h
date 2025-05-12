@@ -54,6 +54,7 @@ public:
     static void AddVertexFromControlPoint(FbxMesh* Mesh, FSkeletalMeshRenderData* MeshData, int ControlPointIndex);
 
     static void DebugWriteAnimationModel(const UAnimDataModel* AnimModel);
+    static void DebugWriteUV(const FSkeletalMeshRenderData* MeshData);
 
     // 일단 SkeletalMesh 안 만들어지면 false 반환
     static bool ImportFBX(const FString& FilePath);

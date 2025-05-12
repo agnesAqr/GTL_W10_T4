@@ -82,6 +82,8 @@ FSkeletalMeshRenderData* FBXLoader::ParseFBX(const FString& FilePath, bool bIsAb
     ExtractSkeleton(Scene, NewMeshData, RefSkeletal);
     ExtractFBXMeshData(Scene, NewMeshData, RefSkeletal, NodeMap);
 
+    DebugWriteUV(NewMeshData);
+
     for (int i = 0; i < NewMeshData->Vertices.Num(); ++i)
     {
         FSkeletalVertex Vertex;
@@ -142,7 +144,6 @@ FSkeletalMeshRenderData* FBXLoader::ParseFBX(const FString& FilePath, bool bIsAb
 
         AnimDataModels.Add(FilePath, AnimModel);
     }
-    
     
     SkeletalMeshData.Add(FilePath, NewMeshData);
     RefSkeletalData.Add(FilePath, RefSkeletal);
@@ -273,10 +274,7 @@ void FBXLoader::ExtractMeshFromNode(FbxNode* Node, FSkeletalMeshRenderData* Mesh
     }
 }
 
-void FBXLoader::ExtractVertices(
-    FbxMesh* Mesh,
-    FSkeletalMeshRenderData* MeshData,
-    FRefSkeletal* RefSkeletal)
+void FBXLoader::ExtractVertices(FbxMesh* Mesh, FSkeletalMeshRenderData* MeshData, FRefSkeletal* RefSkeletal)
 {
 
     // 1) Normal Element의 매핑 모드로 분기
@@ -325,259 +323,175 @@ void FBXLoader::ExtractVertices(
     ExtractSkinningData  (Mesh, MeshData, RefSkeletal, BaseVertexIndex);
 }
 
-void FBXLoader::ExtractNormals(
-    FbxMesh* Mesh,
-    FSkeletalMeshRenderData* RenderData,
-    int BaseVertexIndex)
+void FBXLoader::ExtractNormals(FbxMesh* Mesh, FSkeletalMeshRenderData* RenderData, int BaseVertexIndex)
 {
     auto* NormalElem = Mesh->GetElementNormal();
     if (!NormalElem)
     {
-        // 노말 정보가 없으면 (0,0,1)로 초기화 예시
+        // 노멀 정보가 없으면 (0,0,1)로 초기화
         for (int i = BaseVertexIndex; i < RenderData->Vertices.Num(); ++i)
-        {
             RenderData->Vertices[i].Normal = FVector(0, 0, 1);
-        }
         return;
     }
 
-    // 매핑·레퍼런스 모드
     auto mapMode = NormalElem->GetMappingMode();
     auto refMode = NormalElem->GetReferenceMode();
 
-
-    int directCount = NormalElem->GetDirectArray().GetCount();
-    int indexCount  = refMode != FbxGeometryElement::eDirect ? NormalElem->GetIndexArray().GetCount() : 0;
-
-    int polyVertCounter   = 0;
-    int vertexBufferIndex = BaseVertexIndex;
-    int polyCount         = Mesh->GetPolygonCount();
+    int directCount     = NormalElem->GetDirectArray().GetCount();
+    int polyCount       = Mesh->GetPolygonCount();
+    int polyVertCounter = 0;            // eByPolygonVertex 시 인덱스
+    int totalVerts      = RenderData->Vertices.Num();
 
     for (int p = 0; p < polyCount; ++p)
     {
         int polySize = Mesh->GetPolygonSize(p);
-        for (int v = 0; v < polySize; ++v)
+        for (int v = 0; v < polySize; ++v, ++polyVertCounter)
         {
             int ctrlIdx = Mesh->GetPolygonVertex(p, v);
-            int idx = -1;
+            int srcIdx  = -1;
 
-            // 1) 인덱스 계산 (switch 문으로 람다 대체)
-            switch (mapMode)
+            // 1) srcIdx 계산
+            if (mapMode == FbxGeometryElement::eByControlPoint)
             {
-                case FbxGeometryElement::eByControlPoint:
-                    idx = (refMode == FbxGeometryElement::eDirect)
-                          ? ctrlIdx
-                          : NormalElem->GetIndexArray().GetAt(ctrlIdx);
-                    break;
-
-                case FbxGeometryElement::eByPolygonVertex:
-                    idx = (refMode == FbxGeometryElement::eDirect)
-                          ? polyVertCounter
-                          : NormalElem->GetIndexArray().GetAt(polyVertCounter);
-                    break;
-
-                default:
-                    // eByPolygon, eAllSame 등 지원 필요 시 여기에 추가
-                    idx = -1;
-                    break;
+                srcIdx = (refMode == FbxGeometryElement::eDirect)
+                       ? ctrlIdx
+                       : NormalElem->GetIndexArray().GetAt(ctrlIdx);
+            }
+            else // eByPolygonVertex
+            {
+                srcIdx = (refMode == FbxGeometryElement::eDirect)
+                       ? polyVertCounter
+                       : NormalElem->GetIndexArray().GetAt(polyVertCounter);
             }
 
-            // 2) directArray 범위를 벗어나면 0으로 클램프
-            if (idx < 0 || idx >= directCount)
+            // 2) srcIdx 범위 클램프
+            if (srcIdx < 0 || srcIdx >= directCount)
             {
-                UE_LOG(LogLevel::Warning,TEXT("Normal index %d out of range [0,%d). Clamped to 0."), idx, directCount);
-                idx = 0;
+                UE_LOG(LogLevel::Warning,TEXT("Normal index %d out of range [0,%d). Clamped to 0."), srcIdx, directCount);
+                srcIdx = 0;
             }
 
-            // 3) 노말 추출
-            auto Nor = NormalElem->GetDirectArray().GetAt(idx);
+            // 3) 노멀 읽기
+            auto Nor = NormalElem->GetDirectArray().GetAt(srcIdx);
+            FVector Normal(
+                static_cast<float>(Nor[0]),
+                static_cast<float>(Nor[1]),
+                static_cast<float>(Nor[2])
+            );
 
-            // 4) vertexBufferIndex 범위 검사 후 대입
-            if (vertexBufferIndex < RenderData->Vertices.Num())
+            // 4) targetVertex 계산 및 범위 검사
+            int targetVertex = (mapMode == FbxGeometryElement::eByControlPoint)
+                             ? (BaseVertexIndex + ctrlIdx)
+                             : (BaseVertexIndex + polyVertCounter);
+
+            if (targetVertex < 0 || targetVertex >= totalVerts)
             {
-                auto& V = RenderData->Vertices[vertexBufferIndex];
-                V.Normal.X = static_cast<float>(Nor[0]);
-                V.Normal.Y = static_cast<float>(Nor[1]);
-                V.Normal.Z = static_cast<float>(Nor[2]);
-            }
-            else
-            {
-                UE_LOG(LogLevel::Error,TEXT("vertexBufferIndex %d >= Vertices.Num() %d"), vertexBufferIndex, RenderData->Vertices.Num());
-                return;  // 더 이상 진행하지 않음
+                UE_LOG(LogLevel::Error,TEXT("ExtractNormals: targetVertex %d out of range [0,%d)"), targetVertex, totalVerts);
+                continue;
             }
 
-            ++polyVertCounter;
-            ++vertexBufferIndex;
+            // 5) 실제 대입
+            RenderData->Vertices[targetVertex].Normal = Normal;
         }
     }
 }
 
-void FBXLoader::ExtractUVs(
-    FbxMesh* Mesh,
-    FSkeletalMeshRenderData* MeshData,
-    int BaseVertexIndex)
+void FBXLoader::ExtractUVs(FbxMesh* Mesh, FSkeletalMeshRenderData* MeshData, int BaseVertexIndex)
 {
-    auto* UVElem = Mesh->GetElementUV(0);
-    if (!UVElem)
+    if (Mesh->GetElementUVCount() == 0) return;
+    auto* UVElem  = Mesh->GetElementUV(0);
+    auto  mapMode = UVElem->GetMappingMode();
+    auto  refMode = UVElem->GetReferenceMode();
+
+    int vertexBufferIndex = 0;
+    int totalVertices    = MeshData->Vertices.Num();
+    int polyCount        = Mesh->GetPolygonCount();
+
+    for (int polyIdx = 0; polyIdx < polyCount; ++polyIdx)
     {
-        // UV가 없으면 (0,0)으로 초기화
-        for(int i = BaseVertexIndex; i < MeshData->Vertices.Num(); ++i)
+        int polySize = Mesh->GetPolygonSize(polyIdx);
+        for (int vertIdx = 0; vertIdx < polySize; ++vertIdx, ++vertexBufferIndex)
         {
-            MeshData->Vertices[i].TexCoord = FVector2D::ZeroVector;
-        }
-        return;
-    }
-
-    // Mapping / Reference 모드
-    auto mapMode = UVElem->GetMappingMode();
-    auto refMode = UVElem->GetReferenceMode();
-    int directCount = UVElem->GetDirectArray().GetCount();
-    int indexCount  = (refMode != FbxGeometryElement::eDirect)
-                      ? UVElem->GetIndexArray().GetCount()
-                      : 0;
-
-    int polyVertCounter   = 0;
-    int vertexBufferIndex = BaseVertexIndex;
-    int polyCount         = Mesh->GetPolygonCount();
-
-    for (int p = 0; p < polyCount; ++p)
-    {
-        int polySize = Mesh->GetPolygonSize(p);
-        for (int v = 0; v < polySize; ++v)
-        {
-            int ctrlIdx = Mesh->GetPolygonVertex(p, v);
-            int idx = -1;
-
-            // 인덱스 계산
+            int ctrlIdx = Mesh->GetPolygonVertex(polyIdx, vertIdx);
+            int srcIdx;
             if (mapMode == FbxGeometryElement::eByControlPoint)
             {
-                idx = (refMode == FbxGeometryElement::eDirect)
-                      ? ctrlIdx
-                      : UVElem->GetIndexArray().GetAt(ctrlIdx);
+                srcIdx = (refMode == FbxGeometryElement::eDirect)
+                       ? ctrlIdx
+                       : UVElem->GetIndexArray().GetAt(ctrlIdx);
             }
-            else if (mapMode == FbxGeometryElement::eByPolygonVertex)
+            else // eByPolygonVertex
             {
-                idx = (refMode == FbxGeometryElement::eDirect)
-                      ? polyVertCounter
-                      : UVElem->GetIndexArray().GetAt(polyVertCounter);
-            }
-            else
-            {
-                // eByPolygon, eAllSame 등 지원 필요 시 여기에 추가
-                idx = -1;
+                srcIdx = (refMode == FbxGeometryElement::eDirect)
+                       ? vertexBufferIndex
+                       : UVElem->GetIndexArray().GetAt(vertexBufferIndex);
             }
 
-            // DirectArray 범위 체크
-            if (idx < 0 || idx >= directCount)
-            {
-                UE_LOG(LogLevel::Warning,
-                    TEXT("UV index %d out of range [0,%d). Clamped to 0."), idx, directCount);
-                idx = 0;
-            }
+            FbxVector2 uv = UVElem->GetDirectArray().GetAt(srcIdx);
 
-            // vertexBufferIndex 범위 체크
-            if (vertexBufferIndex >= MeshData->Vertices.Num())
-            {
-                UE_LOG(LogLevel::Error,
-                    TEXT("vertexBufferIndex %d >= Vertices.Num() %d"),
-                    vertexBufferIndex, MeshData->Vertices.Num());
-                return;
-            }
+            // targetVertex 계산
+            int targetVertex = (mapMode == FbxGeometryElement::eByControlPoint)
+                             ? (BaseVertexIndex + ctrlIdx)
+                             : (BaseVertexIndex + vertexBufferIndex);
 
-            // 실제 UV 추출
-            auto UV = UVElem->GetDirectArray().GetAt(idx);
-            auto& V  = MeshData->Vertices[vertexBufferIndex];
-            V.TexCoord.X = static_cast<float>(UV[0]);
-            V.TexCoord.Y = 1.0f - static_cast<float>(UV[1]);  // DirectX용 Y 반전
+            // 범위 검사
+            if (targetVertex < 0 || targetVertex >= totalVertices)
+                continue;
 
-            ++polyVertCounter;
-            ++vertexBufferIndex;
+            MeshData->Vertices[targetVertex].TexCoord = FVector2D(
+                static_cast<float>(uv[0]),
+                1 - static_cast<float>(uv[1])
+            );
         }
     }
 }
 
 void FBXLoader::ExtractTangents(FbxMesh* Mesh, FSkeletalMeshRenderData* MeshData, int BaseVertexIndex)
 {
-   // 1) Tangent 요소 가져오기 / 생성
+    if (Mesh->GetElementTangentCount() == 0) return;
     auto* TanElem = Mesh->GetElementTangent(0);
-    if (!TanElem || TanElem->GetDirectArray().GetCount() == 0)
+    auto  mapMode  = TanElem->GetMappingMode();
+    auto  refMode  = TanElem->GetReferenceMode();
+
+    int vertexBufferIndex = 0;
+    const int polyCount = Mesh->GetPolygonCount();
+
+    for (int polyIdx = 0; polyIdx < polyCount; ++polyIdx)
     {
-        UE_LOG(LogLevel::Warning, TEXT("FBX Tangent Empty! Generating..."));
-        Mesh->GenerateTangentsData(0, /*overwrite=*/ true);
-        TanElem = Mesh->GetElementTangent(0);
-        if (!TanElem || TanElem->GetDirectArray().GetCount() == 0)
+        const int polySize = Mesh->GetPolygonSize(polyIdx);
+        for (int vertIdx = 0; vertIdx < polySize; ++vertIdx)
         {
-            UE_LOG(LogLevel::Error, TEXT("Failed to generate FBX tangents."));
-            return;
-        }
-    }
-
-    // 2) 모드 & 카운트
-    auto mapMode = TanElem->GetMappingMode();
-    auto refMode = TanElem->GetReferenceMode();
-    int directCount = TanElem->GetDirectArray().GetCount();
-    int indexCount  = (refMode != FbxGeometryElement::eDirect)
-                      ? TanElem->GetIndexArray().GetCount()
-                      : 0;
-
-    int polyVertCounter   = 0;
-    int vertexBufferIndex = BaseVertexIndex;
-    int polyCount         = Mesh->GetPolygonCount();
-    int totalVertices     = MeshData->Vertices.Num();
-
-    // 3) 폴리곤-버텍스 순회
-    for (int p = 0; p < polyCount; ++p)
-    {
-        int polySize = Mesh->GetPolygonSize(p);
-        for (int v = 0; v < polySize; ++v)
-        {
-            int ctrlIdx = Mesh->GetPolygonVertex(p, v);
-            int idx = -1;
-
-            // 3-1) 인덱스 계산
+            int ctrlIdx = Mesh->GetPolygonVertex(polyIdx, vertIdx);
+            int srcIdx;
             if (mapMode == FbxGeometryElement::eByControlPoint)
             {
-                idx = (refMode == FbxGeometryElement::eDirect)
-                      ? ctrlIdx
-                      : TanElem->GetIndexArray().GetAt(ctrlIdx);
+                srcIdx = (refMode == FbxGeometryElement::eDirect)
+                       ? ctrlIdx
+                       : TanElem->GetIndexArray().GetAt(ctrlIdx);
             }
-            else if (mapMode == FbxGeometryElement::eByPolygonVertex)
+            else // eByPolygonVertex
             {
-                idx = (refMode == FbxGeometryElement::eDirect)
-                      ? polyVertCounter
-                      : TanElem->GetIndexArray().GetAt(polyVertCounter);
-            }
-            else
-            {
-                UE_LOG(LogLevel::Warning,TEXT("Unsupported Tangent MappingMode %d"), (int)mapMode);
-                return;
+                srcIdx = (refMode == FbxGeometryElement::eDirect)
+                       ? vertexBufferIndex
+                       : TanElem->GetIndexArray().GetAt(vertexBufferIndex);
             }
 
-            // 3-2) DirectArray 범위 검사
-            if (idx < 0 || idx >= directCount)
+            FbxVector4 tan = TanElem->GetDirectArray().GetAt(srcIdx);
+
+            int targetVertex = (mapMode == FbxGeometryElement::eByControlPoint)
+                             ? (BaseVertexIndex + ctrlIdx)
+                             : (BaseVertexIndex + vertexBufferIndex);
+
+            MeshData->Vertices[targetVertex].Tangent = FVector(
+                static_cast<float>(tan[0]),
+                static_cast<float>(tan[1]),
+                static_cast<float>(tan[2])
+            );
+
+            if (mapMode == FbxGeometryElement::eByPolygonVertex)
             {
-                UE_LOG(LogLevel::Warning,TEXT("Tangent index %d out of range [0,%d). Clamped to 0."),
-                    idx, directCount);
-                idx = 0;
+                ++vertexBufferIndex;
             }
-
-            // 3-3) vertexBufferIndex 범위 검사
-            if (vertexBufferIndex < 0 || vertexBufferIndex >= totalVertices)
-            {
-                UE_LOG(LogLevel::Error,TEXT("vertexBufferIndex %d >= Vertices.Num() %d"),
-                    vertexBufferIndex, totalVertices);
-                return;
-            }
-
-            // 4) 실제 Tangent 복사
-            auto Tan = TanElem->GetDirectArray().GetAt(idx);
-            auto& V = MeshData->Vertices[vertexBufferIndex];
-            V.Tangent.X = static_cast<float>(Tan[0]);
-            V.Tangent.Y = static_cast<float>(Tan[1]);
-            V.Tangent.Z = static_cast<float>(Tan[2]);
-
-            ++polyVertCounter;
-            ++vertexBufferIndex;
         }
     }
 }
@@ -1328,6 +1242,45 @@ void FBXLoader::DebugWriteAnimationModel(const UAnimDataModel* AnimModel)
     else
     {
         UE_LOG(LogLevel::Error, TEXT("Failed to write animation debug to %s"), *FilePath);
+    }
+}
+
+void FBXLoader::DebugWriteUV(const FSkeletalMeshRenderData* MeshData)
+{
+    if (!MeshData)
+    {
+        UE_LOG(LogLevel::Warning, TEXT("DebugWriteUVs: MeshData is null."));
+        return;
+    }
+
+    // 1) 누적할 출력 문자열 준비
+    FString Output;
+    Output += TEXT("Index    U         V\n");
+    Output += TEXT("------------------------\n");
+
+    // 2) 각 버텍스의 UV 좌표 포맷팅
+    for (int32 i = 0; i < MeshData->Vertices.Num(); ++i)
+    {
+        const FVector2D& UV = MeshData->Vertices[i].TexCoord;
+        Output += FString::Printf(
+            TEXT("%5d    %.6f    %.6f\n"),
+            i,
+            UV.X,
+            UV.Y
+        );
+    }
+
+    // 3) 로그 폴더에 파일 경로 지정 (Saved/Logs)
+    const FString RelativePath = TEXT("Logs/ExtractedUVs.txt");
+
+    // 4) 파일 쓰기
+    if (FFileHelper::WriteStringToLogFile(*RelativePath,Output))
+    {
+        UE_LOG(LogLevel::Warning, TEXT("UV 덤프 완료: %s"), *RelativePath);
+    }
+    else
+    {
+        UE_LOG(LogLevel::Error, TEXT("UV 덤프 실패: %s"), *RelativePath);
     }
 }
 
