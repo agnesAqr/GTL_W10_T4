@@ -23,7 +23,7 @@ FMatrix FTransform::ToMatrix() const
     // 만약 FMatrix 구현이 M1*M2 = M1 적용 후 M2 적용이면 순서 반대
     // 제공된 코드는 SSE::VectorMatrixMultiply(&Result, this, &Other); -> this 적용 후 other 적용 순서로 보임
     // 따라서 UE와 같은 순서 (Translate * Rotate * Scale) 를 사용하려면
-    // return TranslationMatrix * RotationMatrix * ScaleMatrix;
+    //return TranslationMatrix * RotationMatrix * ScaleMatrix;
 }
 
 FMatrix FTransform::ToMatrixNoScale() const

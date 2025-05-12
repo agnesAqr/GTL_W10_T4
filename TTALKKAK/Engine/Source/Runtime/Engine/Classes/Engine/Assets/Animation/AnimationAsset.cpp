@@ -393,7 +393,7 @@ void UAnimSequence::PopulateModel()
              if (Track.RotKeys.IsValidIndex(KeyIndex1) && Track.RotKeys.IsValidIndex(KeyIndex2))
              {
                  BoneTransform.Rotation = FQuat::Slerp(Track.RotKeys[KeyIndex1], Track.RotKeys[KeyIndex2], Alpha);
-                 BoneTransform.Rotation.Normalize(); // Slerp 후 정규화 권장
+                 //BoneTransform.Rotation.Normalize(); // Slerp 후 정규화 권장
              }
              else if (Track.RotKeys.IsValidIndex(KeyIndex1))
              {

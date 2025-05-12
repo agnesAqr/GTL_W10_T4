@@ -33,7 +33,8 @@ FMatrix FMatrix::operator-(const FMatrix& Other) const {
 }
 
 // 행렬 곱셈
-FMatrix FMatrix::operator*(const FMatrix& Other) const {
+FMatrix FMatrix::operator*(const FMatrix& Other) const
+{
     FMatrix Result = {};
     SSE::VectorMatrixMultiply(&Result, this, &Other);
     return Result;
@@ -223,6 +224,7 @@ FMatrix FMatrix::CreateTranslationMatrix(const FVector& position)
     translationMatrix.M[3][0] = position.X;
     translationMatrix.M[3][1] = position.Y;
     translationMatrix.M[3][2] = position.Z;
+    translationMatrix.M[3][3] = 1;
     return translationMatrix;
 }
 

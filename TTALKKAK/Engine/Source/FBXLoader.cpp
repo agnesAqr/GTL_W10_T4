@@ -70,7 +70,10 @@ FSkeletalMeshRenderData* FBXLoader::ParseFBX(const FString& FilePath, bool bIsAb
         UnrealUnit.ConvertScene(Scene);
     }
     
-    UnrealAxisSystem.ConvertScene(Scene);
+    if (Scene->GetGlobalSettings().GetAxisSystem() != UnrealAxisSystem)
+    {
+        UnrealAxisSystem.DeepConvertScene(Scene);
+    }
 
     FSkeletalMeshRenderData* NewMeshData = new FSkeletalMeshRenderData();
     FRefSkeletal* RefSkeletal = new FRefSkeletal();
@@ -199,8 +202,8 @@ void FBXLoader::ExtractSkeleton(FbxScene* Scene, FSkeletalMeshRenderData* MeshDa
     {
         FbxNode* Node = BoneNodes[i];
         FBone NewBone;
-        NewBone.BoneName              = Node->GetName();
-        NewBone.ParentIndex           = INDEX_NONE;
+        NewBone.BoneName= Node->GetName();
+        NewBone.ParentIndex = INDEX_NONE;
 
         if (auto* Parent = Node->GetParent())
         {
@@ -210,8 +213,8 @@ void FBXLoader::ExtractSkeleton(FbxScene* Scene, FSkeletalMeshRenderData* MeshDa
         }
 
         // 로컬/글로벌 트랜스폼만 세팅
-        NewBone.GlobalTransform       = ConvertFbxMatrix(Node->EvaluateGlobalTransform());
-        NewBone.LocalTransform        = ConvertFbxMatrix(Node->EvaluateLocalTransform());
+        NewBone.GlobalTransform = ConvertFbxMatrix(Node->EvaluateGlobalTransform());
+        NewBone.LocalTransform = ConvertFbxMatrix(Node->EvaluateLocalTransform());
 
         // 바인드 포즈 역행렬과 스키닝 매트릭스는 ProcessSkinning 에서 업데이트
         NewBone.InverseBindPoseMatrix = FMatrix::Identity;
@@ -655,7 +658,7 @@ void FBXLoader::ProcessSkinning(FbxSkin* Skin, FSkeletalMeshRenderData* MeshData
 
         // 업데이트
         MeshData->Bones[BI].InverseBindPoseMatrix = InvBind;
-        MeshData->Bones[BI].SkinningMatrix        = CurrGlobal * InvBind;
+        MeshData->Bones[BI].SkinningMatrix = CurrGlobal * InvBind;
     }
 
     // 2) 정점별 본 가중치 적용
