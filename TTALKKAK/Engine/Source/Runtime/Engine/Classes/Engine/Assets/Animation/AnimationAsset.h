@@ -102,7 +102,7 @@ public:
     void TickAssetPlayer() override;
     void PopulateModel() override;
 
-    // AtFrame으로 작성을 해야할 것 같기도 하고 흠.
+    //void SamplePoseAtTime(float Time, const FRefSkeletal* Skeleton, FPoseData& OutPose, const uint32 AnimCount) const;
     void SamplePoseAtTime(float Time, const FRefSkeletal* Skeleton, FPoseData& OutPose) const;
 
 protected:
@@ -158,3 +158,5 @@ inline void UAnimSequence::TickAssetPlayer()
 {
     UAnimSequenceBase::TickAssetPlayer();
 }
+
+static void FindKeyIndices(const TArray<float>& KeyTimes, float CurrentTime, int32& OutKeyIndex1, int32& OutKeyIndex2);

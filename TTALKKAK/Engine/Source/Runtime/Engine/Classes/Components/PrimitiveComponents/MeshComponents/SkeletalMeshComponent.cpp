@@ -154,27 +154,32 @@ void USkeletalMeshComponent::SetSkeletalMesh(USkeletalMesh* value)
         OverrideMaterials.Init(nullptr, SkeletalMesh->GetMaterials().Num());
         AABB = SkeletalMesh->GetRenderData().BoundingBox;
 
-        // CreateBoneComponents(); 
+        //CreateBoneComponents(); 
 
         if (OwningAnimInstance == nullptr)
         {
             OwningAnimInstance = FObjectFactory::ConstructObject<UAnimSingleNodeInstance>(this);
         }
 
+        UE_LOG(LogLevel::Display, TEXT("USkeletalMeshComponent::SetSkeletalMesh - Setting mesh to: %s"),
+            value ? *value->GetFName().ToString() : TEXT("NULL"));
+
         if (OwningAnimInstance)
         {
-            //OwningAnimInstance->SetTargetSkeleton(SkeletalMesh->GetRefSkeletal());
+            UE_LOG(LogLevel::Display, TEXT("  Setting TargetSkeleton. SkeletalMesh is: %s. RefSkeletal is: %s"),
+                SkeletalMesh ? TEXT("VALID") : TEXT("NULL"),
+                (SkeletalMesh && SkeletalMesh->GetRefSkeletal()) ? TEXT("VALID") : TEXT("NULL"));
             OwningAnimInstance->TargetSkeleton = SkeletalMesh->GetRefSkeletal(); // TargetSkeleton public 가정
 
             OwningAnimInstance->NativeInitializeAnimation(); // 스켈레톤 설정 후 초기화
 
             // 만약 기본 애니메이션이 있다면 여기서 설정
             if (CurrentAnimSequence) {
-                PlayAnimation(CurrentAnimSequence);
+                PlayAnimation(CurrentAnimSequence); 
             }
             else {
                 // 기본 애니메이션이 없다면, 참조 포즈로 본 트랜스폼 초기화
-                UpdateBoneTransformsFromAnim(); // 포즈를 참조 포즈로 설정
+                //UpdateBoneTransformsFromAnim(); // 포즈를 참조 포즈로 설정 // 그러면 이것도 맞는거 같은데
                 SkinningVertex(); // 참조 포즈로 스키닝
             }
         }
@@ -216,7 +221,7 @@ USkeletalMesh* USkeletalMeshComponent::LoadSkeletalMesh(const FString& FilePath)
     // FBXLoader가 USkeletalMesh를 생성하고 내부적으로 RefSkeletal도 채운다고 가정
     USkeletalMesh* NewSkeletalMesh = FBXLoader::CreateSkeletalMesh(FilePath);
     // 애니메이션은 별도로 로드하고 관리
-    // FBXLoader::CreateAnimationSequence(FilePath);
+    FBXLoader::CreateAnimationSequence(FilePath);
 
     if (NewSkeletalMesh)
     {
@@ -237,25 +242,25 @@ void USkeletalMeshComponent::UpdateBoneHierarchy()
     SkeletalMesh->UpdateBoneHierarchy();
     SkinningVertex();
 }
-
-void USkeletalMeshComponent::PlayAnimation(UAnimSequence* NewAnimToPlay)
+void USkeletalMeshComponent::PlayAnimation(UAnimSequence* NewAnimToPlay, bool bLooping)
 {
     CurrentAnimSequence = NewAnimToPlay;
+
     if (OwningAnimInstance && CurrentAnimSequence)
     {
         UAnimSingleNodeInstance* SingleNodeInstance = Cast<UAnimSingleNodeInstance>(OwningAnimInstance);
         if (SingleNodeInstance)
         {
-            SingleNodeInstance->SetAnimation(CurrentAnimSequence);
+            SingleNodeInstance->SetLooping(bLooping);
+            SingleNodeInstance->SetAnimation(CurrentAnimSequence, bLooping);
         }
-        // else: 다른 타입의 AnimInstance라면 해당 인스턴스에 맞는 방식으로 애니메이션 설정
     }
     else if (OwningAnimInstance && !CurrentAnimSequence)
     {
         UAnimSingleNodeInstance* SingleNodeInstance = Cast<UAnimSingleNodeInstance>(OwningAnimInstance);
         if (SingleNodeInstance)
         {
-            SingleNodeInstance->SetAnimation(nullptr); // AnimInstance에서 nullptr 처리 로직 필요
+            SingleNodeInstance->SetAnimation(nullptr, false);
         }
 
         UpdateBoneHierarchy();
@@ -304,26 +309,29 @@ void USkeletalMeshComponent::SkinningVertex()
 // FIX-ME
 void USkeletalMeshComponent::BeginPlay()
 {
-    Super::BeginPlay(); // 일단 Super를 해야하는 상황인지도 정확하게는 모르겠음.
+    Super::BeginPlay(); 
+
+    CurrentAnimSequence = FBXLoader::CreateAnimationSequence("FBX/Capoeira.fbx");
 
     if (OwningAnimInstance)
     {
-        // OwningAnimInstance->NativeInitializeAnimation(); // 중복 호출될 수 있으므로 SetSkeletalMesh에서 처리
+        OwningAnimInstance->NativeInitializeAnimation();
     }
     else if (SkeletalMesh)
     {
         OwningAnimInstance = FObjectFactory::ConstructObject<UAnimSingleNodeInstance>(this);
         if (OwningAnimInstance)
         {
-            // OwningAnimInstance->SetTargetSkeleton(SkeletalMesh->GetRefSkeletal());
-            OwningAnimInstance->TargetSkeleton = SkeletalMesh->GetRefSkeletal(); // TargetSkeleton public 가정
+            OwningAnimInstance->TargetSkeleton = SkeletalMesh->GetRefSkeletal(); 
 
             OwningAnimInstance->NativeInitializeAnimation();
-            if (CurrentAnimSequence) {
+            if (CurrentAnimSequence) 
+            {
                 PlayAnimation(CurrentAnimSequence);
             }
-            else {
-                UpdateBoneTransformsFromAnim(); // 참조 포즈로
+            else 
+            {
+                UpdateBoneTransformsFromAnim();
                 SkinningVertex();
             }
         }
@@ -349,6 +357,7 @@ void USkeletalMeshComponent::DuplicateSubObjects(const UObject* Source, UObject*
         this->OverrideMaterials = SourceComp->OverrideMaterials;
         this->SelectedSubMeshIndex = SourceComp->SelectedSubMeshIndex;
         this->CurrentAnimSequence = SourceComp->CurrentAnimSequence;
+        this->BoneComponents = SourceComp->BoneComponents;
 
         this->OwningAnimInstance = nullptr;
     }
@@ -374,10 +383,6 @@ void USkeletalMeshComponent::TickComponent(float DeltaTime)
         SkinningVertex();
 
     }
-     else if (SkeletalMesh) // 애니메이션은 없지만 스켈레탈 메시가 있는 경우 (예: 참조 포즈 표시)
-     {
-        // 필요하다면 참조 포즈 유지 로직
-     }
 
     if (BoneComponents.Num() > 0 && SkeletalMesh)
     {
@@ -401,7 +406,7 @@ void USkeletalMeshComponent::UpdateBoneTransformsFromAnim()
     {
         // 애니메이션 인스턴스나 스켈레탈 메시가 없으면 아무것도 하지 않거나 참조 포즈로.
         // 참조 포즈로 되돌리려면:
-        // if (SkeletalMesh) SkeletalMesh->UpdateBoneHierarchy(); // 참조 포즈의 본 트랜스폼으로 설정
+        if (SkeletalMesh) SkeletalMesh->UpdateBoneHierarchy(); // 참조 포즈의 본 트랜스폼으로 설정
         return;
     }
 
@@ -409,7 +414,7 @@ void USkeletalMeshComponent::UpdateBoneTransformsFromAnim()
     if (!RefSkeleton)
     {
         // 참조 스켈레톤 정보가 없으면 진행 불가
-        // if (SkeletalMesh) SkeletalMesh->UpdateBoneHierarchy();
+        if (SkeletalMesh) SkeletalMesh->UpdateBoneHierarchy();
         return;
     }
 

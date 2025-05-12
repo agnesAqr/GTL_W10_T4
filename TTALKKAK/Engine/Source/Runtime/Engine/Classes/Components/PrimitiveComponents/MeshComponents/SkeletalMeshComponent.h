@@ -39,7 +39,8 @@ public:
     void CreateBoneComponents();
     void UpdateBoneHierarchy();
 
-    void PlayAnimation(UAnimSequence* NewAnimToPlay);
+    // 이걸 여기 두는 것 자체가 별로긴 함. 근데 학습 자료에 그렇게 나와 있음.
+    void PlayAnimation(UAnimSequence* NewAnimToPlay, bool bLooping = true);
     UAnimInstance* GetAnimInstance() const { return OwningAnimInstance; }
 
     void UpdateBoneTransformsFromAnim();
