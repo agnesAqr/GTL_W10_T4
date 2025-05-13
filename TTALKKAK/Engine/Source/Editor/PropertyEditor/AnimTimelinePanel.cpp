@@ -65,9 +65,10 @@ void AnimTimelinePanel::DrawAnimationTimeline()
         if (ASkeletalMeshActor* SkeletalMeshActor = Cast<ASkeletalMeshActor>(Actor))
         {
             SkeletalMeshComponent = SkeletalMeshActor->GetComponentByClass<USkeletalMeshComponent>();
-            // TODO : CurrAnimSeq 가져오는 방식 바꿔야 함
-            UAnimSingleNodeInstance* singleNodeInstance = Cast<UAnimSingleNodeInstance>(SkeletalMeshComponent->GetAnimInstance());
-            CurrAnimSeq = singleNodeInstance->GetAnimation();
+            if (UAnimSingleNodeInstance* singleNodeInstance = Cast<UAnimSingleNodeInstance>(SkeletalMeshComponent->GetAnimInstance()))
+            {
+                CurrAnimSeq = singleNodeInstance->GetAnimation();
+            }
         }
     }
 

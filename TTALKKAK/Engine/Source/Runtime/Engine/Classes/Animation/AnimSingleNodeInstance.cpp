@@ -85,8 +85,49 @@ void UAnimSingleNodeInstance::SetAnimation(UAnimSequence* AnimSequence, bool bSh
     }
 }
 
-void UAnimSingleNodeInstance::SetPosition(float InTime, bool bFireNotifies)
+void UAnimSingleNodeInstance::SetPosition(float InTime, bool bFireNotifies /*= false*/)
 {
+    // ▶ PlayAsset이나 Skeleton이 없으면 아무 것도 안 함
+    if (!AnimationSequence || !TargetSkeleton)
+    {
+        return;
+    }
+
+    // ▶ 이전 시간 보관
+    PreviousTime = CurrentTime;
+
+    // ▶ 요청된 시간(InTime)으로 세팅하되, 루핑/클램프 처리
+    const float PlayLength = AnimationSequence->GetPlayLength();
+    float NewTime = InTime;
+
+    if (bLooping && PlayLength > KINDA_SMALL_NUMBER)
+    {
+        NewTime = FMath::Fmod(NewTime, PlayLength);
+        if (NewTime < 0.0f)
+        {
+            NewTime += PlayLength;
+        }
+    }
+    else
+    {
+        NewTime = FMath::Clamp(NewTime, 0.0f, PlayLength);
+    }
+    CurrentTime = NewTime;
+
+    // ▶ 노티파이 트리거 (구간 Prev→Curr 사이 이벤트 발생)
+    if (bFireNotifies)
+    {
+        TriggerAnimNotifies(PreviousTime, CurrentTime);
+    }
+
+    // ▶ 포즈 데이터 초기화
+    CurrentPoseData.Reset();
+    CurrentPoseData.Skeleton = TargetSkeleton;
+    const int32 NumBones = TargetSkeleton->BoneTree.Num();
+    CurrentPoseData.LocalBoneTransforms.Init(FCompactPoseBone(), NumBones);
+
+    // ▶ 해당 시간의 포즈 샘플링
+    AnimationSequence->SamplePoseAtTime(CurrentTime, TargetSkeleton, CurrentPoseData);
 }
 
 void UAnimSingleNodeInstance::NativeInitializeAnimation()

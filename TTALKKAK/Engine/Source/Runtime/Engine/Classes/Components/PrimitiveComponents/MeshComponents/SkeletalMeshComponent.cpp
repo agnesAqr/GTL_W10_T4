@@ -20,7 +20,7 @@ USkeletalMeshComponent::USkeletalMeshComponent()
     , SelectedSubMeshIndex(-1)
     , OwningAnimInstance(nullptr)
 {
-    OwningAnimInstance = FObjectFactory::ConstructObject<UAnimInstance>(this);
+    OwningAnimInstance = FObjectFactory::ConstructObject<UAnimSingleNodeInstance>(this);
 }
 
 USkeletalMeshComponent::USkeletalMeshComponent(const USkeletalMeshComponent& Other)
