@@ -4,6 +4,7 @@
 #include "LaunchEngineLoop.h"
 #include "Renderer/Renderer.h"
 #include "FBXLoader.h"
+#include "Animation/AnimationSettings.h"
 #include "Components/Material/Material.h"
 #include "Engine/FLoaderOBJ.h"
 
@@ -60,6 +61,26 @@ void USkeletalMesh::SetData(const FSkeletalMeshRenderData& InRenderData, FRefSke
         
         MaterialSlots.Add(newMaterialSlot);
     }
+
+    Console::GetInstance().OnCPUSkinning.BindLambda([&]()
+    {
+        if(RefSkeletal)
+        {
+            SkeletalMeshRenderData.Vertices = RefSkeletal->RawVertices;
+            FRenderResourceManager* renderResourceManager = GEngineLoop.Renderer.GetResourceManager();
+            GetRenderData().VB = renderResourceManager->CreateDynamicVertexBuffer<FSkeletalVertex>(SkeletalMeshRenderData.Vertices);
+        }
+    });
+
+    Console::GetInstance().OnGPUSkinning.BindLambda([&]()
+    {
+        if(RefSkeletal)
+        {
+            SkeletalMeshRenderData.Vertices = RefSkeletal->RawVertices;
+            FRenderResourceManager* renderResourceManager = GEngineLoop.Renderer.GetResourceManager();
+            GetRenderData().VB = renderResourceManager->CreateDynamicVertexBuffer<FSkeletalVertex>(SkeletalMeshRenderData.Vertices);
+        }
+    });
 }
 
 void USkeletalMesh::UpdateBoneHierarchy()
@@ -212,7 +233,6 @@ void USkeletalMesh::UpdateSkinnedVertices()
     if (SkeletalMeshRenderData.Vertices.Num() <= 0)
         return;
 
-
     if (GetRefSkeletal()->RawVertices.Num() == SkeletalMeshRenderData.Vertices.Num())
     {
         for (int i = 0; i < SkeletalMeshRenderData.Vertices.Num(); i++)
@@ -220,15 +240,17 @@ void USkeletalMesh::UpdateSkinnedVertices()
             SkeletalMeshRenderData.Vertices[i].Position = GetRefSkeletal()->RawVertices[i].Position;
         }
     }
-
-    // 스키닝 적용
-    for (auto& Vertex : SkeletalMeshRenderData.Vertices)
+    
+    // CPU Skinning
+    if (GCurrentSkinningMode == ESkinningMode::CPU)
     {
-        Vertex.SkinningVertex(SkeletalMeshRenderData.Bones);
+        for (auto& Vertex : SkeletalMeshRenderData.Vertices)
+        {
+            Vertex.SkinningVertex(SkeletalMeshRenderData.Bones);
+        }
+        FRenderResourceManager* renderResourceManager = GEngineLoop.Renderer.GetResourceManager();
+        GetRenderData().VB = renderResourceManager->CreateDynamicVertexBuffer<FSkeletalVertex>(SkeletalMeshRenderData.Vertices);
     }
-
-    FRenderResourceManager* renderResourceManager = GEngineLoop.Renderer.GetResourceManager();
-    GetRenderData().VB = renderResourceManager->CreateDynamicVertexBuffer<FSkeletalVertex>(SkeletalMeshRenderData.Vertices);
 }
 
 void USkeletalMesh::UpdateVertexBuffer()

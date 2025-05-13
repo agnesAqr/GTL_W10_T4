@@ -1,6 +1,8 @@
 #include "SkeletalMeshComponent.h"
 
 #include "FBXLoader.h"
+#include "LaunchEngineLoop.h"
+#include "Animation/AnimationSettings.h"
 #include "Engine/World.h"
 #include "Launch/EditorEngine.h"
 #include "UObject/ObjectFactory.h"

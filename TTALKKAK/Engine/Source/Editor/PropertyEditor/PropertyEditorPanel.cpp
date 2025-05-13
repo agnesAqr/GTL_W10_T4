@@ -1877,7 +1877,7 @@ void PropertyEditorPanel::RenderDelegate(ULevel* level)
 
 void PropertyEditorPanel::DrawSkeletalMeshPreviewButton(const FString& FilePath)
 {
-    if (ImGui::Button("Preview##"))
+    if (ImGui::Button("SkeletalMesh Viewer##"))
     {
         UEditorEngine* EditorEngine = Cast<UEditorEngine>(GEngine);
         if (EditorEngine == nullptr)
