@@ -1,6 +1,7 @@
 #pragma once
 #include "UnrealEd/EditorPanel.h"
 
+class UAnimSequence;
 class SLevelEditor;
 
 class AnimTimelinePanel : public UEditorPanel
@@ -13,6 +14,7 @@ public:
 private:
     SLevelEditor* activeLevelEditor;
     float Width = 300, Height = 100;
+    UAnimSequence* CurrAnimSeq = nullptr;
 
     void DrawAnimationTimeline();
 };

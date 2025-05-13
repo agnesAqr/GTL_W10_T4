@@ -1922,9 +1922,7 @@ void PropertyEditorPanel::DrawSkeletalMeshPreviewButton(const FString& FilePath)
     {
         UEditorEngine* EditorEngine = Cast<UEditorEngine>(GEngine);
         if (EditorEngine == nullptr)
-        {
             return;
-        }
 
         EditorEngine->SetPreviewMode(EEditorPreviewMode::SkeletalMesh);
         UWorld* World = EditorEngine->CreatePreviewWindow();
@@ -1933,9 +1931,7 @@ void PropertyEditorPanel::DrawSkeletalMeshPreviewButton(const FString& FilePath)
         for (AActor* Actor : CopiedActors)
         {
             if (Actor->IsA<UTransformGizmo>() || Actor->IsA<APlayerCameraManager>())
-            {
                 continue;
-            }
 
             Actor->Destroy();
         }
@@ -1966,20 +1962,17 @@ void PropertyEditorPanel::DrawAnimationPreviewButton(const FString& FilePath)
     {
         UEditorEngine* EditorEngine = Cast<UEditorEngine>(GEngine);
         if (EditorEngine == nullptr)
-        {
             return;
-        }
 
         EditorEngine->SetPreviewMode(EEditorPreviewMode::Animation);
+        // TODO : 추후 World 새로 생성하는 방식으로 변경
         UWorld* World = EditorEngine->CreatePreviewWindow();
 
         const TArray<AActor*> CopiedActors = World->GetActors();
         for (AActor* Actor : CopiedActors)
         {
             if (Actor->IsA<UTransformGizmo>() || Actor->IsA<APlayerCameraManager>())
-            {
                 continue;
-            }
 
             Actor->Destroy();
         }
@@ -1995,11 +1988,11 @@ void PropertyEditorPanel::DrawAnimationPreviewButton(const FString& FilePath)
         MeshComp->SetWorldRotation(FRotator(0.0f, 0.0f, 90.0f));
         TempActor->SetActorScale(FVector(1.0f, 1.0f, 1.0f));
 
-        // Todo : 추후 하나의 PreviewActor 재활용하는 방식으로 변경
         ASkeletalMeshActor* SkeletalMeshActor = World->SpawnActor<ASkeletalMeshActor>();
         SkeletalMeshActor->SetActorLabel("SkeletalMesh");
         USkeletalMeshComponent* SkeletalMeshComp = SkeletalMeshActor->GetComponentByClass<USkeletalMeshComponent>();
-        SkeletalMeshComp->SetSkeletalMesh(FBXLoader::GetSkeletalMesh(FilePath));
+        //SkeletalMeshComp->SetSkeletalMesh(FBXLoader::GetSkeletalMesh(FilePath));
+        SkeletalMeshComp->LoadSkeletalMesh(TEXT("FBX/mixmix2_2.fbx"));
     }
     ImGui::PopStyleColor(1);
 }
