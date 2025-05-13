@@ -33,4 +33,11 @@ public:
 
     void SetLooping(bool InValue) { bLooping = InValue; }
     bool IsLooping() const { return bLooping; }
+
+    /** 
+     * @brief 재생 위치를 직접 설정하고, 필요하면 노티파이를 트리거합니다.
+     * @param InTime        설정할 시간(초)
+     * @param bFireNotifies 이 시간 구간의 Notify 이벤트를 발생시킬지 여부
+     */
+    void SetPosition(float InTime, bool bFireNotifies = false);
 };

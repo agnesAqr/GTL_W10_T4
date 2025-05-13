@@ -124,6 +124,9 @@
     <Filter Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework">
       <UniqueIdentifier>{37b438ba-687a-4ab8-b921-02ed2635d25b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine\Source\ThirdParty\im-neo-sequencer">
+      <UniqueIdentifier>{eec2933f-9fd7-489c-be94-544c79fa5e92}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\Source\Editor\PropertyEditor\IWindowToggleable.h">
@@ -511,6 +514,12 @@
     <ClInclude Include="Engine\Source\Editor\UnrealEd\AnimationPreviewUI.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Actors\ACharacter.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Actors\APawn.h" />
+    <ClInclude Include="Engine\Source\ThirdParty\im-neo-sequencer\imgui_neo_internal.h">
+      <Filter>Engine\Source\ThirdParty\im-neo-sequencer</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Source\ThirdParty\im-neo-sequencer\imgui_neo_sequencer.h">
+      <Filter>Engine\Source\ThirdParty\im-neo-sequencer</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\Source\ThirdParty\DirectXTK\Include\DDSTextureLoader.h" />
@@ -764,6 +773,12 @@
     <ClCompile Include="Engine\Source\Editor\UnrealEd\AnimationPreviewUI.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Actors\ACharacter.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Actors\APawn.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\im-neo-sequencer\imgui_neo_internal.cpp">
+      <Filter>Engine\Source\ThirdParty\im-neo-sequencer</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Source\ThirdParty\im-neo-sequencer\imgui_neo_sequencer.cpp">
+      <Filter>Engine\Source\ThirdParty\im-neo-sequencer</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\ShaderHeaders\GConstantBuffers.hlsli" />

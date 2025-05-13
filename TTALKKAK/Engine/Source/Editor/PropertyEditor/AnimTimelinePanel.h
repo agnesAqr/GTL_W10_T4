@@ -1,8 +1,10 @@
 #pragma once
 #include "UnrealEd/EditorPanel.h"
 
+struct ImFont;
 class UAnimSequence;
 class SLevelEditor;
+class USkeletalMeshComponent;
 
 class AnimTimelinePanel : public UEditorPanel
 {
@@ -14,7 +16,9 @@ public:
 private:
     SLevelEditor* activeLevelEditor;
     float Width = 300, Height = 100;
+    USkeletalMeshComponent* SkeletalMeshComponent;
     UAnimSequence* CurrAnimSeq = nullptr;
+    ImFont* IconFont;
 
     void DrawAnimationTimeline();
 };

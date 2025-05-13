@@ -234,7 +234,7 @@ void USkeletalMeshComponent::UpdateBoneHierarchy()
 void USkeletalMeshComponent::PlayAnimation(UAnimSequence* NewAnimToPlay, bool bLooping)
 {
     CurrentAnimSequence = NewAnimToPlay;
-
+    
     if (OwningAnimInstance && CurrentAnimSequence)
     {
         UAnimSingleNodeInstance* SingleNodeInstance = Cast<UAnimSingleNodeInstance>(OwningAnimInstance);
@@ -310,7 +310,6 @@ void USkeletalMeshComponent::BeginPlay()
         if (OwningAnimInstance)
         {
             OwningAnimInstance->TargetSkeleton = SkeletalMesh->GetRefSkeletal(); 
-
             OwningAnimInstance->NativeInitializeAnimation();
             if (CurrentAnimSequence) 
             {
@@ -456,4 +455,68 @@ void USkeletalMeshComponent::UpdateBoneTransformsFromAnim()
 void USkeletalMeshComponent::HandleAnimNotify(const FAnimNotifyEvent& Notify)
 {
     //Owner->HandleAnimNotify(Notify);
+}
+
+void USkeletalMeshComponent::SetPosition(float InTime, bool bFireNotifies)
+{
+    if (OwningAnimInstance && CurrentAnimSequence)
+    {
+        // UAnimSingleNodeInstance에 시간 세팅
+        UAnimSingleNodeInstance* SingleNodeInst = Cast<UAnimSingleNodeInstance>(OwningAnimInstance);
+        if (SingleNodeInst)
+        {
+            // AnimSingleNodeInstance 의 내부 시간·포즈 업데이트
+            SingleNodeInst->SetPosition(InTime, bFireNotifies);
+        }
+    }
+    else
+    {
+        // 애니메이션이 없는 경우 참조 포즈로 초기화
+        if (SkeletalMesh)
+            SkeletalMesh->UpdateBoneHierarchy();
+    }
+
+    // 애니메이션에 따라 본 트랜스폼을 재계산하여 RenderData 에 반영
+    UpdateBoneTransformsFromAnim();
+    SkeletalMesh->UpdateSkinnedVertices();
+}
+
+void UAnimSingleNodeInstance::SetPosition(float InTime, bool bFireNotifies)
+{
+    if (!CurrentAnimationSeq || !TargetSkeleton)
+        return;
+
+    // 이전 시간 저장
+    PreviousTime = CurrentTime;
+
+    // 원하는 시간으로 설정
+    CurrentTime = InTime;
+
+    // 루핑 처리
+    const float PlayLength = CurrentAnimationSeq->GetPlayLength();
+    if (bLooping && PlayLength > KINDA_SMALL_NUMBER)
+    {
+        CurrentTime = FMath::Fmod(CurrentTime, PlayLength);
+        if (CurrentTime < 0.0f)
+            CurrentTime += PlayLength;
+    }
+    else
+    {
+        CurrentTime = FMath::Clamp(CurrentTime, 0.0f, PlayLength);
+    }
+
+    // Notify 이벤트 트리거 (옵션)
+    if (bFireNotifies)
+        TriggerAnimNotifies(PreviousTime, CurrentTime);
+
+    // 포즈 데이터 초기화
+    CurrentPoseData.Reset();
+    CurrentPoseData.Skeleton = TargetSkeleton;
+    if (TargetSkeleton && TargetSkeleton->BoneTree.Num() > 0)
+    {
+        CurrentPoseData.LocalBoneTransforms.Init(FCompactPoseBone(), TargetSkeleton->BoneTree.Num());
+    }
+
+    // 해당 시간의 포즈 샘플링
+    CurrentAnimationSeq->SamplePoseAtTime(CurrentTime, TargetSkeleton, CurrentPoseData);
 }

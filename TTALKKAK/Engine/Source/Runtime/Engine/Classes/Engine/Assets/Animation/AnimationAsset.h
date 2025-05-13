@@ -142,7 +142,7 @@ inline float UAnimSequence::GetPlayLength() const
 
 inline int32 UAnimSequence::GetNumberOfFrames() const
 {
-    return UAnimSequenceBase::GetNumberOfFrames();
+    return NumFrames;
 }
 
 inline int32 UAnimSequence::GetNumberOfSampledKeys() const

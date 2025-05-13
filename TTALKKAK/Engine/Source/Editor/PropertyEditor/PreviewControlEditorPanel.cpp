@@ -49,7 +49,7 @@ void PreviewControlEditorPanel::Render()
     ImFont* IconFont = io.Fonts->Fonts[FEATHER_FONT];
     ImVec2 IconSize = ImVec2(32, 32);
 
-    float PanelWidth = (Width) * 0.8f;
+    float PanelWidth = Width;
     float PanelHeight = 45.0f;
 
     float PanelPosX = 1.0f;
