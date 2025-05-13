@@ -175,6 +175,15 @@ void FSkeletalMeshRenderPass::Execute(const std::shared_ptr<FViewportClient> InV
         }
     }
 
+    if (GCurrentSkinningMode == ESkinningMode::CPU)
+    {
+        Console::GetInstance().overlay.CPUSkinStat.End();
+    }
+    else if (GCurrentSkinningMode == ESkinningMode::GPU)
+    {
+        Console::GetInstance().overlay.GPUSkinStat.End(Graphics.DeviceContext);
+    }
+
     ID3D11ShaderResourceView* nullSRVs[8] = { nullptr };
     ID3D11ShaderResourceView* nullSRV[4] = { nullptr };
     Graphics.DeviceContext->PSSetShaderResources(2, 1, &nullSRVs[0]); //쓰고 해제 나중에 이쁘게 뺴기

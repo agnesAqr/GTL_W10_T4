@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 
+#include "Stat.h"
 #include "D3D11RHI/GraphicDevice.h"
 #include "Delegates/DelegateCombination.h"
 #include "PropertyEditor/IWindowToggleable.h"
@@ -17,46 +18,6 @@ enum class LogLevel
     Error
 };
 
-class StatOverlay 
-{
-public:
-    bool showFPS = false;
-    bool showMemory = false;
-    bool showRender = false;
-    bool showShadow = false;
-
-    void ToggleStat(const std::string& command);
-
-
-    void Render(ID3D11DeviceContext* context, UINT width, UINT height);
-    
-
-private:
-    bool isOpen = true;
-
-    float CalculateFPS() {
-        static int frameCount = 0;
-        static float elapsedTime = 0.0f;
-        static float lastTime = 0.0f;
-
-        float currentTime = GetTickCount64() / 1000.0f;
-        elapsedTime += (currentTime - lastTime);
-        lastTime = currentTime;
-        frameCount++;
-
-        if (elapsedTime > 1.0f) {
-            float fps = frameCount / elapsedTime;
-            frameCount = 0;
-            elapsedTime = 0.0f;
-            return fps;
-        }
-        return 0.0f;
-    }
-
-    void DrawTextOverlay(const std::string& text, int x, int y);
-};
-
-
 class Console : public IWindowToggleable
 {
 private:
@@ -70,20 +31,25 @@ public:
     void Draw();
     void ExecuteCommand(const std::string& command);
     void OnResize(HWND hWnd);
-    void Toggle() override { 
-        if (bWasOpen) {
+    void Toggle() override
+    { 
+        if (bWasOpen)
+        {
             bWasOpen = false;
         }
-        else {
+        else
+        {
             bWasOpen = true;
         }
-    } // Toggle() 구현 
+    } // Toggle() 구현
+    
     void SetShadowFilterMode(const std::string& command);
 
     FOnCPUSkinning OnCPUSkinning;
     FOnGPUSkinning OnGPUSkinning;
 public:
-    struct LogEntry {
+    struct LogEntry
+    {
         LogLevel level;
         FString message;
     };
@@ -108,10 +74,9 @@ public:
     Console(Console&&) = delete;
     Console& operator=(Console&&) = delete;
 
-    StatOverlay overlay;
+    FStatOverlay overlay;
 private:
     bool bExpand = true;
-    UINT width;
-    UINT height;
-
+    uint32 width;
+    uint32 height;
 };

@@ -237,6 +237,7 @@ robocopy "$(ProjectDir)Icon"     "$(OutDir)\Icon"     *.* /E /R:3 /W:5 /NFL /NDL
     <ClCompile Include="Engine\Source\Runtime\Engine\FBX\FBXDefine.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\PlayerCameraManager.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Engine\AssetManager.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\UserInterface\Stat.cpp" />
     <ClCompile Include="Engine\Source\Runtime\InputCore\InputCoreTypes.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Physics\FCollisionManager.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Core\Coroutine\CoroutineManager.cpp" />
@@ -459,6 +460,7 @@ robocopy "$(ProjectDir)Icon"     "$(OutDir)\Icon"     *.* /E /R:3 /W:5 /NFL /NDL
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Engine\Assets\Animation\IAnimationDataModel.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Engine\Assets\UAsset.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\FBX\FBXDefine.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\UserInterface\Stat.h" />
     <ClInclude Include="Engine\Source\Runtime\InputCore\InputCoreTypes.h" />
     <ClInclude Include="Engine\Source\Runtime\Launch\ShowFlags.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\PlayerCameraManager.h" />

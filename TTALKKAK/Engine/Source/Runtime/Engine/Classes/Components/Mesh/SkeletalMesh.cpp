@@ -240,7 +240,7 @@ void USkeletalMesh::UpdateSkinnedVertices()
             SkeletalMeshRenderData.Vertices[i].Position = GetRefSkeletal()->RawVertices[i].Position;
         }
     }
-
+    
     // CPU Skinning
     if (GCurrentSkinningMode == ESkinningMode::CPU)
     {

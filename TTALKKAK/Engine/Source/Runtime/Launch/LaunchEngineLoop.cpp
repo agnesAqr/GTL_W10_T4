@@ -6,6 +6,7 @@
 #include "Contents/UI/ContentsUI.h"
 #include "ImGUI/imgui.h"
 #include "FBXLoader.h"
+#include "Animation/AnimationSettings.h"
 #include "LevelEditor/SLevelEditor.h"
 #include "PropertyEditor/ViewportTypePanel.h"
 #include "Renderer/Renderer.h"
@@ -35,7 +36,7 @@ int32 FEngineLoop::Init(HINSTANCE hInstance)
     
     Renderer.Initialize(&GraphicDevice);
     ResourceManager.Initialize(&GraphicDevice);
-
+    Console::GetInstance().overlay.Init(GraphicDevice.Device);
     
     // if (bIsEditor)
     {
@@ -85,6 +86,14 @@ void FEngineLoop::Tick()
         }
         const float DeltaTime = static_cast<float>(ElapsedTime / 1000.f);
 
+        if (GCurrentSkinningMode == ESkinningMode::CPU)
+        {
+            Console::GetInstance().overlay.CPUSkinStat.Begin();
+        }
+        else if (GCurrentSkinningMode == ESkinningMode::GPU)
+        {
+            Console::GetInstance().overlay.GPUSkinStat.Begin(GEngineLoop.GraphicDevice.DeviceContext);
+        }
         GEngine->Tick(DeltaTime);
 
         Render();
@@ -171,6 +180,7 @@ void FEngineLoop::Render()
             else if (TargetWorld->WorldType == EWorldType::PIE)
             {
                 EditorEngine->GetUnrealEditor()->RenderInPIE();
+                Console::GetInstance().Draw();
                 // if (LevelEditor->GetEditorStateManager().GetEditorState() != EEditorState::Playing || EditorEngine->bForceEditorUI == true)
                 // {
                 //     EditorEngine->GetUnrealEditor()->RenderInPIE();
@@ -184,6 +194,7 @@ void FEngineLoop::Render()
             {
                 EditorEngine->GetSkeletalPreviewUI()->Render();
             }
+
         }
         ImGuiManager::Get().EndFrame(AppWindow);
     

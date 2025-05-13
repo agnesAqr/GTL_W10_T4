@@ -40,6 +40,7 @@ void UEditorEngine::Init()
     UnrealEditor->Initialize(LevelEditor, GEngineLoop.GraphicDevice.GetDefaultWindowData().ScreenWidth, GEngineLoop.GraphicDevice.GetDefaultWindowData().ScreenHeight);
     SkeletalPreviewUI->Initialize(LevelEditor, GEngineLoop.GraphicDevice.GetDefaultWindowData().ScreenWidth, GEngineLoop.GraphicDevice.GetDefaultWindowData().ScreenHeight);
     ContentsUI->Initialize();
+    
     CollisionManager.Initialize();  
     FLuaManager::Get().Initialize();    
 
