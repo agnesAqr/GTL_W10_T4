@@ -26,12 +26,10 @@ void FFinalRenderPass::Prepare(const std::shared_ptr<FViewportClient> InViewport
         Graphics.SwapPingPongBuffers();
         
         Graphics.DeviceContext->OMSetRenderTargets(1, &Graphics.GetCurrentWindowData()->FrameBufferRTV, nullptr);
+        Graphics.DeviceContext->RSSetState(Renderer.GetResourceManager()->GetRasterizerState(ERasterizerState::SolidBack));
         Graphics.DeviceContext->OMSetDepthStencilState(Renderer.GetDepthStencilState(EDepthStencilState::DepthNone), 0);
 
         Graphics.DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-        
-        ID3D11SamplerState* Sampler = Renderer.GetSamplerState(ESamplerType::Point);
-        Graphics.DeviceContext->PSSetSamplers(0, 1, &Sampler);
 
         const auto PreviousSRV = Graphics.GetPreviousShaderResourceView();
         Graphics.DeviceContext->PSSetShaderResources(0, 1, &PreviousSRV);

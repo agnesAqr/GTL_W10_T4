@@ -83,7 +83,7 @@ void FShadowRenderPass::Prepare(std::shared_ptr<FViewportClient> InViewportClien
     Graphics.DeviceContext->OMSetDepthStencilState(Renderer.GetDepthStencilState(EDepthStencilState::LessEqual), 0);
 
     Graphics.DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST); // 정정 연결 방식 설정
-    Graphics.DeviceContext->RSSetState(Renderer.GetCurrentRasterizerState());
+    Graphics.DeviceContext->RSSetState(Renderer.GetRasterizerState(ERasterizerState::SolidBack));
     
     ID3D11SamplerState* CompareSampler = Renderer.GetSamplerState(ESamplerType::ComparisonSampler);
     Graphics.DeviceContext->PSSetSamplers(static_cast<uint32>(ESamplerType::ComparisonSampler), 1, &CompareSampler);

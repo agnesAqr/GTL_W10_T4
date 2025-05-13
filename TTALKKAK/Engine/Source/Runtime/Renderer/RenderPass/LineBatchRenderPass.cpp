@@ -195,7 +195,7 @@ void FLineBatchRenderPass::Prepare(std::shared_ptr<FViewportClient> InViewportCl
     const FGraphicsDevice& Graphics = GEngineLoop.GraphicDevice;
     FRenderResourceManager* renderResourceManager = Renderer.GetResourceManager();
 
-    Graphics.DeviceContext->RSSetState(Renderer.GetCurrentRasterizerState()); //레스터 라이저 상태 설정
+    Graphics.DeviceContext->RSSetState(Renderer.GetRasterizerState(ERasterizerState::SolidBack)); //레스터 라이저 상태 설정
     Graphics.DeviceContext->OMSetDepthStencilState(Renderer.GetDepthStencilState(EDepthStencilState::LessEqual), 0);
     
     const auto CurRTV = Graphics.GetCurrentRenderTargetView();

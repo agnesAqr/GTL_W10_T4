@@ -101,7 +101,10 @@ private:
     std::shared_ptr<FStaticMeshRenderPass> GoroudRenderPass;
     std::shared_ptr<FStaticMeshRenderPass> LambertRenderPass;
     std::shared_ptr<FStaticMeshRenderPass> PhongRenderPass;
+
+    // 일단 Phong밖에 안함
     std::shared_ptr<FSkeletalMeshRenderPass> SkeletalRenderPass;
+    
     std::shared_ptr<FLineBatchRenderPass> LineBatchRenderPass;
     std::shared_ptr<FGizmoRenderPass> GizmoRenderPass;
     //std::shared_ptr<FComputeTileLightCulling> ComputeTileLightCulling;
