@@ -163,11 +163,10 @@ void USkeletalMeshComponent::SetSkeletalMesh(USkeletalMesh* value)
 
         if (OwningAnimInstance)
         {
-            UE_LOG(LogLevel::Display, TEXT("  Setting TargetSkeleton. SkeletalMesh is: %s. RefSkeletal is: %s"),
+            UE_LOG(LogLevel::Display, TEXT("Setting Target Skeleton. SkeletalMesh is: %s. RefSkeletal is: %s"),
                 SkeletalMesh ? TEXT("VALID") : TEXT("NULL"),
                 (SkeletalMesh && SkeletalMesh->GetRefSkeletal()) ? TEXT("VALID") : TEXT("NULL"));
             OwningAnimInstance->TargetSkeleton = SkeletalMesh->GetRefSkeletal(); // TargetSkeleton public 가정
-
             OwningAnimInstance->NativeInitializeAnimation(); // 스켈레톤 설정 후 초기화
 
             // 만약 기본 애니메이션이 있다면 여기서 설정
@@ -211,13 +210,12 @@ USkeletalMesh* USkeletalMeshComponent::LoadSkeletalMesh(const FString& FilePath)
 {
     // FBXLoader가 USkeletalMesh를 생성하고 내부적으로 RefSkeletal도 채운다고 가정
     USkeletalMesh* NewSkeletalMesh = FBXLoader::GetSkeletalMesh(FilePath);
-    // 애니메이션은 별도로 로드하고 관리
-    FBXLoader::GetAnimationSequence(FilePath);
-
     if (NewSkeletalMesh)
     {
         SetSkeletalMesh(NewSkeletalMesh);
     }
+    // 애니메이션은 별도로 로드하고 관리
+    CurrentAnimSequence = FBXLoader::GetAnimationSequence(FilePath);
 
     return NewSkeletalMesh;
 }
@@ -300,10 +298,8 @@ void USkeletalMeshComponent::SkinningVertex()
 // FIX-ME
 void USkeletalMeshComponent::BeginPlay()
 {
-    Super::BeginPlay(); 
-
-    CurrentAnimSequence = FBXLoader::GetAnimationSequence("FBX/mixmix2_2.fbx");
-
+    Super::BeginPlay();
+    
     if (OwningAnimInstance)
     {
         OwningAnimInstance->NativeInitializeAnimation();

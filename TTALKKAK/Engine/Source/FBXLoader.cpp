@@ -1106,14 +1106,7 @@ USkeletalMesh* FBXLoader::CreateSkeletalMesh(const FString& FilePath)
 
 USkeletalMesh* FBXLoader::GetSkeletalMesh(const FString& FilePath)
 {
-    if (SkeletalMeshMap.Contains(FilePath))
-    {
-        return SkeletalMeshMap[FilePath];
-    }
-    else
-    {
-        return CreateSkeletalMesh(FilePath);
-    }
+    return SkeletalMeshMap.Contains(FilePath) ? SkeletalMeshMap[FilePath] : CreateSkeletalMesh(FilePath);
 }
 
 FSkeletalMeshRenderData FBXLoader::GetCopiedSkeletalRenderData(FString FilePath)
@@ -1131,12 +1124,7 @@ FSkeletalMeshRenderData FBXLoader::GetCopiedSkeletalRenderData(FString FilePath)
 FRefSkeletal* FBXLoader::GetRefSkeletal(FString FilePath)
 {
     // TODO: 폴더에서 가져올 수 있으면 가져오기
-    if (RefSkeletalData.Contains(FilePath))
-    {
-        return RefSkeletalData[FilePath];
-    }
-    
-    return nullptr;
+    return RefSkeletalData.Contains(FilePath) ? RefSkeletalData[FilePath] : nullptr;
 }
 
 UAnimSequence* FBXLoader::CreateAnimationSequence(const FString& FilePath)
@@ -1144,7 +1132,6 @@ UAnimSequence* FBXLoader::CreateAnimationSequence(const FString& FilePath)
     ParseFBX(FilePath);
 
     UAnimSequence* AnimSequence = FObjectFactory::ConstructObject<UAnimSequence>(nullptr);
-
     UAnimDataModel* AnimDataModel = GetAnimDataModel(FilePath);
     AnimSequence->SetAnimDataModel(AnimDataModel);
     SkeletalAnimSequences.Add(FilePath, AnimSequence);
@@ -1154,20 +1141,12 @@ UAnimSequence* FBXLoader::CreateAnimationSequence(const FString& FilePath)
 
 UAnimSequence* FBXLoader::GetAnimationSequence(const FString& FilePath)
 {
-    if (SkeletalAnimSequences.Contains(FilePath))
-    {
-        return SkeletalAnimSequences[FilePath];
-    }
-
-    return CreateAnimationSequence(FilePath);
+    return SkeletalAnimSequences.Contains(FilePath) ? SkeletalAnimSequences[FilePath] : CreateAnimationSequence(FilePath);
 }
 
 UAnimDataModel* FBXLoader::GetAnimDataModel(const FString& FilePath)
 {
-    if (AnimDataModels.Contains(FilePath))
-        return AnimDataModels[FilePath];
-
-    return nullptr;
+    return AnimDataModels.Contains(FilePath) ? AnimDataModels[FilePath] : nullptr;
 }
 
 void FBXLoader::AddVertexFromControlPoint(
