@@ -26,7 +26,7 @@ public:
     virtual void DuplicateSubObjects(const UObject* Source, UObject* InOuter) override;
     virtual void PostDuplicate() override;
 
-    /** 애님 Notify 전달을 받는 예시 함수 */
+    /** Anim Notify 전달을 받는 함수 */
     virtual void HandleAnimNotify(const FAnimNotifyEvent& Notify);
 
 protected:
