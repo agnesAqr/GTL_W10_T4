@@ -166,7 +166,11 @@ void Console::ExecuteCommand(const std::string& command)
         AddLog(LogLevel::Display, " - help: Shows available commands");
         AddLog(LogLevel::Display, " - stat fps: Toggle FPS display");
         AddLog(LogLevel::Display, " - stat memory: Toggle Memory display");
+        AddLog(LogLevel::Display, " - stat skin: Toggle Skinning performance display");
+        AddLog(LogLevel::Display, " - stat skinning: Toggle Skinning performance display");
         AddLog(LogLevel::Display, " - stat none: Hide all stat overlays");
+        AddLog(LogLevel::Display, " - skinning cpu: Perform CPU skinning and log mode");
+        AddLog(LogLevel::Display, " - skinning gpu: Perform GPU skinning and log mode");
     }
     else if (command.rfind("stat ", 0) == 0)
     {

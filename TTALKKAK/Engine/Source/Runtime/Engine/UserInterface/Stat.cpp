@@ -90,7 +90,7 @@ void FStatOverlay::ToggleStat(const std::string& command)
     {
         showShadow = true; showRender = true; isOpen = true;
     }
-    else if (command == "stat skinning")
+    else if (command == "stat skin" || command == "stat skinning")
     {
         CPUSkinStat.Reset();
         GPUSkinStat.Reset();
