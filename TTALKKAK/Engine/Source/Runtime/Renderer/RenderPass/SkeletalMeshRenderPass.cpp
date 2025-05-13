@@ -30,14 +30,6 @@ extern UEngine* GEngine;
 
 FSkeletalMeshRenderPass::FSkeletalMeshRenderPass(const FName& InShaderName) : FBaseRenderPass(InShaderName)
 {
-    const FGraphicsDevice& Graphics = FEngineLoop::GraphicDevice;
-
-    D3D11_BUFFER_DESC constdesc = {};
-    constdesc.ByteWidth = sizeof(FLightingConstants);
-    constdesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-    constdesc.Usage = D3D11_USAGE_DYNAMIC;
-    constdesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-    Graphics.Device->CreateBuffer(&constdesc, nullptr, &LightConstantBuffer);
 }
 
 void FSkeletalMeshRenderPass::AddRenderObjectsToRenderPass(UWorld* World)
@@ -354,9 +346,7 @@ void FSkeletalMeshRenderPass::UpdateLightConstants()
     LightConstant.NumPointLights = PointLightCount;
     LightConstant.NumSpotLights = SpotLightCount;
     
-    renderResourceManager->UpdateConstantBuffer(LightConstantBuffer, &LightConstant);
-    Graphics.DeviceContext->VSSetConstantBuffers(1, 1, &LightConstantBuffer);
-    Graphics.DeviceContext->PSSetConstantBuffers(2, 1, &LightConstantBuffer);
+    renderResourceManager->UpdateConstantBuffer(renderResourceManager->GetConstantBuffer(TEXT("FLightingConstants")), &LightConstant);
 }
 
 void FSkeletalMeshRenderPass::UpdateMaterialConstants(const FObjMaterialInfo& MaterialInfo)

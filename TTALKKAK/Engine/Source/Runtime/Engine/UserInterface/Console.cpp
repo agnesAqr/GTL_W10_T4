@@ -181,11 +181,13 @@ void Console::ExecuteCommand(const std::string& command)
     else if (command == "skinning cpu")
     {
         GCurrentSkinningMode = ESkinningMode::CPU;
+        OnCPUSkinning.ExecuteIfBound();
         AddLog(LogLevel::Display, "Skinning mode : CPU");
     }
     else if (command == "skinning gpu")
     {
         GCurrentSkinningMode = ESkinningMode::GPU;
+        OnGPUSkinning.ExecuteIfBound();
         AddLog(LogLevel::Display, "Skinning mode : GPU");
     }
     else {

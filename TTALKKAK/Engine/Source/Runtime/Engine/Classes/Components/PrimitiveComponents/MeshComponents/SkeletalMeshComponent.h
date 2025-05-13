@@ -37,7 +37,7 @@ public:
     void SetSkeletalMesh(USkeletalMesh* value);
     USkeletalMesh* LoadSkeletalMesh(const FString& FilePath);
     void CreateBoneComponents();
-    //void UpdateBoneHierarchy();
+    void UpdateBoneHierarchy();
 
     // 이걸 여기 두는 것 자체가 별로긴 함. 근데 학습 자료에 그렇게 나와 있음.
     void PlayAnimation(UAnimSequence* NewAnimToPlay, bool bLooping = true);
@@ -47,7 +47,7 @@ public:
 
 private:
     TArray<UStaticMeshComponent*> BoneComponents;
-    //void SkinningVertex();
+    void SkinningVertex();
     
     UAnimInstance* OwningAnimInstance;
     UAnimSequence* CurrentAnimSequence;

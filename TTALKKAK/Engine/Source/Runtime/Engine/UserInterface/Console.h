@@ -2,9 +2,13 @@
 #include <string>
 
 #include "D3D11RHI/GraphicDevice.h"
+#include "Delegates/DelegateCombination.h"
 #include "PropertyEditor/IWindowToggleable.h"
 
 #define UE_LOG Console::GetInstance().AddLog
+
+DECLARE_DELEGATE(FOnCPUSkinning)
+DECLARE_DELEGATE(FOnGPUSkinning)
 
 enum class LogLevel
 {
@@ -51,6 +55,8 @@ private:
 
     void DrawTextOverlay(const std::string& text, int x, int y);
 };
+
+
 class Console : public IWindowToggleable
 {
 private:
@@ -73,6 +79,9 @@ public:
         }
     } // Toggle() 구현 
     void SetShadowFilterMode(const std::string& command);
+
+    FOnCPUSkinning OnCPUSkinning;
+    FOnGPUSkinning OnGPUSkinning;
 public:
     struct LogEntry {
         LogLevel level;

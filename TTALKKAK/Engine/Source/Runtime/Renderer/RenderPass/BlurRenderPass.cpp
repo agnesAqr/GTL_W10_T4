@@ -44,7 +44,7 @@ void FBlurRenderPass::Prepare(std::shared_ptr<FViewportClient> InViewportClient)
         Graphics.DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
         
         ID3D11SamplerState* Sampler = Renderer.GetSamplerState(ESamplerType::Point);
-        Graphics.DeviceContext->PSSetSamplers(0, 1, &Sampler);
+        Graphics.DeviceContext->PSSetSamplers(static_cast<uint64>(ESamplerType::Point), 1, &Sampler);
 
         const auto PreviousSRV = Graphics.GetPreviousShaderResourceView();
         Graphics.DeviceContext->PSSetShaderResources(0, 1, &PreviousSRV);

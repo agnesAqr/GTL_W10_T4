@@ -38,6 +38,4 @@ private:
     
     TArray<ULightComponentBase*> LightComponents;
     TArray<USkeletalMeshComponent*> SkeletalMeshComponents;
-    
-    ID3D11Buffer* LightConstantBuffer = nullptr;
 };

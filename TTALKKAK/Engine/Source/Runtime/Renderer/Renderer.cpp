@@ -51,12 +51,6 @@ void FRenderer::Initialize(FGraphicsDevice* graphics)
     RenderResourceManager->Initialize();
 
     //CreateComputeShader();
-    
-    D3D_SHADER_MACRO defines[] = 
-    {
-        {"LIGHTING_MODEL_GOURAUD", "1"},
-        {nullptr, nullptr}
-    };
     //SetViewMode(VMI_Lit_Phong);
     
     CreateVertexPixelShader(TEXT("UberLit"), GouradDefines);
