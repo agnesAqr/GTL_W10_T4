@@ -1041,7 +1041,7 @@ void PropertyEditorPanel::RenderForSkeletalMesh2(USkeletalMeshComponent* Skeleta
         #pragma endregion
 
         DrawSkeletalMeshPreviewButton(SkeletalMesh->GetSkeletalMesh()->GetRenderData().Name);
-        //if (SkeletalMesh->HasAnimation())
+        if (SkeletalMesh->HasAnimation())
             DrawAnimationPreviewButton(SkeletalMesh->GetSkeletalMesh()->GetRenderData().Name);
 
         ImGui::TreePop();

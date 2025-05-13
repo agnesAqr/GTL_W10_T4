@@ -144,7 +144,6 @@ void USkeletalMeshComponent::SetSkeletalMesh(USkeletalMesh* value)
     if (SkeletalMesh == value) return;
 
     SkeletalMesh = value;
-
     if (SkeletalMesh)
     {
         VBIBTopologyMappingName = SkeletalMesh->GetFName();
@@ -453,10 +452,8 @@ void USkeletalMeshComponent::UpdateBoneTransformsFromAnim()
         // else: 루트 본이거나 ParentIndex가 유효하지 않으면, ParentGlobalTransformMatrix는 Identity로 유지됩니다.
 
         RenderData.Bones[BoneTreeIndex].GlobalTransform = RenderData.Bones[BoneTreeIndex].LocalTransform * ParentGlobalTransformMatrix;
-        //RenderData.Bones[BoneTreeIndex].GlobalTransform = ParentGlobalTransformMatrix * RenderData.Bones[BoneTreeIndex].LocalTransform;
 
         RenderData.Bones[BoneTreeIndex].SkinningMatrix = RenderData.Bones[BoneTreeIndex].InverseBindPoseMatrix * RenderData.Bones[BoneTreeIndex].GlobalTransform;
-        //RenderData.Bones[BoneTreeIndex].SkinningMatrix = RenderData.Bones[BoneTreeIndex].GlobalTransform * RenderData.Bones[BoneTreeIndex].InverseBindPoseMatrix;
     }
 }
 

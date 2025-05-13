@@ -48,7 +48,6 @@ USkeletalMeshComponent* UAnimInstance::GetSkelMeshComponent() const
 {
     return Cast<USkeletalMeshComponent>(GetOuter());
 }
-}
 
 void UAnimInstance::TriggerAnimNotifies(float PrevTime, float CurrTime)
 {
