@@ -30,8 +30,7 @@ private:
     UAnimSequence* AnimationB;
     float BlendAlpha;
 
-    float CurrentTimeA;
-    float CurrentTimeB;
+    float NormalizedTime;
 
     FPoseData PoseDataA;
     FPoseData PoseDataB;

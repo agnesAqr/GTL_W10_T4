@@ -7,9 +7,8 @@
 UBlendAnimInstance::UBlendAnimInstance()
     : AnimationA(nullptr)
     , AnimationB(nullptr)
-    , BlendAlpha(1.f)
-    , CurrentTimeA(0.f)
-    , CurrentTimeB(0.f)
+    , BlendAlpha(0.8f)
+    , NormalizedTime(0.f)
 {
     AnimationA = FBXLoader::GetAnimationSequence("FBX/Walking.fbx");
     AnimationB = FBXLoader::GetAnimationSequence("FBX/Sneak_Walking.fbx");
@@ -19,8 +18,7 @@ UBlendAnimInstance::UBlendAnimInstance(const UBlendAnimInstance& Other)
     : AnimationA(Other.AnimationA)
     , AnimationB(Other.AnimationB)
     , BlendAlpha(Other.BlendAlpha)
-    , CurrentTimeA(Other.CurrentTimeA)
-    , CurrentTimeB(Other.CurrentTimeB)
+    , NormalizedTime(Other.NormalizedTime)
 {
 }
 
@@ -55,8 +53,7 @@ void UBlendAnimInstance::NativeInitializeAnimation()
 {
     Super::NativeInitializeAnimation();
 
-    CurrentTimeA = 0.0f;
-    CurrentTimeB = 0.0f;
+    NormalizedTime = 0.0f;
 
     PoseDataA.Reset();
     PoseDataB.Reset();
@@ -72,40 +69,88 @@ void UBlendAnimInstance::NativeInitializeAnimation()
 
     if (AnimationA&&AnimationB && TargetSkeleton)
     {
-        AnimationA->SamplePoseAtTime(CurrentTimeA, TargetSkeleton, PoseDataA);
-        AnimationB->SamplePoseAtTime(CurrentTimeB, TargetSkeleton, PoseDataB);
+
+        float SampleTimeA = NormalizedTime * AnimationA->GetPlayLength();
+        float SampleTimeB = NormalizedTime * AnimationB->GetPlayLength();
+
+        AnimationA->SamplePoseAtTime(SampleTimeA, TargetSkeleton, PoseDataA);
+        AnimationB->SamplePoseAtTime(SampleTimeB, TargetSkeleton, PoseDataB);
+
+        AnimationUtils::BlendPoses(PoseDataA, PoseDataB, BlendAlpha, CurrentPoseData);
     }
 
-    SetBlendAlpha(0.5f);
 }
 
 void UBlendAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
     Super::NativeUpdateAnimation(DeltaSeconds);
-    AnimationA->SetSkeletal(TargetSkeleton);
-    AnimationB->SetSkeletal(TargetSkeleton);
 
-    if (AnimationA && AnimationB && TargetSkeleton)
+    if (!AnimationA || !AnimationB || !TargetSkeleton || TargetSkeleton->BoneTree.Num() == 0)
     {
-        if (AnimationA->GetPlayLength() > 0.f)
-        {
-            CurrentTimeA += DeltaSeconds * AnimationA->GetRateScale();
-            CurrentTimeA = FMath::Fmod(CurrentTimeA, AnimationA->GetPlayLength());
-        }
-        if (AnimationB->GetPlayLength() > 0.f)
-        {
-            CurrentTimeB += DeltaSeconds * AnimationB->GetRateScale();
-            CurrentTimeB = FMath::Fmod(CurrentTimeB, AnimationB->GetPlayLength());
-        }
+        return;
+    }
 
-        // TargetSkeleton에서 뼈 개수를 가져와서 Reset 호출해야하는데 일단 지금 본 갯수 빼고 했음. 문제 생기면 이게 문제일 확률이 매우 높음.
-        PoseDataA.Reset();
-        PoseDataB.Reset();
 
-        // FIX-ME
-        AnimationA->SamplePoseAtTime(CurrentTimeA, TargetSkeleton, PoseDataA);
-        AnimationB->SamplePoseAtTime(CurrentTimeB, TargetSkeleton, PoseDataB);
+    float PlayLengthA = AnimationA->GetPlayLength();
+    float PlayLengthB = AnimationB->GetPlayLength();
+    float RateScaleA = AnimationA->GetRateScale();
+    float RateScaleB = AnimationB->GetRateScale();
 
-        AnimationUtils::BlendPoses(PoseDataA, PoseDataB, BlendAlpha, CurrentPoseData);\
+    // 두 애니메이션 중 하나라도 유효한 길이가 있어야 함
+    if (PlayLengthA <= MINIMUM_ANIMATION_LENGTH && PlayLengthB <= MINIMUM_ANIMATION_LENGTH)
+    {
+        return;
+    }
+
+    float SafePlayLengthA = FMath::Max(PlayLengthA, MINIMUM_ANIMATION_LENGTH);
+    float SafePlayLengthB = FMath::Max(PlayLengthB, MINIMUM_ANIMATION_LENGTH);
+
+    float EffectivePlayLength = FMath::Lerp(SafePlayLengthA, SafePlayLengthB, BlendAlpha);
+    float EffectiveRateScale = FMath::Lerp(RateScaleA, RateScaleB, BlendAlpha);
+
+    if (EffectivePlayLength > MINIMUM_ANIMATION_LENGTH && EffectiveRateScale > KINDA_SMALL_NUMBER)
+    {
+        NormalizedTime += (DeltaSeconds * EffectiveRateScale) / EffectivePlayLength;
+        NormalizedTime = FMath::Fmod(NormalizedTime, 1.0f);
+    }
+    else if (PlayLengthA > MINIMUM_ANIMATION_LENGTH && RateScaleA > KINDA_SMALL_NUMBER) // B가 문제일 때 A 기준
+    {
+        NormalizedTime += (DeltaSeconds * RateScaleA) / PlayLengthA;
+        NormalizedTime = FMath::Fmod(NormalizedTime, 1.0f);
+    }
+    else if (PlayLengthB > MINIMUM_ANIMATION_LENGTH && RateScaleB > KINDA_SMALL_NUMBER) // A가 문제일 때 B 기준
+    {
+        NormalizedTime += (DeltaSeconds * RateScaleB) / PlayLengthB;
+        NormalizedTime = FMath::Fmod(NormalizedTime, 1.0f);
+    }
+
+    float CurrentTimeA = NormalizedTime * PlayLengthA;
+    float CurrentTimeB = NormalizedTime * PlayLengthB;
+
+    const int32 NumBones = TargetSkeleton->BoneTree.Num();
+    PoseDataA.LocalBoneTransforms.Empty();
+    PoseDataB.LocalBoneTransforms.Empty();
+
+    PoseDataA.LocalBoneTransforms.Init(FCompactPoseBone(), NumBones);
+    PoseDataB.LocalBoneTransforms.Init(FCompactPoseBone(), NumBones);
+
+    AnimationA->SamplePoseAtTime(CurrentTimeA, TargetSkeleton, PoseDataA);
+    AnimationB->SamplePoseAtTime(CurrentTimeB, TargetSkeleton, PoseDataB);
+
+    if (PoseDataA.LocalBoneTransforms.Num() == 0 && PoseDataB.LocalBoneTransforms.Num() > 0)
+    {
+        CurrentPoseData = PoseDataB; // B만 유효하면 B 사용
+    }
+    else if (PoseDataB.LocalBoneTransforms.Num() == 0 && PoseDataA.LocalBoneTransforms.Num() > 0)
+    {
+        CurrentPoseData = PoseDataA; // A만 유효하면 A 사용
+    }
+    else if (PoseDataA.LocalBoneTransforms.Num() > 0 && PoseDataB.LocalBoneTransforms.Num() > 0)
+    {
+        AnimationUtils::BlendPoses(PoseDataA, PoseDataB, BlendAlpha, CurrentPoseData);
+    }
+    else
+    {
+        CurrentPoseData.LocalBoneTransforms.Init(FCompactPoseBone(), NumBones); // 예: 바인드 포즈로 초기화
     }
 }
