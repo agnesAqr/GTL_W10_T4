@@ -67,6 +67,7 @@ namespace AnimationUtils
 
         const int32 NumBones = PoseA.LocalBoneTransforms.Num();
         OutBlendedPose.Reset();
+        OutBlendedPose.LocalBoneTransforms.Init(FCompactPoseBone(), NumBones);
 
         for (int32 i = 0; i < NumBones; ++i)
         {

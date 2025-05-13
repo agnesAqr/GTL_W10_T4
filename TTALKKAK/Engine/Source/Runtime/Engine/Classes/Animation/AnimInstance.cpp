@@ -33,6 +33,7 @@ void UAnimInstance::NativeInitializeAnimation()
 {
     USkeletalMeshComponent* SkelComp = GetSkelMeshComponent();
     TargetSkeleton = SkelComp->GetSkeletalMesh()->GetRefSkeletal();
+    CurrentPoseData.Reset();
 }
 
 void UAnimInstance::NativeUpdateAnimation(float DeltaSeconds)

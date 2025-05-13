@@ -11,9 +11,8 @@ UAnimSingleNodeInstance::UAnimSingleNodeInstance()
     , CurrentTime(0.0f)
     , bLooping(true)
 {
-    // Begin Test
-    AnimationSequence = FBXLoader::GetAnimationSequence("FBX/Walking.fbx");
-    // End Test
+    // 이거를 삭제하라고 하는디 아무리 생각해도 여기 맞긴 함
+    AnimationSequence = FBXLoader::GetAnimationSequence("FBX/Sneak_Walking.fbx");
 }
 
 UAnimSingleNodeInstance::UAnimSingleNodeInstance(const UAnimSingleNodeInstance& Other)
@@ -41,9 +40,6 @@ void UAnimSingleNodeInstance::DuplicateSubObjects(const UObject* Source, UObject
     const UAnimSingleNodeInstance* Origin = Cast<UAnimSingleNodeInstance>(Source);
     if (Origin)
     {
-        // AnimationSequence is a UObject pointer, typically an asset.
-        // We don't duplicate assets here, just copy the pointer.
-        // If it were a sub-object owned exclusively by this instance, duplication logic would be needed.
         this->AnimationSequence = Origin->AnimationSequence;
     }
 }
@@ -93,8 +89,6 @@ void UAnimSingleNodeInstance::NativeInitializeAnimation()
     Super::NativeInitializeAnimation();
 
     CurrentTime = 0.0f;
-    CurrentPoseData.Reset();
-
 
     if (TargetSkeleton)
     {
@@ -105,8 +99,12 @@ void UAnimSingleNodeInstance::NativeInitializeAnimation()
         }
     }
 
-    UAnimSequence* AnimSequence = FBXLoader::GetAnimationSequence("FBX/Walking.fbx");
-    SetAnimation(AnimSequence, true);
+    if (AnimationSequence && TargetSkeleton)
+    {
+        AnimationSequence->SamplePoseAtTime(CurrentTime, TargetSkeleton, CurrentPoseData);
+    }
+
+    //SetAnimation(AnimationSequence, true);
 }
 
 

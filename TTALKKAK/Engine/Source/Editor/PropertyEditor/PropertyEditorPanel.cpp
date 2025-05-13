@@ -38,6 +38,11 @@
 #include "UnrealEd/EditorViewportClient.h"
 #include "UObject/FunctionRegistry.h"
 
+#include "Animation/AnimInstance.h"
+#include "Animation/AnimSingleNodeInstance.h"
+#include "Animation/BlendAnimInstance.h"
+#include "CoreUObject/UObject/NameTypes.h"
+
 void PropertyEditorPanel::Initialize(float InWidth, float InHeight)
 {
     Width = InWidth;
@@ -990,19 +995,115 @@ void PropertyEditorPanel::RenderForSkeletalMesh(USkeletalMeshComponent* Skeletal
     ImGui::PopStyleColor();
 }
 
-void PropertyEditorPanel::RenderForSkeletalMesh2(USkeletalMeshComponent* SkeletalMesh)
+void PropertyEditorPanel::RenderForSkeletalMesh2(USkeletalMeshComponent* SkeletalMeshComp) // 변수명 변경하여 명확화
 {
-    if (SkeletalMesh->GetSkeletalMesh() == nullptr)
+    if (!SkeletalMeshComp || !SkeletalMeshComp->GetSkeletalMesh())
     {
         return;
     }
-    
+
     ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.1f, 0.1f, 0.1f, 1.0f));
     if (ImGui::TreeNodeEx("Skeletal Mesh", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen))
     {
-        ImGui::Text("Skeletal Mesh");
+        ImGui::Text("Skeletal Mesh: %s", *SkeletalMeshComp->GetSkeletalMesh()->GetRenderData().Name); // 메시 이름 표시
 
-        DrawSkeletalMeshPreviewButton(SkeletalMesh->GetSkeletalMesh()->GetRenderData().Name);
+        DrawSkeletalMeshPreviewButton(SkeletalMeshComp->GetSkeletalMesh()->GetRenderData().Name);
+
+
+
+        UAnimInstance* CurrentActualAnimInstance = SkeletalMeshComp->GetAnimInstance();
+        FString CurrentInstanceName = CurrentActualAnimInstance ? CurrentActualAnimInstance->GetClass()->GetName() : TEXT("None");
+
+        struct AnimInstanceOption 
+        {
+            const char* DisplayName;
+            UClass* ClassType;
+        };
+
+        static const TArray<AnimInstanceOption> AnimInstanceOptions = {
+            {"UAnimInstance", UAnimInstance::StaticClass()},
+            {"AnimSingleNodeInstance", UAnimSingleNodeInstance::StaticClass()},
+            {"BlendAnimInstance", UBlendAnimInstance::StaticClass()}
+        };
+
+        int SelectedInstanceIndex = -1;
+        const char* PreviewValue = "None"; 
+
+        if (CurrentActualAnimInstance)
+        {
+            PreviewValue = *CurrentInstanceName;
+            for (int i = 0; i < AnimInstanceOptions.Num(); ++i)
+            {
+                if (CurrentActualAnimInstance->IsA(AnimInstanceOptions[i].ClassType))
+                {
+                    SelectedInstanceIndex = i;
+                    PreviewValue = AnimInstanceOptions[i].DisplayName; 
+                    //break;
+                }
+            }
+        }
+
+        if (ImGui::BeginCombo("AnimInstance Class", PreviewValue))
+        {
+            for (int i = 0; i < AnimInstanceOptions.Num(); ++i)
+            {
+                bool isSelected = (SelectedInstanceIndex == i);
+                if (ImGui::Selectable(AnimInstanceOptions[i].DisplayName, isSelected))
+                {
+                    if (SelectedInstanceIndex != i)
+                    {
+                        UAnimInstance* NewInstance = nullptr;
+                        UClass* TargetClass = AnimInstanceOptions[i].ClassType; 
+
+                        if (CurrentActualAnimInstance && CurrentActualAnimInstance->GetClass() != TargetClass)
+                        {
+                            if (SkeletalMeshComp->GetAnimInstance())
+                            {
+                                SkeletalMeshComp->SetAnimInstance(nullptr);
+                            }
+                        }
+                        else if (CurrentActualAnimInstance && CurrentActualAnimInstance->GetClass() == TargetClass) 
+                        {
+                            NewInstance = CurrentActualAnimInstance;
+                        }
+
+
+                        if (!NewInstance)
+                        {
+                            if (TargetClass == UAnimInstance::StaticClass())
+                            {
+                                NewInstance = FObjectFactory::ConstructObject<UAnimInstance>(SkeletalMeshComp);
+                            }
+                            else if (TargetClass == UAnimSingleNodeInstance::StaticClass())
+                            {
+                                NewInstance = FObjectFactory::ConstructObject<UAnimSingleNodeInstance>(SkeletalMeshComp);
+                            }
+                            else if (TargetClass == UBlendAnimInstance::StaticClass())
+                            {
+                                NewInstance = FObjectFactory::ConstructObject<UBlendAnimInstance>(SkeletalMeshComp);
+                            }
+                            else
+                            {
+                                UE_LOG(LogLevel::Error, TEXT("Cannot construct AnimInstance: Unknown class type selected."));
+                            }
+                        }
+
+
+                        if (NewInstance)
+                        {
+                            SkeletalMeshComp->SetAnimInstance(NewInstance);
+                            NewInstance->TargetSkeleton = SkeletalMeshComp->GetSkeletalMesh() ? SkeletalMeshComp->GetSkeletalMesh()->GetRefSkeletal() : nullptr;
+                            NewInstance->NativeInitializeAnimation();
+                        }
+                    }
+                }
+                if (isSelected)
+                {
+                    ImGui::SetItemDefaultFocus();
+                }
+            }
+            ImGui::EndCombo();
+        }
 
         ImGui::TreePop();
     }

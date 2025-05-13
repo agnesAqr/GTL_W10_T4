@@ -1,4 +1,6 @@
 #pragma once
+#include "UObject/Object.h"
+#include "UObject/ObjectMacros.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimSingleNodeInstance.h"
 #include "Classes/Engine/Assets/Animation/AnimTypes.h"
@@ -28,9 +30,10 @@ private:
     UAnimSequence* AnimationB;
     float BlendAlpha;
 
-    FPoseData FinalBlendedPose;
-
     float CurrentTimeA;
     float CurrentTimeB;
+
+    FPoseData PoseDataA;
+    FPoseData PoseDataB;
 };
 

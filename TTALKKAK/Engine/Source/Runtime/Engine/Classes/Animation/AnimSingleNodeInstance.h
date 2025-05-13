@@ -1,4 +1,6 @@
 #pragma once
+#include "UObject/Object.h"
+#include "UObject/ObjectMacros.h"
 #include "Animation/AnimInstance.h"
 
 class UAnimSequence;
