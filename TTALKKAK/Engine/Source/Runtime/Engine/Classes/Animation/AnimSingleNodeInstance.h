@@ -25,8 +25,12 @@ private:
     UAnimSequence* CurrentAnimationSeq;
     float CurrentTime;
     float PreviousTime;
+    bool bLooping;
 
 public:
     UAnimSequence* GetAnimation() const { return CurrentAnimationSeq; }
-    void SetAnimation(UAnimSequence* AnimSequence);
+    void SetAnimation(UAnimSequence* AnimSequence, bool bShouldLoop);
+
+    void SetLooping(bool InValue) { bLooping = InValue; }
+    bool IsLooping() const { return bLooping; }
 };

@@ -4,6 +4,7 @@
 #include "FBX/FBXDefine.h"
 #include "Math/MathUtility.h"
 #include "FBXLoader.h"
+#include "Classes/Engine/Assets/Animation/AnimDataModel.h"
 
 // NOTE: For CurrentAnimationSeq->GetRateScale() to work as in UCustomAnimInstance,
 // UAnimSequenceBase would need a public GetRateScale() method like:
@@ -18,15 +19,15 @@
 UAnimSingleNodeInstance::UAnimSingleNodeInstance()
     : CurrentAnimationSeq(nullptr)
     , CurrentTime(0.0f)
+    , bLooping(true)
 {
-    UAnimSequence* AnimSequence = FBXLoader::CreateAnimationSequence("FBX/Run_Forward.fbx");
-    SetAnimation(AnimSequence);
 }
 
 UAnimSingleNodeInstance::UAnimSingleNodeInstance(const UAnimSingleNodeInstance& Other)
     : UAnimInstance(Other)
     , CurrentAnimationSeq(Other.CurrentAnimationSeq) 
     , CurrentTime(Other.CurrentTime)
+    , bLooping(Other.bLooping)
 {
 }
 
@@ -59,19 +60,17 @@ void UAnimSingleNodeInstance::PostDuplicate()
     Super::PostDuplicate();
 }
 
-void UAnimSingleNodeInstance::SetAnimation(UAnimSequence* AnimSequence)
+void UAnimSingleNodeInstance::SetAnimation(UAnimSequence* AnimSequence, bool bShouldLoop)
 {
     CurrentAnimationSeq = AnimSequence;
     CurrentTime = 0.0f;
     PreviousTime = 0.0f;
+    bLooping = bShouldLoop;
 
     if (CurrentAnimationSeq && TargetSkeleton)
     {
         CurrentPoseData.Reset();
         CurrentPoseData.Skeleton = TargetSkeleton;
-        // IMPORTANT: Workaround for UAnimSequence::SamplePoseAtTime bug
-        // The SamplePoseAtTime function provided might not correctly size OutPose.LocalBoneTransforms.
-        // Ensure it's sized before calling.
         if (TargetSkeleton->BoneTree.Num() > 0)
         {
             CurrentPoseData.LocalBoneTransforms.SetNum(TargetSkeleton->BoneTree.Num());
@@ -100,12 +99,11 @@ void UAnimSingleNodeInstance::SetAnimation(UAnimSequence* AnimSequence)
 void UAnimSingleNodeInstance::NativeInitializeAnimation()
 {
     Super::NativeInitializeAnimation();
+
     CurrentTime = 0.0f;
     PreviousTime = 0.0f;
     CurrentPoseData.Reset();
 
-    // TargetSkeleton should be set by the component/system that owns this AnimInstance.
-    // Initialize CurrentPoseData with the correct skeleton and bone count (identity pose).
     if (TargetSkeleton)
     {
         CurrentPoseData.Skeleton = TargetSkeleton;
@@ -114,78 +112,59 @@ void UAnimSingleNodeInstance::NativeInitializeAnimation()
             CurrentPoseData.LocalBoneTransforms.Init(FCompactPoseBone(), TargetSkeleton->BoneTree.Num());
         }
     }
+
+    UAnimSequence* AnimSequence = FBXLoader::GetAnimationSequence("FBX/Walking.fbx");
+    //AnimSequence->GetPlayLength();// 이거 왜 0으로 뽑히지
+    SetAnimation(AnimSequence, true);
 }
+
 
 void UAnimSingleNodeInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
     Super::NativeUpdateAnimation(DeltaSeconds);
-
+    CurrentAnimationSeq->SetSkeletal(TargetSkeleton);
     if (CurrentAnimationSeq && TargetSkeleton)
     {
         PreviousTime = CurrentTime;
         
         const float PlayLength = CurrentAnimationSeq->GetPlayLength();
+        //const float PlayLength = CurrentAnimationSeq->GetAnimDataModel()->PlayLength; // 이걸 이런식으로 접근해야 하는거면 다른 것들은 왜 있는거지
         float ActualRateScale = 1.0f;
+        if (CurrentAnimationSeq) ActualRateScale = CurrentAnimationSeq->GetRateScale();
 
-        // Accessing RateScale:
-        // UCustomAnimInstance uses AnimationA->GetRateScale().
-        // UAnimSequenceBase has `RateScale` as protected and no public GetRateScale() is defined in provided headers.
-        // This implies GetRateScale() should be added to UAnimSequenceBase or RateScale made public.
-        // For now, we'll assume such a getter would exist or RateScale could be accessed directly.
-        // If `PROPERTY(float, RateScale)` in UAnimSequenceBase implies a public `GetRateScale()`, we'd use that.
-        // Let's try to use .RateScale directly, assuming it's made accessible for this example.
-        // If not, a default of 1.0f is used.
-        // To make `CurrentAnimationSeq->RateScale` work, `RateScale` in `UAnimSequenceBase` must be public,
-        // or `UAnimSingleNodeInstance` must be a friend, or a public getter exists.
-        // Let's assume UAnimSequenceBase had `public: float GetRateScale() const { return RateScale; }`
-        // In that case, the line would be:
-        // ActualRateScale = CurrentAnimationSeq->GetRateScale();
-        // For now, using direct member access (which might fail compilation with current headers):
-        ActualRateScale = CurrentAnimationSeq->GetRateScale();
+        UE_LOG(LogLevel::Display, "UAnimSingleNodeInstance-ActualRateScale: %f", ActualRateScale);
+        UE_LOG(LogLevel::Display, "UAnimSingleNodeInstance-PlayLength: %f", PlayLength);
 
         if (PlayLength > KINDA_SMALL_NUMBER)
         {
             CurrentTime += DeltaSeconds * ActualRateScale;
             CurrentTime = FMath::Fmod(CurrentTime, PlayLength);
-            if (CurrentTime < 0.0f)
-            {
-                CurrentTime += PlayLength;
-            }
+            if (CurrentTime < 0.0f) CurrentTime += PlayLength;
         }
         else
         {
             CurrentTime = 0.0f;
         }
 
-        CurrentPoseData.Reset(); 
-        CurrentPoseData.Skeleton = TargetSkeleton;
-
-        // IMPORTANT: Workaround for UAnimSequence::SamplePoseAtTime potentially not sizing LocalBoneTransforms.
-        // This ensures LocalBoneTransforms is sized before SamplePoseAtTime tries to write to it.
-        // The proper fix is within SamplePoseAtTime itself.
+        this->CurrentPoseData.Reset();
+        this->CurrentPoseData.Skeleton = TargetSkeleton;
         if (TargetSkeleton->BoneTree.Num() > 0)
         {
-            CurrentPoseData.LocalBoneTransforms.SetNum(TargetSkeleton->BoneTree.Num());
-            // Initialize to identity as a base. SamplePoseAtTime should fill actual values.
-            // If SamplePoseAtTime doesn't animate a bone, it should ideally fall back to ref pose.
-            // Current SamplePoseAtTime iterates all skeleton bones, but only updates if track exists.
-            for (FCompactPoseBone& Bone : CurrentPoseData.LocalBoneTransforms)
-            {
-                Bone = FCompactPoseBone(); // Identity transform
-            }
+            this->CurrentPoseData.LocalBoneTransforms.Init(FCompactPoseBone(), TargetSkeleton->BoneTree.Num());
         }
         TriggerAnimNotifies(PreviousTime, CurrentTime);
         CurrentAnimationSeq->SamplePoseAtTime(CurrentTime, TargetSkeleton, CurrentPoseData);
     }
     else
     {
-        CurrentPoseData.Reset();
+        // 애니메이션이나 스켈레톤 없으면 CurrentPoseData를 참조 포즈 또는 항등 포즈로 리셋
+        this->CurrentPoseData.Reset();
         if (TargetSkeleton)
         {
-            CurrentPoseData.Skeleton = TargetSkeleton;
+            this->CurrentPoseData.Skeleton = TargetSkeleton;
             if (TargetSkeleton->BoneTree.Num() > 0)
             {
-                CurrentPoseData.LocalBoneTransforms.Init(FCompactPoseBone(), TargetSkeleton->BoneTree.Num());
+                this->CurrentPoseData.LocalBoneTransforms.Init(FCompactPoseBone(), TargetSkeleton->BoneTree.Num());
             }
         }
     }

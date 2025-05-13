@@ -4,6 +4,8 @@
 #include "FBX/FBXDefine.h" // FIX-ME
 #include "Classes/Engine/Assets/Animation/AnimTypes.h"
 
+class USkeletalMeshComponent;
+
 class UAnimInstance : public UObject
 {
     DECLARE_CLASS(UAnimInstance, UObject)
@@ -19,9 +21,10 @@ public:
     virtual void NativeInitializeAnimation();
     virtual void NativeUpdateAnimation(float DeltaSeconds);
     virtual void TriggerAnimNotifies(float PrevTime, float CurrTime);
-    
-    FRefSkeletal* TargetSkeleton;
+
+    const FRefSkeletal* TargetSkeleton;
     virtual const FPoseData& GetCurrentPose() const;
+    USkeletalMeshComponent* GetSkelMeshComponent() const;
 
 protected:
     FPoseData CurrentPoseData;

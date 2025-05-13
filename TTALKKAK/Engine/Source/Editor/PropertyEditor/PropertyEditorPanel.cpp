@@ -1999,7 +1999,7 @@ void PropertyEditorPanel::DrawAnimationPreviewButton(const FString& FilePath)
         ASkeletalMeshActor* SkeletalMeshActor = World->SpawnActor<ASkeletalMeshActor>();
         SkeletalMeshActor->SetActorLabel("SkeletalMesh");
         USkeletalMeshComponent* SkeletalMeshComp = SkeletalMeshActor->GetComponentByClass<USkeletalMeshComponent>();
-        SkeletalMeshComp->SetSkeletalMesh(FBXLoader::CreateSkeletalMesh(FilePath));
+        SkeletalMeshComp->SetSkeletalMesh(FBXLoader::GetSkeletalMesh(FilePath));
     }
     ImGui::PopStyleColor(1);
 }

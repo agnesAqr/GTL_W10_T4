@@ -46,7 +46,7 @@ EAssetType UAnimationAsset::GetAssetType() const
     return EAssetType::Animation;
 }
 
-void UAnimationAsset::SetSkeletal(FRefSkeletal* InRefSkeletal)
+void UAnimationAsset::SetSkeletal(const FRefSkeletal* InRefSkeletal)
 {
     RefSkeletal = InRefSkeletal;
 }
@@ -146,6 +146,7 @@ void UAnimSequence::SetAnimDataModel(UAnimDataModel* AnimDataModel)
     NumFrames = AnimDataModel->NumberOfFrames;
     NumberOfSampledKeys = AnimDataModel->NumberOfKeys;
     SamplingFrameRate = AnimDataModel->FrameRate;
+    SequenceLength = AnimDataModel->PlayLength;
     
     for (auto BoneAnimTrack : AnimDataModel->BoneAnimationTracks)
     {
@@ -193,119 +194,225 @@ void UAnimSequence::PopulateModel()
     }
 }
 
-void UAnimSequence::SamplePoseAtTime(float Time, const FRefSkeletal* Skeleton, FPoseData& OutPose) const
-{
-    if (!Skeleton || RawAnimationData.Num() == 0)
-    {
-        if (Skeleton) OutPose.Reset(); 
-        return;
-    }
-    OutPose.Reset();
+//static void FindKeyIndices(const TArray<float>& KeyTimes, float CurrentTime, int32& OutKeyIndex1, int32& OutKeyIndex2)
+//{
+//    OutKeyIndex1 = -1;
+//    OutKeyIndex2 = -1;
+//
+//    if (KeyTimes.Num() == 0) return;
+//
+//    // 첫 번째 키보다 이전 시간 처리
+//    if (CurrentTime < KeyTimes[0])
+//    {
+//        OutKeyIndex1 = -1;
+//        OutKeyIndex2 = 0;  
+//        return;
+//    }
+//
+//    for (int32 K = 0; K < KeyTimes.Num(); ++K)
+//    {
+//        if (KeyTimes[K] <= CurrentTime)
+//        {
+//            OutKeyIndex1 = K;
+//        }
+//        else
+//        {
+//            OutKeyIndex2 = K;
+//            return; // 두 인덱스 모두 찾았으므로 종료
+//        }
+//    }
+//}
 
-    const int32 NumSkeletonBones = Skeleton->BoneTree.Num();
+//void UAnimSequence::SamplePoseAtTime(float Time, const FRefSkeletal* Skeleton, FPoseData& OutPose, const uint32 AnimTrackIndexToSample) const 
+//{
+//    OutPose.Reset();
+//    OutPose.Skeleton = Skeleton;
+//    if (!Skeleton || Skeleton->BoneTree.Num() == 0)
+//    {
+//        return;
+//    }
+//    DataModel->PlayLength;
+//    const int32 NumSkeletonBones = Skeleton->BoneTree.Num();
+//    OutPose.LocalBoneTransforms.Init(FCompactPoseBone(), NumSkeletonBones); // 모든 본을 항등 변환으로 초기화
+//
+//    const FRawAnimSequenceTrack& SelectedTrack = RawAnimationData[AnimTrackIndexToSample];
+//    float CurrentTime = SequenceLength > KINDA_SMALL_NUMBER ? FMath::Fmod(Time, SequenceLength) : 0.0f;
+//    if (CurrentTime < 0.0f)
+//    {
+//        CurrentTime += SequenceLength;
+//    }
+//    FCompactPoseBone AnimatedTransformForThisTrack; // 이 트랙에서 계산된 단일 변환 값
+//
+//    int32 KeyIndex1 = -1;
+//    int32 KeyIndex2 = -1;
+//    float Alpha = 0.0f;
+//
+//    if (SelectedTrack.PosKeys.Num() > 0)
+//    {
+//        FindKeyIndices(SelectedTrack.KeyTimes, CurrentTime, KeyIndex1, KeyIndex2);
+//        if (KeyIndex1 != -1 && KeyIndex2 != -1 && SelectedTrack.PosKeys.IsValidIndex(KeyIndex1) && SelectedTrack.PosKeys.IsValidIndex(KeyIndex2))
+//        {
+//            float Time1 = SelectedTrack.KeyTimes[KeyIndex1];
+//            float Time2 = SelectedTrack.KeyTimes[KeyIndex2];
+//            Alpha = (Time1 == Time2) ? 0.0f : FMath::Clamp((CurrentTime - Time1) / (Time2 - Time1), 0.0f, 1.0f);
+//            AnimatedTransformForThisTrack.Translation = FMath::Lerp(SelectedTrack.PosKeys[KeyIndex1], SelectedTrack.PosKeys[KeyIndex2], Alpha);
+//        }
+//        else if (KeyIndex1 != -1 && SelectedTrack.PosKeys.IsValidIndex(KeyIndex1))
+//        {
+//            AnimatedTransformForThisTrack.Translation = SelectedTrack.PosKeys[KeyIndex1];
+//        }
+//    }
+//
+//    if (SelectedTrack.RotKeys.Num() > 0)
+//    {
+//        FindKeyIndices(SelectedTrack.KeyTimes, CurrentTime, KeyIndex1, KeyIndex2);
+//        if (KeyIndex1 != -1 && KeyIndex2 != -1 && SelectedTrack.RotKeys.IsValidIndex(KeyIndex1) && SelectedTrack.RotKeys.IsValidIndex(KeyIndex2))
+//        {
+//            float Time1 = SelectedTrack.KeyTimes[KeyIndex1];
+//            float Time2 = SelectedTrack.KeyTimes[KeyIndex2];
+//            Alpha = (Time1 == Time2) ? 0.0f : FMath::Clamp((CurrentTime - Time1) / (Time2 - Time1), 0.0f, 1.0f);
+//            AnimatedTransformForThisTrack.Rotation = FQuat::Slerp(SelectedTrack.RotKeys[KeyIndex1], SelectedTrack.RotKeys[KeyIndex2], Alpha);
+//            AnimatedTransformForThisTrack.Rotation.Normalize();
+//        }
+//        else if (KeyIndex1 != -1 && SelectedTrack.RotKeys.IsValidIndex(KeyIndex1))
+//        {
+//            AnimatedTransformForThisTrack.Rotation = SelectedTrack.RotKeys[KeyIndex1];
+//            AnimatedTransformForThisTrack.Rotation.Normalize();
+//        }
+//    }
+//
+//    if (SelectedTrack.ScaleKeys.Num() > 0)
+//    {
+//        FindKeyIndices(SelectedTrack.KeyTimes, CurrentTime, KeyIndex1, KeyIndex2);
+//        if (KeyIndex1 != -1 && KeyIndex2 != -1 && SelectedTrack.ScaleKeys.IsValidIndex(KeyIndex1) && SelectedTrack.ScaleKeys.IsValidIndex(KeyIndex2))
+//        {
+//            float Time1 = SelectedTrack.KeyTimes[KeyIndex1];
+//            float Time2 = SelectedTrack.KeyTimes[KeyIndex2];
+//            Alpha = (Time1 == Time2) ? 0.0f : FMath::Clamp((CurrentTime - Time1) / (Time2 - Time1), 0.0f, 1.0f);
+//            AnimatedTransformForThisTrack.Scale3D = FMath::Lerp(SelectedTrack.ScaleKeys[KeyIndex1], SelectedTrack.ScaleKeys[KeyIndex2], Alpha);
+//        }
+//        else if (KeyIndex1 != -1 && SelectedTrack.ScaleKeys.IsValidIndex(KeyIndex1))
+//        {
+//            AnimatedTransformForThisTrack.Scale3D = SelectedTrack.ScaleKeys[KeyIndex1];
+//        }
+//    }
+//
+//    for (int32 BoneIndex = 0; BoneIndex < NumSkeletonBones; ++BoneIndex)
+//    {
+//        OutPose.LocalBoneTransforms[BoneIndex] = AnimatedTransformForThisTrack;
+//    }
+//}
+ 
+ void UAnimSequence::SamplePoseAtTime(float Time, const FRefSkeletal* Skeleton, FPoseData& OutPose) const
+ {
+     if (!Skeleton || RawAnimationData.Num() == 0)
+     {
+         if (Skeleton) OutPose.Reset();
+         return;
+     }
+     OutPose.Reset();
 
-    float CurrentTime = FMath::Fmod(Time, SequenceLength);
-    if (CurrentTime < 0.0f) CurrentTime += SequenceLength;
+     const int32 NumSkeletonBones = Skeleton->BoneTree.Num();
+     OutPose.LocalBoneTransforms.Init(FCompactPoseBone(), NumSkeletonBones); // 모든 본을 항등 변환으로 초기화
+
+     float CurrentTime = FMath::Fmod(Time, SequenceLength);
+     if (CurrentTime < 0.0f) CurrentTime += SequenceLength;
+
+     UE_LOG(LogLevel::Display, "UAnimSequence-Time: %f", Time);
+     UE_LOG(LogLevel::Display, "UAnimSequence-CurrentTime: %f", CurrentTime);
+
+     for (int32 BoneIndex = 0; BoneIndex < NumSkeletonBones; ++BoneIndex)
+     {
+         FCompactPoseBone& BoneTransform = OutPose.LocalBoneTransforms[BoneIndex];
+         // 기본적으로 바인드 포즈 또는 Identity로 설정 (애니메이션 트랙이 없는 뼈를 위해)
+         //BoneTransform = Skeleton->GetRefPoseTransform(BoneIndex); // 스켈레톤에서 바인드 포즈 가져오는 함수 필요
+
+         if (RawAnimationData.IsValidIndex(BoneIndex))
+         {
+             const FRawAnimSequenceTrack& Track = RawAnimationData[BoneIndex];
+
+             if (Track.PosKeys.Num() == 0 && Track.RotKeys.Num() == 0 && Track.ScaleKeys.Num() == 0)
+             {
+                 // 이 트랙에 키가 없으면 다음 뼈로
+                 continue;
+             }
+
+             // 1. 현재 시간에 해당하는 키프레임 인덱스 찾기
+             //    Track.KeyTimes 배열을 사용하여 CurrentTime 이전 키와 이후 키를 찾습니다.
+             //    (간단하게는 선형 검색, 최적화하려면 이진 검색)
+             int32 KeyIndex1 = -1;
+             int32 KeyIndex2 = -1;
+
+             for (int32 K = 0; K < Track.KeyTimes.Num(); ++K)
+             {
+                 if (Track.KeyTimes[K] <= CurrentTime)
+                 {
+                     KeyIndex1 = K;
+                 }
+                 else
+                 {
+                     KeyIndex2 = K;
+                     break;
+                 }
+             }
+
+             if (KeyIndex1 == -1) // 시간이 첫 키보다 이전 (또는 키 없음)
+             {
+                 if (Track.PosKeys.Num() > 0) BoneTransform.Translation = Track.PosKeys[0];
+                 if (Track.RotKeys.Num() > 0) BoneTransform.Rotation = Track.RotKeys[0];
+                 if (Track.ScaleKeys.Num() > 0) BoneTransform.Scale3D = Track.ScaleKeys[0];
+                 continue;
+             }
+             if (KeyIndex2 == -1) // 시간이 마지막 키 이후 (또는 키 1개)
+             {
+                 if (Track.PosKeys.Num() > 0) BoneTransform.Translation = Track.PosKeys[KeyIndex1];
+                 if (Track.RotKeys.Num() > 0) BoneTransform.Rotation = Track.RotKeys[KeyIndex1];
+                 if (Track.ScaleKeys.Num() > 0) BoneTransform.Scale3D = Track.ScaleKeys[KeyIndex1];
+                 continue;
+             }
+
+             // 2. 두 키프레임 간의 보간 알파 값 계산
+             float Time1 = Track.KeyTimes[KeyIndex1];
+             float Time2 = Track.KeyTimes[KeyIndex2];
+             float Alpha = (Time1 == Time2) ? 0.0f : (CurrentTime - Time1) / (Time2 - Time1);
+             Alpha = FMath::Clamp(Alpha, 0.0f, 1.0f);
+
+             // 3. 위치, 회전, 스케일 보간
+             // 위치 (Lerp)
+             if (Track.PosKeys.IsValidIndex(KeyIndex1) && Track.PosKeys.IsValidIndex(KeyIndex2))
+             {
+                 BoneTransform.Translation = FMath::Lerp(Track.PosKeys[KeyIndex1], Track.PosKeys[KeyIndex2], Alpha);
+             }
+             else if (Track.PosKeys.IsValidIndex(KeyIndex1))
+             {
+                 BoneTransform.Translation = Track.PosKeys[KeyIndex1];
+             }
 
 
-    // RawAnimationData는 애니메이션에 실제 데이터가 있는 뼈들의 트랙만 가지고 있을 수 있음
-    // Skeleton의 모든 뼈에 대해 루프를 돌아야 함.
-    // RawAnimationData의 트랙 순서가 Skeleton의 뼈 순서와 일치한다고 가정.
-    // 또는 AnimationTrackNames 와 Skeleton의 BoneName을 매칭해야 함. (더 복잡)
-    // 여기서는 RawAnimationData의 트랙 인덱스가 Skeleton의 뼈 인덱스와 일치한다고 가정.
+             // 회전 (Slerp 또는 Nlerp)
+             if (Track.RotKeys.IsValidIndex(KeyIndex1) && Track.RotKeys.IsValidIndex(KeyIndex2))
+             {
+                 BoneTransform.Rotation = FQuat::Slerp(Track.RotKeys[KeyIndex1], Track.RotKeys[KeyIndex2], Alpha);
+                 //BoneTransform.Rotation.Normalize(); // Slerp 후 정규화 권장
+             }
+             else if (Track.RotKeys.IsValidIndex(KeyIndex1))
+             {
+                 BoneTransform.Rotation = Track.RotKeys[KeyIndex1];
+             }
 
-    for (int32 BoneIndex = 0; BoneIndex < NumSkeletonBones; ++BoneIndex)
-    {
-        FCompactPoseBone& BoneTransform = OutPose.LocalBoneTransforms[BoneIndex];
-        // 기본적으로 바인드 포즈 또는 Identity로 설정 (애니메이션 트랙이 없는 뼈를 위해)
-        // BoneTransform = Skeleton->GetRefPoseTransform(BoneIndex); // 스켈레톤에서 바인드 포즈 가져오는 함수 필요
-
-        if (RawAnimationData.IsValidIndex(BoneIndex))
-        {
-            const FRawAnimSequenceTrack& Track = RawAnimationData[BoneIndex];
-
-            if (Track.PosKeys.Num() == 0 && Track.RotKeys.Num() == 0 && Track.ScaleKeys.Num() == 0)
-            {
-                // 이 트랙에 키가 없으면 다음 뼈로
-                continue;
-            }
-
-            // 1. 현재 시간에 해당하는 키프레임 인덱스 찾기
-            //    Track.KeyTimes 배열을 사용하여 CurrentTime 이전 키와 이후 키를 찾습니다.
-            //    (간단하게는 선형 검색, 최적화하려면 이진 검색)
-            int32 KeyIndex1 = -1;
-            int32 KeyIndex2 = -1;
-
-            for (int32 K = 0; K < Track.KeyTimes.Num(); ++K)
-            {
-                if (Track.KeyTimes[K] <= CurrentTime)
-                {
-                    KeyIndex1 = K;
-                }
-                else
-                {
-                    KeyIndex2 = K;
-                    break;
-                }
-            }
-
-            if (KeyIndex1 == -1) // 시간이 첫 키보다 이전 (또는 키 없음)
-            {
-                if (Track.PosKeys.Num() > 0) BoneTransform.Translation = Track.PosKeys[0];
-                if (Track.RotKeys.Num() > 0) BoneTransform.Rotation = Track.RotKeys[0];
-                if (Track.ScaleKeys.Num() > 0) BoneTransform.Scale3D = Track.ScaleKeys[0];
-                continue;
-            }
-            if (KeyIndex2 == -1) // 시간이 마지막 키 이후 (또는 키 1개)
-            {
-                if (Track.PosKeys.Num() > 0) BoneTransform.Translation = Track.PosKeys[KeyIndex1];
-                if (Track.RotKeys.Num() > 0) BoneTransform.Rotation = Track.RotKeys[KeyIndex1];
-                if (Track.ScaleKeys.Num() > 0) BoneTransform.Scale3D = Track.ScaleKeys[KeyIndex1];
-                continue;
-            }
-
-            // 2. 두 키프레임 간의 보간 알파 값 계산
-            float Time1 = Track.KeyTimes[KeyIndex1];
-            float Time2 = Track.KeyTimes[KeyIndex2];
-            float Alpha = (Time1 == Time2) ? 0.0f : (CurrentTime - Time1) / (Time2 - Time1);
-            Alpha = FMath::Clamp(Alpha, 0.0f, 1.0f);
-
-            // 3. 위치, 회전, 스케일 보간
-            // 위치 (Lerp)
-            if (Track.PosKeys.IsValidIndex(KeyIndex1) && Track.PosKeys.IsValidIndex(KeyIndex2))
-            {
-                BoneTransform.Translation = FMath::Lerp(Track.PosKeys[KeyIndex1], Track.PosKeys[KeyIndex2], Alpha);
-            }
-            else if (Track.PosKeys.IsValidIndex(KeyIndex1))
-            {
-                BoneTransform.Translation = Track.PosKeys[KeyIndex1];
-            }
-
-
-            // 회전 (Slerp 또는 Nlerp)
-            if (Track.RotKeys.IsValidIndex(KeyIndex1) && Track.RotKeys.IsValidIndex(KeyIndex2))
-            {
-                BoneTransform.Rotation = FQuat::Slerp(Track.RotKeys[KeyIndex1], Track.RotKeys[KeyIndex2], Alpha);
-                BoneTransform.Rotation.Normalize(); // Slerp 후 정규화 권장
-            }
-            else if (Track.RotKeys.IsValidIndex(KeyIndex1))
-            {
-                BoneTransform.Rotation = Track.RotKeys[KeyIndex1];
-            }
-
-            // 스케일 (Lerp)
-            if (Track.ScaleKeys.IsValidIndex(KeyIndex1) && Track.ScaleKeys.IsValidIndex(KeyIndex2))
-            {
-                BoneTransform.Scale3D = FMath::Lerp(Track.ScaleKeys[KeyIndex1], Track.ScaleKeys[KeyIndex2], Alpha);
-            }
-            else if (Track.ScaleKeys.IsValidIndex(KeyIndex1))
-            {
-                BoneTransform.Scale3D = Track.ScaleKeys[KeyIndex1];
-            }
-        }
-        // else : 애니메이션 트랙이 없는 뼈는 기본 바인드 포즈(또는 Identity)를 유지합니다.
-        // 이 부분은 OutPose.Reset()에서 FCompactPoseBone의 기본 생성자에 의해 Identity로 초기화되거나,
-        // 위에서 Skeleton->GetRefPoseTransform(BoneIndex) 등으로 명시적으로 바인드 포즈를 넣어줘야 합니다.
-        // 현재 코드는 Identity로 남아있게 됩니다.
-    }
-}
+             // 스케일 (Lerp)
+             if (Track.ScaleKeys.IsValidIndex(KeyIndex1) && Track.ScaleKeys.IsValidIndex(KeyIndex2))
+             {
+                 BoneTransform.Scale3D = FMath::Lerp(Track.ScaleKeys[KeyIndex1], Track.ScaleKeys[KeyIndex2], Alpha);
+             }
+             else if (Track.ScaleKeys.IsValidIndex(KeyIndex1))
+             {
+                 BoneTransform.Scale3D = Track.ScaleKeys[KeyIndex1];
+             }
+         }
+         // else : 애니메이션 트랙이 없는 뼈는 기본 바인드 포즈(또는 Identity)를 유지합니다.
+         // 이 부분은 OutPose.Reset()에서 FCompactPoseBone의 기본 생성자에 의해 Identity로 초기화되거나,
+         // 위에서 Skeleton->GetRefPoseTransform(BoneIndex) 등으로 명시적으로 바인드 포즈를 넣어줘야 합니다.
+         // 현재 코드는 Identity로 남아있게 됩니다.
+     }
+ }

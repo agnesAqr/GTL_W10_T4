@@ -23,14 +23,14 @@ public:
     void Unload() override;
     EAssetType GetAssetType() const override;
 
-    void SetSkeletal(FRefSkeletal* InRefSkeletal);
+    void SetSkeletal(const FRefSkeletal* InRefSkeletal);
     const FRefSkeletal* GetReferenceSkeleton() const
     {
         return RefSkeletal;
     }
 protected:
     /** 이 애셋을 플레이할 수 있는 스켈레톤에 대한 포인터 */
-    FRefSkeletal* RefSkeletal;    
+    const FRefSkeletal* RefSkeletal;    
 };
 
 struct FAnimNotifyEvent
@@ -78,7 +78,7 @@ protected:
     float SequenceLength;
     
     /** 이 애니메이션의 전체 재생 속도를 조정하기 위한 값 */
-    float RateScale;
+    float RateScale = 1.f;
     bool bLoop;
 
     // 소스 애니메이션 데이터
@@ -110,7 +110,7 @@ public:
     void PopulateModel() override;
     TArray<FAnimNotifyEvent> GetNotifies() const { return Notifies;};
 
-    // AtFrame으로 작성을 해야할 것 같기도 하고 흠.
+    //void SamplePoseAtTime(float Time, const FRefSkeletal* Skeleton, FPoseData& OutPose, const uint32 AnimCount) const;
     void SamplePoseAtTime(float Time, const FRefSkeletal* Skeleton, FPoseData& OutPose) const;
 
 protected:
@@ -169,3 +169,5 @@ inline void UAnimSequence::TickAssetPlayer()
 {
     UAnimSequenceBase::TickAssetPlayer();
 }
+
+static void FindKeyIndices(const TArray<float>& KeyTimes, float CurrentTime, int32& OutKeyIndex1, int32& OutKeyIndex2);

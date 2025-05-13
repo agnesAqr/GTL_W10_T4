@@ -85,8 +85,9 @@ void UCustomAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
         PoseA_Data.Reset();
         PoseB_Data.Reset();
 
-        AnimationA->SamplePoseAtTime(CurrentTimeA, TargetSkeleton, PoseA_Data);
-        AnimationB->SamplePoseAtTime(CurrentTimeB, TargetSkeleton, PoseB_Data);
+        // FIX-ME
+        //AnimationA->SamplePoseAtTime(CurrentTimeA, TargetSkeleton, PoseA_Data, 0);
+        //AnimationB->SamplePoseAtTime(CurrentTimeB, TargetSkeleton, PoseB_Data, 1);
 
         AnimationUtils::BlendPoses(PoseA_Data, PoseB_Data, BlendAlpha, FinalBlendedPose);
 
@@ -98,6 +99,6 @@ void UCustomAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
             CurrentTimeA += DeltaSeconds * AnimationA->GetRateScale();
             CurrentTimeA = FMath::Fmod(CurrentTimeA, AnimationA->GetPlayLength());
         }
-        AnimationA->SamplePoseAtTime(CurrentTimeA, TargetSkeleton, FinalBlendedPose);
+        //AnimationA->SamplePoseAtTime(CurrentTimeA, TargetSkeleton, FinalBlendedPose, 0);
     }
 }
