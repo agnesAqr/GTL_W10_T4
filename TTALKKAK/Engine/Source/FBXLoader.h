@@ -26,7 +26,11 @@ public:
     static void ProcessSkinning(FbxSkin* skin, FSkeletalMeshRenderData* MeshData, FRefSkeletal* RefSkeletal, int base_vertex_index);
     static void ExtractIndices(FbxMesh* Mesh, FSkeletalMeshRenderData* MeshData, int BaseVertexIndex);
     static void ExtractMaterials(FbxNode* Node, FbxMesh* Mesh, FSkeletalMeshRenderData* MeshData, FRefSkeletal* RefSkeletal, int BaseIndexOffset);
-    static void ExtractAnimation(int BoneTreeIndex, const FRefSkeletal& RefSkeletal, FbxAnimLayer* AnimLayer, UAnimDataModel* AnimModel, const TMap<FString, FbxNode*>& NodeMap);
+    
+    static void ExtractAnimation(int BoneTreeIndex, const FRefSkeletal& RefSkeletal, FbxAnimLayer* AnimLayer, UAnimDataModel* AnimModel, const TMap<FString, FbxNode*>& NodeMap, const TArray<FbxTime>& SampleTimes);
+
+    static TArray<FbxTime> CollectSampleTimes(FbxAnimStack* AnimStack, FbxAnimLayer* AnimLayer, FbxScene* Scene, FbxTime::EMode pTimeMode = FbxTime::eFrames60, bool
+                                              bUseKeyTimes = true);
     
     static void UpdateBoundingBox(FSkeletalMeshRenderData* MeshData);
 
@@ -54,6 +58,7 @@ public:
     static void AddVertexFromControlPoint(FbxMesh* Mesh, FSkeletalMeshRenderData* MeshData, int ControlPointIndex);
 
     static void DebugWriteAnimationModel(const UAnimDataModel* AnimModel);
+    static void DebugWriteUV(const FSkeletalMeshRenderData* MeshData);
 
     // 일단 SkeletalMesh 안 만들어지면 false 반환
     static bool ImportFBX(const FString& FilePath);

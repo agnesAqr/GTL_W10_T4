@@ -8,13 +8,30 @@
 #include "Classes/Engine/FLoaderOBJ.h"
 #include "GameFramework/Actor.h"
 #include "StaticMeshComponents/StaticMeshComponent.h"
+#include "Animation/AnimInstance.h"
+#include "Animation/AnimSingleNodeInstance.h"
+
+USkeletalMeshComponent::USkeletalMeshComponent()
+    : SkeletalMesh(nullptr)
+    , SelectedSubMeshIndex(-1)
+    , OwningAnimInstance(nullptr)
+    , CurrentAnimSequence(nullptr)
+{
+}
 
 USkeletalMeshComponent::USkeletalMeshComponent(const USkeletalMeshComponent& Other)
     : UMeshComponent(Other)
     , SkeletalMesh(Other.SkeletalMesh)
     , SelectedSubMeshIndex(Other.SelectedSubMeshIndex)
+    , OwningAnimInstance(Other.OwningAnimInstance)
+    , CurrentAnimSequence(Other.CurrentAnimSequence)
 {
+    //if (Other.OverrideMaterials.Num() > 0)
+    //{
+    //    OverrideMaterials = Other.OverrideMaterials;
+    //}
 }
+
 uint32 USkeletalMeshComponent::GetNumMaterials() const
 {
     if (SkeletalMesh == nullptr) return 0;
@@ -123,25 +140,63 @@ int USkeletalMeshComponent::CheckRayIntersection(FVector& rayOrigin, FVector& ra
 
 
 void USkeletalMeshComponent::SetSkeletalMesh(USkeletalMesh* value)
-{ 
-    SkeletalMesh = value;
-    VBIBTopologyMappingName = SkeletalMesh->GetFName();
-    value->UpdateBoneHierarchy();
-    
-    OverrideMaterials.SetNum(value->GetMaterials().Num());
-    AABB = SkeletalMesh->GetRenderData().BoundingBox;
+{
+    if (SkeletalMesh == value) return;
 
-    // CreateBoneComponents();
+    SkeletalMesh = value;
+
+    if (SkeletalMesh)
+    {
+        VBIBTopologyMappingName = SkeletalMesh->GetFName();
+         SkeletalMesh->UpdateBoneHierarchy();
+
+        // 머티리얼 오버라이드 배열 크기 조정
+        OverrideMaterials.Init(nullptr, SkeletalMesh->GetMaterials().Num());
+        AABB = SkeletalMesh->GetRenderData().BoundingBox;
+
+        if (OwningAnimInstance == nullptr)
+        {
+            OwningAnimInstance = FObjectFactory::ConstructObject<UAnimSingleNodeInstance>(this);
+        }
+
+        UE_LOG(LogLevel::Display, TEXT("USkeletalMeshComponent::SetSkeletalMesh - Setting mesh to: %s"),
+            value ? *value->GetFName().ToString() : TEXT("NULL"));
+
+        if (OwningAnimInstance)
+        {
+            UE_LOG(LogLevel::Display, TEXT("  Setting TargetSkeleton. SkeletalMesh is: %s. RefSkeletal is: %s"),
+                SkeletalMesh ? TEXT("VALID") : TEXT("NULL"),
+                (SkeletalMesh && SkeletalMesh->GetRefSkeletal()) ? TEXT("VALID") : TEXT("NULL"));
+            OwningAnimInstance->TargetSkeleton = SkeletalMesh->GetRefSkeletal(); // TargetSkeleton public 가정
+
+            OwningAnimInstance->NativeInitializeAnimation(); // 스켈레톤 설정 후 초기화
+
+            // 만약 기본 애니메이션이 있다면 여기서 설정
+            if (CurrentAnimSequence) {
+                //PlayAnimation(CurrentAnimSequence); 
+            }
+            else {
+                // 기본 애니메이션이 없다면, 참조 포즈로 본 트랜스폼 초기화
+                //UpdateBoneTransformsFromAnim(); // 포즈를 참조 포즈로 설정 // 그러면 이것도 맞는거 같은데
+                SkinningVertex(); // 참조 포즈로 스키닝
+            }
+        }
+    }
+    else // SkeletalMesh가 nullptr로 설정된 경우
+    {
+        VBIBTopologyMappingName = TEXT("");
+        OverrideMaterials.Empty();
+
+        if (OwningAnimInstance)
+        {
+            OwningAnimInstance = nullptr;
+        }
+        CurrentAnimSequence = nullptr;
+    }
 }
 
 void USkeletalMeshComponent::CreateBoneComponents()
 {
-    // 이미 할당된 component가 있다면 삭제
-    for (auto& BoneComp : BoneComponents)
-    {
-        BoneComp->DestroyComponent();
-    }
-
     FManagerOBJ::CreateStaticMesh("Contents/helloBlender.obj");
     for (const auto& Bone : GetSkeletalMesh()->GetRenderData().Bones)
     {
@@ -155,12 +210,17 @@ void USkeletalMeshComponent::CreateBoneComponents()
 
 USkeletalMesh* USkeletalMeshComponent::LoadSkeletalMesh(const FString& FilePath)
 {
-    USkeletalMesh* SkeletalMesh = FBXLoader::CreateSkeletalMesh(FilePath);
-    FBXLoader::CreateAnimationSequence(FilePath);
-    
-    SetSkeletalMesh(SkeletalMesh);
-    
-    return SkeletalMesh;
+    // FBXLoader가 USkeletalMesh를 생성하고 내부적으로 RefSkeletal도 채운다고 가정
+    USkeletalMesh* NewSkeletalMesh = FBXLoader::GetSkeletalMesh(FilePath);
+    // 애니메이션은 별도로 로드하고 관리
+    FBXLoader::GetAnimationSequence(FilePath);
+
+    if (NewSkeletalMesh)
+    {
+        SetSkeletalMesh(NewSkeletalMesh);
+    }
+
+    return NewSkeletalMesh;
 }
 
 void USkeletalMeshComponent::UpdateBoneHierarchy()
@@ -173,6 +233,31 @@ void USkeletalMeshComponent::UpdateBoneHierarchy()
     
     SkeletalMesh->UpdateBoneHierarchy();
     SkinningVertex();
+}
+void USkeletalMeshComponent::PlayAnimation(UAnimSequence* NewAnimToPlay, bool bLooping)
+{
+    CurrentAnimSequence = NewAnimToPlay;
+
+    if (OwningAnimInstance && CurrentAnimSequence)
+    {
+        UAnimSingleNodeInstance* SingleNodeInstance = Cast<UAnimSingleNodeInstance>(OwningAnimInstance);
+        if (SingleNodeInstance)
+        {
+            SingleNodeInstance->SetLooping(bLooping);
+            SingleNodeInstance->SetAnimation(CurrentAnimSequence, bLooping);
+        }
+    }
+    else if (OwningAnimInstance && !CurrentAnimSequence)
+    {
+        UAnimSingleNodeInstance* SingleNodeInstance = Cast<UAnimSingleNodeInstance>(OwningAnimInstance);
+        if (SingleNodeInstance)
+        {
+            SingleNodeInstance->SetAnimation(nullptr, false);
+        }
+
+        //UpdateBoneHierarchy();
+        SkinningVertex();
+    }
 }
 
 void USkeletalMeshComponent::SkinningVertex()
@@ -213,6 +298,41 @@ void USkeletalMeshComponent::SkinningVertex()
 //     SetStaticMesh(Mesh);
 // }
 
+// FIX-ME
+void USkeletalMeshComponent::BeginPlay()
+{
+    Super::BeginPlay(); 
+
+    CurrentAnimSequence = FBXLoader::GetAnimationSequence("FBX/mixmix2_2.fbx");
+
+    if (OwningAnimInstance)
+    {
+        OwningAnimInstance->NativeInitializeAnimation();
+    }
+    else if (SkeletalMesh)
+    {
+        OwningAnimInstance = FObjectFactory::ConstructObject<UAnimSingleNodeInstance>(this);
+        if (OwningAnimInstance)
+        {
+            OwningAnimInstance->TargetSkeleton = SkeletalMesh->GetRefSkeletal(); 
+
+            OwningAnimInstance->NativeInitializeAnimation();
+            if (CurrentAnimSequence) 
+            {
+                PlayAnimation(CurrentAnimSequence);
+            }
+            else 
+            {
+                UpdateBoneTransformsFromAnim();
+                //UpdateBoneHierarchy();
+                SkinningVertex();
+            }
+        }
+    }
+
+    CreateBoneComponents();
+}
+
 UObject* USkeletalMeshComponent::Duplicate(UObject* InOuter)
 {
     USkeletalMeshComponent* NewComp = FObjectFactory::ConstructObjectFrom<USkeletalMeshComponent>(this, InOuter);
@@ -224,32 +344,118 @@ UObject* USkeletalMeshComponent::Duplicate(UObject* InOuter)
 void USkeletalMeshComponent::DuplicateSubObjects(const UObject* Source, UObject* InOuter)
 {
     UMeshComponent::DuplicateSubObjects(Source, InOuter);
-    // TODO: Material 복사
+    const USkeletalMeshComponent* SourceComp = Cast<USkeletalMeshComponent>(Source);
+    if (SourceComp)
+    {
+        // SkeletalMesh는 애셋이므로 포인터만 복사 (깊은 복사 필요 시 별도 처리)
+        this->SkeletalMesh = SourceComp->SkeletalMesh;
+        this->OverrideMaterials = SourceComp->OverrideMaterials;
+        this->SelectedSubMeshIndex = SourceComp->SelectedSubMeshIndex;
+        this->CurrentAnimSequence = SourceComp->CurrentAnimSequence;
+        this->OwningAnimInstance = Cast<UAnimInstance>(SourceComp->OwningAnimInstance->Duplicate(this));
+    }
 }
 
-void USkeletalMeshComponent::PostDuplicate() {}
+void USkeletalMeshComponent::PostDuplicate()
+{
+    Super::PostDuplicate();
+    // if (SkeletalMesh)
+    // {
+    //     USkeletalMesh* TempMesh = SkeletalMesh;
+    //     SkeletalMesh = nullptr;
+    //     SetSkeletalMesh(TempMesh);
+    // }
+}
 
 void USkeletalMeshComponent::TickComponent(float DeltaTime)
 {
-    //Timer += DeltaTime * 0.005f;
-    //SetLocation(GetWorldLocation()+ (FVector(1.0f,1.0f, 1.0f) * sin(Timer)));
-}
-
-void USkeletalMesh::ResetToOriginalPose()
-{
-    // 본 트랜스폼 복원
-    for (int i = 0; i < OriginalLocalTransforms.Num() && i < SkeletalMeshRenderData.Bones.Num(); i++)
+    if (OwningAnimInstance && SkeletalMesh)
     {
-        // 로컬 트랜스폼 복원
-        SkeletalMeshRenderData.Bones[i].LocalTransform = OriginalLocalTransforms[i];
-
-        SkeletalMeshRenderData.Bones[i].GlobalTransform = OriginalGlobalMatrices[i];
+        OwningAnimInstance->NativeUpdateAnimation(DeltaTime);
+        UpdateBoneTransformsFromAnim();
+        //SkinningVertex();
+        //SkeletalMesh->UpdateBoneHierarchy();
+        SkeletalMesh->UpdateSkinnedVertices();
     }
 
+    if (BoneComponents.Num() > 0 && SkeletalMesh)
+    {
+        const auto& RenderBones = SkeletalMesh->GetRenderData().Bones;
+        for (int i = 0; i < BoneComponents.Num() && i < RenderBones.Num(); ++i)
+        {
+            if (BoneComponents[i] && RenderBones.IsValidIndex(i))
+            {
+                FTransform BoneComponentLocalSpaceTransform(RenderBones[i].GlobalTransform);
+                FTransform BoneFinalWorldTransform = BoneComponentLocalSpaceTransform * this->GetWorldTransform();
 
-    // 로컬 트랜스폼으로부터 글로벌 트랜스폼과 스키닝 매트릭스 재계산
-    UpdateBoneHierarchy();
+                BoneComponents[i]->SetWorldTransform(BoneFinalWorldTransform);
+            }
+        }
+    }
+}
 
-    // 스키닝 적용
-    UpdateSkinnedVertices();
+void USkeletalMeshComponent::UpdateBoneTransformsFromAnim()
+{
+    if (!OwningAnimInstance || !SkeletalMesh)
+    {
+        // 애니메이션 인스턴스나 스켈레탈 메시가 없으면 아무것도 하지 않거나 참조 포즈로.
+        // 참조 포즈로 되돌리려면:
+        if (SkeletalMesh) SkeletalMesh->UpdateBoneHierarchy(); // 참조 포즈의 본 트랜스폼으로 설정
+        return;
+    }
+
+    const FRefSkeletal* RefSkeleton = OwningAnimInstance->TargetSkeleton; // 또는 GetTargetSkeleton() 같은 함수
+    if (!RefSkeleton)
+    {
+        // 참조 스켈레톤 정보가 없으면 진행 불가
+        if (SkeletalMesh) SkeletalMesh->UpdateBoneHierarchy();
+        return;
+    }
+
+    const FPoseData& CurrentPose = OwningAnimInstance->GetCurrentPose();
+    FSkeletalMeshRenderData& RenderData = SkeletalMesh->GetRenderData(); // Non-const 접근
+
+    if (CurrentPose.LocalBoneTransforms.Num() != RefSkeleton->BoneTree.Num() ||
+        RenderData.Bones.Num() != RefSkeleton->BoneTree.Num())
+    {
+        UE_LOG(LogLevel::Warning, TEXT("Mismatch in bone counts between AnimPose, RefSkeleton, and RenderData."));
+        SkeletalMesh->UpdateBoneHierarchy();
+        return;
+    }
+
+    for (int32 BoneTreeIndex = 0; BoneTreeIndex < RefSkeleton->BoneTree.Num(); ++BoneTreeIndex)
+    {
+        if (!RenderData.Bones.IsValidIndex(BoneTreeIndex) || !CurrentPose.LocalBoneTransforms.IsValidIndex(BoneTreeIndex))
+        {
+            UE_LOG(LogLevel::Warning, TEXT("Invalid bone index during local transform application."));
+            continue;
+        }
+
+        RenderData.Bones[BoneTreeIndex].LocalTransform = CurrentPose.LocalBoneTransforms[BoneTreeIndex].ToTransform().ToMatrix();
+    }
+
+    for (int32 BoneTreeIndex = 0; BoneTreeIndex < RefSkeleton->BoneTree.Num(); ++BoneTreeIndex)
+    {
+        if (!RenderData.Bones.IsValidIndex(BoneTreeIndex) || !RefSkeleton->BoneTree.IsValidIndex(BoneTreeIndex))
+        {
+            UE_LOG(LogLevel::Warning, TEXT("Invalid bone index during global transform calculation."));
+            continue;
+        }
+
+        FMatrix ParentGlobalTransformMatrix = FMatrix::Identity;
+
+        int32 ParentBoneDataIndex = RenderData.Bones[BoneTreeIndex].ParentIndex;
+
+        if (ParentBoneDataIndex != INDEX_NONE && RenderData.Bones.IsValidIndex(ParentBoneDataIndex)) 
+        {
+            ParentGlobalTransformMatrix = RenderData.Bones[ParentBoneDataIndex].GlobalTransform;
+        }
+        // else: 루트 본이거나 ParentIndex가 유효하지 않으면, ParentGlobalTransformMatrix는 Identity로 유지됩니다.
+
+        RenderData.Bones[BoneTreeIndex].GlobalTransform = RenderData.Bones[BoneTreeIndex].LocalTransform * ParentGlobalTransformMatrix;
+        //RenderData.Bones[BoneTreeIndex].GlobalTransform = ParentGlobalTransformMatrix * RenderData.Bones[BoneTreeIndex].LocalTransform;
+
+        RenderData.Bones[BoneTreeIndex].SkinningMatrix = RenderData.Bones[BoneTreeIndex].InverseBindPoseMatrix * RenderData.Bones[BoneTreeIndex].GlobalTransform;
+        //RenderData.Bones[BoneTreeIndex].SkinningMatrix = RenderData.Bones[BoneTreeIndex].GlobalTransform * RenderData.Bones[BoneTreeIndex].InverseBindPoseMatrix;
+    }
 }

@@ -3,6 +3,8 @@
 #include "Math/Quat.h"
 #include "Math/Vector.h"
 #include "UObject/NameTypes.h"
+#include "Math/Transform.h"
+#include "FBX/FBXDefine.h"
 
 #define DEFAULT_SAMPLERATE			30.f
 #define MINIMUM_ANIMATION_LENGTH	(1/DEFAULT_SAMPLERATE)
@@ -15,6 +17,63 @@
 #define ENABLE_VERBOSE_ANIM_PERF_TRACKING 0
 
 #define MAX_ANIMATION_TRACKS 65535
+
+struct FCompactPoseBone // 한 뼈의 로컬 변환
+{
+    FQuat Rotation;
+    FVector Translation;
+    FVector Scale3D;
+
+    FCompactPoseBone() : Rotation(FQuat::Identity()), Translation(FVector::ZeroVector), Scale3D(FVector::OneVector) {}
+
+    FTransform ToTransform() const
+    {
+        return FTransform(Rotation, Translation, Scale3D);
+    }
+};
+
+struct FPoseData
+{
+    FPoseData() { LocalBoneTransforms = {}, Skeleton = nullptr; }
+    TArray<FCompactPoseBone> LocalBoneTransforms;
+
+    const FRefSkeletal* Skeleton;
+
+    void Reset()
+    {
+        LocalBoneTransforms.Empty();
+        //LocalBoneTransforms.AddDefaulted(NumBones); // 기본값(Identity)으로 초기화
+    }
+};
+
+namespace AnimationUtils
+{
+    inline void BlendPoses(const FPoseData& PoseA, const FPoseData& PoseB, float BlendAlpha, FPoseData& OutBlendedPose)
+    {
+        if (PoseA.LocalBoneTransforms.Num() != PoseB.LocalBoneTransforms.Num())
+        {
+            // 포즈의 뼈 개수가 다르면 블렌딩 불가 (에러 처리 또는 경고)
+            if (PoseA.LocalBoneTransforms.Num() > 0) OutBlendedPose = PoseA; // A를 그대로 사용
+            else if (PoseB.LocalBoneTransforms.Num() > 0) OutBlendedPose = PoseB; // B를 그대로 사용
+            return;
+        }
+
+        const int32 NumBones = PoseA.LocalBoneTransforms.Num();
+        OutBlendedPose.Reset();
+
+        for (int32 i = 0; i < NumBones; ++i)
+        {
+            const FCompactPoseBone& TransformA = PoseA.LocalBoneTransforms[i];
+            const FCompactPoseBone& TransformB = PoseB.LocalBoneTransforms[i];
+            FCompactPoseBone& BlendedTransform = OutBlendedPose.LocalBoneTransforms[i];
+
+            BlendedTransform.Translation = FMath::Lerp(TransformA.Translation, TransformB.Translation, BlendAlpha);
+            BlendedTransform.Rotation = FQuat::Slerp(TransformA.Rotation, TransformB.Rotation, BlendAlpha);
+            BlendedTransform.Rotation.Normalize();
+            BlendedTransform.Scale3D = FMath::Lerp(TransformA.Scale3D, TransformB.Scale3D, BlendAlpha);
+        }
+    }
+}
 
 struct FRawAnimSequenceTrack
 {

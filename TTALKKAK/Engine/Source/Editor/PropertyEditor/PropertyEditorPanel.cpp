@@ -1913,7 +1913,7 @@ void PropertyEditorPanel::DrawSkeletalMeshPreviewButton(const FString& FilePath)
         SkeletalMeshActor->SetActorLabel("SkeletalMesh");
         USkeletalMeshComponent* SkeletalMeshComp = SkeletalMeshActor->GetComponentByClass<USkeletalMeshComponent>();
 
-        SkeletalMeshComp->SetSkeletalMesh(FBXLoader::CreateSkeletalMesh(FilePath));
+        SkeletalMeshComp->SetSkeletalMesh(FBXLoader::GetSkeletalMesh(FilePath));
     }
 }
 

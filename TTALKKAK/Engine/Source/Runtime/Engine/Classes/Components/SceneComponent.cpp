@@ -216,6 +216,13 @@ void USceneComponent::SetRelativeScale(const FVector& InScale)
     RelativeScale = InScale;
 }
 
+void USceneComponent::SetRelativeTransform(const FTransform InTransform)
+{
+    SetRelativeLocation(InTransform.GetLocation());
+    SetRelativeRotation(InTransform.GetRotation());
+    SetRelativeScale(InTransform.GetScale3D());
+}
+
 FVector USceneComponent::GetRelativeLocation() const
 {
     return RelativeLocation;
@@ -229,6 +236,11 @@ FRotator USceneComponent::GetRelativeRotation() const
 FVector USceneComponent::GetRelativeScale() const
 {
     return RelativeScale;
+}
+
+FTransform USceneComponent::GetRelativeTransform() const
+{
+    return FTransform(RelativeRotation.ToQuaternion(), RelativeLocation, RelativeScale);
 }
 
 FVector USceneComponent::GetWorldLocation() const
@@ -246,6 +258,14 @@ FRotator USceneComponent::GetWorldRotation() const
 FVector USceneComponent::GetWorldScale() const
 {
     return GetWorldMatrix().GetScaleVector();
+}
+
+FTransform USceneComponent::GetWorldTransform() const
+{
+    FVector WorldLocation = GetWorldLocation();
+    FQuat WorldRotation = GetWorldRotation().ToQuaternion();
+    FVector WorldScale = GetWorldScale();
+    return FTransform(WorldRotation, WorldLocation, WorldScale);
 }
 
 void USceneComponent::AddWorldLocation(const FVector& InAddValue)
@@ -306,6 +326,42 @@ void USceneComponent::SetWorldScale(const FVector& InScale)
     }
     FVector NewRelativeScale = NewRelativeMatrix.GetScaleVector();
     RelativeScale = NewRelativeScale;
+}
+
+void USceneComponent::SetWorldTransform(const FTransform& InTransform)
+{
+    FTransform ParentWorldTransform = FTransform::Identity();
+    if (AttachParent)
+    {
+        ParentWorldTransform = AttachParent->GetWorldTransform();
+    }
+
+    FQuat NewRelativeRotationQuat = ParentWorldTransform.GetRotation().Inverse() * InTransform.GetRotation();
+    NewRelativeRotationQuat.Normalize();
+
+    const FVector& TargetWorldScale = InTransform.GetScale3D();
+    const FVector& ParentScale = ParentWorldTransform.GetScale3D();
+    FVector NewRelativeScale;
+    NewRelativeScale.X = (ParentScale.X != 0.f) ? TargetWorldScale.X / ParentScale.X : TargetWorldScale.X; // Avoid division by zero
+    NewRelativeScale.Y = (ParentScale.Y != 0.f) ? TargetWorldScale.Y / ParentScale.Y : TargetWorldScale.Y;
+    NewRelativeScale.Z = (ParentScale.Z != 0.f) ? TargetWorldScale.Z / ParentScale.Z : TargetWorldScale.Z;
+    if (ParentScale.X == 0.f && TargetWorldScale.X != 0.f) {/* handle error or decide behavior */ }
+    if (ParentScale.Y == 0.f && TargetWorldScale.Y != 0.f) {/* handle error or decide behavior */ }
+    if (ParentScale.Z == 0.f && TargetWorldScale.Z != 0.f) {/* handle error or decide behavior */ }
+
+
+    const FVector& TargetWorldLocation = InTransform.GetLocation();
+    FVector DeltaLocationWorld = TargetWorldLocation - ParentWorldTransform.GetLocation();
+    FVector DeltaLocationParentSpace = ParentWorldTransform.GetRotation().Inverse().RotateVector(DeltaLocationWorld);
+
+    FVector NewRelativeLocation;
+    NewRelativeLocation.X = (ParentScale.X != 0.f) ? DeltaLocationParentSpace.X / ParentScale.X : DeltaLocationParentSpace.X;
+    NewRelativeLocation.Y = (ParentScale.Y != 0.f) ? DeltaLocationParentSpace.Y / ParentScale.Y : DeltaLocationParentSpace.Y;
+    NewRelativeLocation.Z = (ParentScale.Z != 0.f) ? DeltaLocationParentSpace.Z / ParentScale.Z : DeltaLocationParentSpace.Z;
+
+    SetRelativeLocation(NewRelativeLocation);
+    SetRelativeRotation(NewRelativeRotationQuat);
+    SetRelativeScale(NewRelativeScale);
 }
 
 FMatrix USceneComponent::GetScaleMatrix() const

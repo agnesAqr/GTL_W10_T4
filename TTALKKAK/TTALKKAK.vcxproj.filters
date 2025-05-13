@@ -118,6 +118,12 @@
     <Filter Include="Engine\Source\Runtime\Engine\Classes\Components\Material">
       <UniqueIdentifier>{057033e1-bf99-4de4-b992-4d13d03f2103}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine\Source\Runtime\Engine\Classes\Animation">
+      <UniqueIdentifier>{d087522d-904b-47da-94d8-b356452666c7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework">
+      <UniqueIdentifier>{37b438ba-687a-4ab8-b921-02ed2635d25b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\Source\Editor\PropertyEditor\IWindowToggleable.h">
@@ -343,9 +349,6 @@
     <ClInclude Include="Engine\Source\Runtime\Serialization\FWindowsBinHelper.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\GameFramework\ActorInfo.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\ActorComponentInfo.h" />
-    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework\MovementComponent.h" />
-    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework\ProjectileMovementComponent.h" />
-    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework\RotatingMovementComponent.h" />
     <ClInclude Include="Engine\Source\Runtime\Windows\D3D11RHI\FShaderProgram.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\RenderPass\FBaseRenderPass.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\RenderPass\StaticMeshRenderPass.h" />
@@ -460,7 +463,29 @@
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Actors\SkeletalMeshActor.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Viewport.h" />
     <ClInclude Include="Engine\Source\Runtime\SlateCore\Layout\SlateRect.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimSingleNodeInstance.h">
+      <Filter>Engine\Source\Runtime\Engine\Classes\Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimInstance.h">
+      <Filter>Engine\Source\Runtime\Engine\Classes\Animation</Filter>
+    </ClInclude>
     <ClInclude Include="Engine\Source\FBXLoader.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework\ChracterMovementComponent.h">
+      <Filter>Engine\Source\Runtime\Engine\Classes\Components\GameFramework</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework\MovementComponent.h">
+      <Filter>Engine\Source\Runtime\Engine\Classes\Components\GameFramework</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework\PawnMovementComponent.h">
+      <Filter>Engine\Source\Runtime\Engine\Classes\Components\GameFramework</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework\ProjectileMovementComponent.h">
+      <Filter>Engine\Source\Runtime\Engine\Classes\Components\GameFramework</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework\RotatingMovementComponent.h">
+      <Filter>Engine\Source\Runtime\Engine\Classes\Components\GameFramework</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Animation\CustomAnimInstance.h" />
     <ClInclude Include="Engine\Source\Runtime\Core\Container\FFileHelper.h" />
     <ClInclude Include="Engine\Source\Runtime\Core\Container\Path.h" />
     <ClInclude Include="Engine\Source\Runtime\Core\Container\StringConv.h" />
@@ -470,8 +495,10 @@
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Engine\Assets\Animation\AnimDataModel.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Engine\Assets\Animation\AnimTypes.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Engine\Assets\Animation\IAnimationDataModel.h" />
-    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Engine\Assets\Animation\UAnimationAsset.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Engine\Assets\UAsset.h" />
+    <ClInclude Include="Engine\Source\Runtime\Core\Math\Transform.h">
+      <Filter>Engine\Source\Runtime\Core\Math</Filter>
+    </ClInclude>
     <ClInclude Include="Engine\Source\Editor\PropertyEditor\PreviewControlEditorPanel.h" />
     <ClInclude Include="Engine\Source\Editor\PropertyEditor\SkeletalPreviewPropertyEditorPanel.h" />
     <ClInclude Include="Engine\Source\Editor\UnrealEd\SkeletalPreviewUI.h" />
@@ -576,9 +603,6 @@
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Actors\PointLightActor.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Core\Math\Color.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Serialization\Archive.cpp" />
-    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework\MovementComponent.cpp" />
-    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework\ProjectileMovementComponent.cpp" />
-    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework\RotatingMovementComponent.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Windows\D3D11RHI\FShaderProgram.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\RenderPass\FBaseRenderPass.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\RenderPass\StaticMeshRenderPass.cpp" />
@@ -689,7 +713,29 @@
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Actors\SkeletalMeshActor.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Viewport.cpp" />
     <ClCompile Include="Engine\Source\Runtime\SlateCore\Layout\SlateRect.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimSingleNodeInstance.cpp">
+      <Filter>Engine\Source\Runtime\Engine\Classes\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimInstance.cpp">
+      <Filter>Engine\Source\Runtime\Engine\Classes\Animation</Filter>
+    </ClCompile>
     <ClCompile Include="Engine\Source\FBXLoader.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework\ChracterMovementComponent.cpp">
+      <Filter>Engine\Source\Runtime\Engine\Classes\Components\GameFramework</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework\MovementComponent.cpp">
+      <Filter>Engine\Source\Runtime\Engine\Classes\Components\GameFramework</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework\PawnMovementComponent.cpp">
+      <Filter>Engine\Source\Runtime\Engine\Classes\Components\GameFramework</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework\ProjectileMovementComponent.cpp">
+      <Filter>Engine\Source\Runtime\Engine\Classes\Components\GameFramework</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework\RotatingMovementComponent.cpp">
+      <Filter>Engine\Source\Runtime\Engine\Classes\Components\GameFramework</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Animation\CustomAnimInstance.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Core\Container\FFileHelper.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Core\Container\Path.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Core\Math\FrameRate.cpp" />
@@ -697,7 +743,6 @@
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Engine\Assets\Animation\AnimDataModel.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Engine\Assets\Animation\AnimTypes.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Engine\Assets\Animation\IAnimationDataModel.cpp" />
-    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Engine\Assets\Animation\UAnimationAsset.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Engine\Assets\UAsset.cpp" />
     <ClCompile Include="Engine\Source\Editor\PropertyEditor\PreviewControlEditorPanel.cpp" />
     <ClCompile Include="Engine\Source\Editor\PropertyEditor\SkeletalPreviewPropertyEditorPanel.cpp" />
@@ -707,6 +752,10 @@
     <ClCompile Include="Engine\Source\Runtime\Engine\FBX\SkeletalDefine.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Viewport.cpp" />
     <ClCompile Include="Engine\Source\Runtime\SlateCore\Layout\SlateRect.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Engine\Assets\Animation\AnimationAsset.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Core\Math\Transform.cpp">
+      <Filter>Engine\Source\Runtime\Core\Math</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\ShaderHeaders\GConstantBuffers.hlsli" />
