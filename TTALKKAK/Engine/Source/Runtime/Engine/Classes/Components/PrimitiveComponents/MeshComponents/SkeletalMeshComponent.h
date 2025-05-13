@@ -1,11 +1,13 @@
 #pragma once
 #include "MeshComponent.h"
 #include "Components/Mesh/SkeletalMesh.h"
-#include "Animation/AnimSingleNodeInstance.h"
 #include "Classes/Engine/Assets/Animation/AnimationAsset.h"
 
 class UStaticMeshComponent;
+
 class UAnimInstance;
+class UAnimSingleNodeInstance;
+class UBlendAnimInstance;
 
 class USkeletalMeshComponent : public UMeshComponent
 {
@@ -39,8 +41,7 @@ public:
     void CreateBoneComponents();
     void UpdateBoneHierarchy();
 
-    // 이걸 여기 두는 것 자체가 별로긴 함. 근데 학습 자료에 그렇게 나와 있음.
-    void PlayAnimation(UAnimSequence* NewAnimToPlay, bool bLooping = true);
+    void SetAnimInstance(UAnimInstance* InAnimInstance);
     UAnimInstance* GetAnimInstance() const { return OwningAnimInstance; }
 
     void UpdateBoneTransformsFromAnim();
@@ -50,9 +51,8 @@ private:
     void SkinningVertex();
     
     UAnimInstance* OwningAnimInstance;
-    UAnimSequence* CurrentAnimSequence;
 
 protected:
     USkeletalMesh* SkeletalMesh;
-    int SelectedSubMeshIndex = -1;
+    int SelectedSubMeshIndex = -1; 
 };
