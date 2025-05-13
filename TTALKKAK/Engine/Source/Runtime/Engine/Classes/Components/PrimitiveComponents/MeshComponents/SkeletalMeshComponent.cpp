@@ -15,7 +15,6 @@ USkeletalMeshComponent::USkeletalMeshComponent()
     : SkeletalMesh(nullptr)
     , SelectedSubMeshIndex(-1)
     , OwningAnimInstance(nullptr)
-    , CurrentAnimSequence(nullptr)
 {
 }
 
@@ -24,7 +23,6 @@ USkeletalMeshComponent::USkeletalMeshComponent(const USkeletalMeshComponent& Oth
     , SkeletalMesh(Other.SkeletalMesh)
     , SelectedSubMeshIndex(Other.SelectedSubMeshIndex)
     , OwningAnimInstance(Other.OwningAnimInstance)
-    , CurrentAnimSequence(Other.CurrentAnimSequence)
 {
     //if (Other.OverrideMaterials.Num() > 0)
     //{
@@ -171,15 +169,8 @@ void USkeletalMeshComponent::SetSkeletalMesh(USkeletalMesh* value)
 
             OwningAnimInstance->NativeInitializeAnimation(); // 스켈레톤 설정 후 초기화
 
-            // 만약 기본 애니메이션이 있다면 여기서 설정
-            if (CurrentAnimSequence) {
-                //PlayAnimation(CurrentAnimSequence); 
-            }
-            else {
-                // 기본 애니메이션이 없다면, 참조 포즈로 본 트랜스폼 초기화
-                //UpdateBoneTransformsFromAnim(); // 포즈를 참조 포즈로 설정 // 그러면 이것도 맞는거 같은데
-                SkinningVertex(); // 참조 포즈로 스키닝
-            }
+            SkinningVertex();
+
         }
     }
     else // SkeletalMesh가 nullptr로 설정된 경우
@@ -191,7 +182,6 @@ void USkeletalMeshComponent::SetSkeletalMesh(USkeletalMesh* value)
         {
             OwningAnimInstance = nullptr;
         }
-        CurrentAnimSequence = nullptr;
     }
 }
 
@@ -213,7 +203,7 @@ USkeletalMesh* USkeletalMeshComponent::LoadSkeletalMesh(const FString& FilePath)
     // FBXLoader가 USkeletalMesh를 생성하고 내부적으로 RefSkeletal도 채운다고 가정
     USkeletalMesh* NewSkeletalMesh = FBXLoader::GetSkeletalMesh(FilePath);
     // 애니메이션은 별도로 로드하고 관리
-    FBXLoader::GetAnimationSequence(FilePath);
+    //FBXLoader::GetAnimationSequence(FilePath);
 
     if (NewSkeletalMesh)
     {
@@ -234,9 +224,10 @@ void USkeletalMeshComponent::UpdateBoneHierarchy()
     SkeletalMesh->UpdateBoneHierarchy();
     SkinningVertex();
 }
-void USkeletalMeshComponent::PlayAnimation(UAnimSequence* NewAnimToPlay, bool bLooping)
+
+void USkeletalMeshComponent::PlayAnimation(UAnimationAsset* NewAnimToPlay, bool bLooping)
 {
-    CurrentAnimSequence = NewAnimToPlay;
+    UAnimSequence* CurrentAnimSequence = Cast<UAnimSequence>(NewAnimToPlay);
 
     if (OwningAnimInstance && CurrentAnimSequence)
     {
@@ -258,6 +249,11 @@ void USkeletalMeshComponent::PlayAnimation(UAnimSequence* NewAnimToPlay, bool bL
         //UpdateBoneHierarchy();
         SkinningVertex();
     }
+}
+
+UAnimSingleNodeInstance* USkeletalMeshComponent::GetSingleNodeInstance() const
+{
+    return Cast<UAnimSingleNodeInstance>(OwningAnimInstance);
 }
 
 void USkeletalMeshComponent::SkinningVertex()
@@ -303,8 +299,7 @@ void USkeletalMeshComponent::BeginPlay()
 {
     Super::BeginPlay(); 
 
-    CurrentAnimSequence = FBXLoader::GetAnimationSequence("FBX/mixmix2_2.fbx");
-
+    UAnimSequence* CurrentAnimSequence = GetSingleNodeInstance()->GetAnimation();
     if (OwningAnimInstance)
     {
         OwningAnimInstance->NativeInitializeAnimation();
@@ -351,7 +346,6 @@ void USkeletalMeshComponent::DuplicateSubObjects(const UObject* Source, UObject*
         this->SkeletalMesh = SourceComp->SkeletalMesh;
         this->OverrideMaterials = SourceComp->OverrideMaterials;
         this->SelectedSubMeshIndex = SourceComp->SelectedSubMeshIndex;
-        this->CurrentAnimSequence = SourceComp->CurrentAnimSequence;
         this->OwningAnimInstance = Cast<UAnimInstance>(SourceComp->OwningAnimInstance->Duplicate(this));
     }
 }

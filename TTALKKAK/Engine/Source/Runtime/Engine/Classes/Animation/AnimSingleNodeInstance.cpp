@@ -6,26 +6,19 @@
 #include "FBXLoader.h"
 #include "Classes/Engine/Assets/Animation/AnimDataModel.h"
 
-// NOTE: For CurrentAnimationSeq->GetRateScale() to work as in UCustomAnimInstance,
-// UAnimSequenceBase would need a public GetRateScale() method like:
-// In UAnimSequenceBase.h:
-// public:
-//    float GetRateScale() const { return RateScale; } 
-// (Currently, RateScale is protected and no getter is shown in the provided files)
-// For this implementation, we will try to access `RateScale` directly,
-// or assume GetRateScale() will be added based on UCustomAnimInstance's usage.
-
-
 UAnimSingleNodeInstance::UAnimSingleNodeInstance()
-    : CurrentAnimationSeq(nullptr)
+    : AnimationSequence(nullptr)
     , CurrentTime(0.0f)
     , bLooping(true)
 {
+    // Begin Test
+    AnimationSequence = FBXLoader::GetAnimationSequence("FBX/Walking.fbx");
+    // End Test
 }
 
 UAnimSingleNodeInstance::UAnimSingleNodeInstance(const UAnimSingleNodeInstance& Other)
     : UAnimInstance(Other)
-    , CurrentAnimationSeq(Other.CurrentAnimationSeq) 
+    , AnimationSequence(Other.AnimationSequence) 
     , CurrentTime(Other.CurrentTime)
     , bLooping(Other.bLooping)
 {
@@ -48,10 +41,10 @@ void UAnimSingleNodeInstance::DuplicateSubObjects(const UObject* Source, UObject
     const UAnimSingleNodeInstance* Origin = Cast<UAnimSingleNodeInstance>(Source);
     if (Origin)
     {
-        // CurrentAnimationSeq is a UObject pointer, typically an asset.
+        // AnimationSequence is a UObject pointer, typically an asset.
         // We don't duplicate assets here, just copy the pointer.
         // If it were a sub-object owned exclusively by this instance, duplication logic would be needed.
-        this->CurrentAnimationSeq = Origin->CurrentAnimationSeq;
+        this->AnimationSequence = Origin->AnimationSequence;
     }
 }
 
@@ -62,11 +55,11 @@ void UAnimSingleNodeInstance::PostDuplicate()
 
 void UAnimSingleNodeInstance::SetAnimation(UAnimSequence* AnimSequence, bool bShouldLoop)
 {
-    CurrentAnimationSeq = AnimSequence;
+    AnimationSequence = AnimSequence;
     CurrentTime = 0.0f;
     bLooping = bShouldLoop;
 
-    if (CurrentAnimationSeq && TargetSkeleton)
+    if (AnimationSequence && TargetSkeleton)
     {
         CurrentPoseData.Reset();
         CurrentPoseData.Skeleton = TargetSkeleton;
@@ -78,7 +71,7 @@ void UAnimSingleNodeInstance::SetAnimation(UAnimSequence* AnimSequence, bool bSh
                 Bone = FCompactPoseBone(); // Identity transform
             }
         }
-        CurrentAnimationSeq->SamplePoseAtTime(CurrentTime, TargetSkeleton, CurrentPoseData);
+        AnimationSequence->SamplePoseAtTime(CurrentTime, TargetSkeleton, CurrentPoseData);
     }
     else
     {
@@ -102,6 +95,7 @@ void UAnimSingleNodeInstance::NativeInitializeAnimation()
     CurrentTime = 0.0f;
     CurrentPoseData.Reset();
 
+
     if (TargetSkeleton)
     {
         CurrentPoseData.Skeleton = TargetSkeleton;
@@ -112,7 +106,6 @@ void UAnimSingleNodeInstance::NativeInitializeAnimation()
     }
 
     UAnimSequence* AnimSequence = FBXLoader::GetAnimationSequence("FBX/Walking.fbx");
-    //AnimSequence->GetPlayLength();// 이거 왜 0으로 뽑히지
     SetAnimation(AnimSequence, true);
 }
 
@@ -120,16 +113,12 @@ void UAnimSingleNodeInstance::NativeInitializeAnimation()
 void UAnimSingleNodeInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
     Super::NativeUpdateAnimation(DeltaSeconds);
-    CurrentAnimationSeq->SetSkeletal(TargetSkeleton);
-    if (CurrentAnimationSeq && TargetSkeleton)
+    AnimationSequence->SetSkeletal(TargetSkeleton);
+    if (AnimationSequence && TargetSkeleton)
     {
-        const float PlayLength = CurrentAnimationSeq->GetPlayLength(); // Begin Test
-        //const float PlayLength = CurrentAnimationSeq->GetAnimDataModel()->PlayLength; // 이걸 이런식으로 접근해야 하는거면 다른 것들은 왜 있는거지
+        const float PlayLength = AnimationSequence->GetPlayLength();
         float ActualRateScale = 1.0f;
-        if (CurrentAnimationSeq) ActualRateScale = CurrentAnimationSeq->GetRateScale();
-
-        UE_LOG(LogLevel::Display, "UAnimSingleNodeInstance-ActualRateScale: %f", ActualRateScale);
-        UE_LOG(LogLevel::Display, "UAnimSingleNodeInstance-PlayLength: %f", PlayLength);
+        if (AnimationSequence) ActualRateScale = AnimationSequence->GetRateScale();
 
         if (PlayLength > KINDA_SMALL_NUMBER)
         {
@@ -148,8 +137,7 @@ void UAnimSingleNodeInstance::NativeUpdateAnimation(float DeltaSeconds)
         {
             this->CurrentPoseData.LocalBoneTransforms.Init(FCompactPoseBone(), TargetSkeleton->BoneTree.Num());
         }
-        //UE_LOG(LogLevel::Display, "UAnimSingleNodeInstance-CurrentTime: %f", CurrentTime);
-        CurrentAnimationSeq->SamplePoseAtTime(CurrentTime, TargetSkeleton, this->CurrentPoseData);
+        AnimationSequence->SamplePoseAtTime(CurrentTime, TargetSkeleton, this->CurrentPoseData);
     }
     else
     {

@@ -40,8 +40,8 @@ public:
     void UpdateBoneHierarchy();
 
     // 이걸 여기 두는 것 자체가 별로긴 함. 근데 학습 자료에 그렇게 나와 있음.
-    void PlayAnimation(UAnimSequence* NewAnimToPlay, bool bLooping = true);
-    UAnimInstance* GetAnimInstance() const { return OwningAnimInstance; }
+    void PlayAnimation(UAnimationAsset* NewAnimToPlay, bool bLooping = true);
+    UAnimSingleNodeInstance* GetSingleNodeInstance() const;
 
     void UpdateBoneTransformsFromAnim();
 
@@ -50,7 +50,6 @@ private:
     void SkinningVertex();
     
     UAnimInstance* OwningAnimInstance;
-    UAnimSequence* CurrentAnimSequence;
 
 protected:
     USkeletalMesh* SkeletalMesh;

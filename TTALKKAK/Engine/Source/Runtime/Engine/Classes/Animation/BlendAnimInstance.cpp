@@ -1,62 +1,63 @@
-#include "CustomAnimInstance.h"
+#include "BlendAnimInstance.h"
 #include "CoreUObject/UObject/Casts.h"
 #include "Classes/Engine/Assets/Animation/AnimationAsset.h" // AnimSequence
 #include "Classes/Engine/Assets/Animation/AnimDataModel.h"
+#include "FBXLoader.h"
 
-UCustomAnimInstance::UCustomAnimInstance()
+UBlendAnimInstance::UBlendAnimInstance()
+    : AnimationA(nullptr)
+    , AnimationB(nullptr)
+    , BlendAlpha(1.f)
+    , FinalBlendedPose(FPoseData())
+    , CurrentTimeA(0.f)
+    , CurrentTimeB(0.f)
 {
-    AnimationA = nullptr;
-    AnimationB = nullptr;
-    BlendAlpha = 1.f;
-    FinalBlendedPose = FPoseData();
+    // constructor에서 하는게 부적절할 수도 있음.
+    AnimationA = FBXLoader::GetAnimationSequence("FBX/Walking.fbx");
+    AnimationB = FBXLoader::GetAnimationSequence("FBX/Sneak_Walking.fbx");
 }
 
-UCustomAnimInstance::UCustomAnimInstance(const UCustomAnimInstance& Other)
+UBlendAnimInstance::UBlendAnimInstance(const UBlendAnimInstance& Other)
     : AnimationA(Other.AnimationA)
     , AnimationB(Other.AnimationB)
     , BlendAlpha(Other.BlendAlpha)
     , FinalBlendedPose(Other.FinalBlendedPose)
+    , CurrentTimeA(Other.CurrentTimeA)
+    , CurrentTimeB(Other.CurrentTimeB)
 {
 }
 
-UObject* UCustomAnimInstance::Duplicate(UObject* InOuter)
+UObject* UBlendAnimInstance::Duplicate(UObject* InOuter)
 {
-    UCustomAnimInstance* NewAnimInstance = FObjectFactory::ConstructObjectFrom<UCustomAnimInstance>(this, InOuter);
+    UBlendAnimInstance* NewAnimInstance = FObjectFactory::ConstructObjectFrom<UBlendAnimInstance>(this, InOuter);
     NewAnimInstance->DuplicateSubObjects(this, InOuter);
     NewAnimInstance->PostDuplicate();
     return NewAnimInstance;
 }
 
-void UCustomAnimInstance::DuplicateSubObjects(const UObject* Source, UObject* InOuter)
+void UBlendAnimInstance::DuplicateSubObjects(const UObject* Source, UObject* InOuter)
 {
     Super::DuplicateSubObjects(Source, InOuter);
-    UCustomAnimInstance* Origin = Cast<UCustomAnimInstance>(Source);
+    UBlendAnimInstance* Origin = Cast<UBlendAnimInstance>(Source);
 }
 
-void UCustomAnimInstance::PostDuplicate()
+void UBlendAnimInstance::PostDuplicate()
 {
     Super::PostDuplicate();
 }
 
-void UCustomAnimInstance::NativeInitializeAnimation()
+void UBlendAnimInstance::NativeInitializeAnimation()
 {
     Super::NativeInitializeAnimation();
-    // 애님 시퀀스 가져오는 함수 호출
-    //AnimationA;
+    //AnimationA=
     //AnimationB;
 
     SetBlendAlpha(1.f);
 }
 
-void UCustomAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
+void UBlendAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
     Super::NativeUpdateAnimation(DeltaSeconds);
-
-    // 여기에 애니메이션 블렌딩하는 부분을 추가할 예정
-
-    // 1. 현재 deltatime에 대한 anim sequence의 값을 가져오고
-    // 2. deltatime을 애니메이션 프레임에 맞게 수정하고
-    // 3. 블렌딩 함수를 구현할 것.
 
     // 참고할 자료는 UAniumSequenceBase의 TickAssetPlayer로 생성은 해둔 상태인 것 같은데
     
@@ -78,27 +79,18 @@ void UCustomAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
             CurrentTimeB = FMath::Fmod(CurrentTimeB, AnimationB->GetPlayLength());
         }
 
-        FPoseData PoseA_Data;
-        FPoseData PoseB_Data;
+        FPoseData PoseDataA;
+        FPoseData PoseDataB;
 
         // TargetSkeleton에서 뼈 개수를 가져와서 Reset 호출해야하는데 일단 지금 본 갯수 빼고 했음. 문제 생기면 이게 문제일 확률이 매우 높음.
-        PoseA_Data.Reset();
-        PoseB_Data.Reset();
+        PoseDataA.Reset();
+        PoseDataB.Reset();
 
         // FIX-ME
-        //AnimationA->SamplePoseAtTime(CurrentTimeA, TargetSkeleton, PoseA_Data, 0);
-        //AnimationB->SamplePoseAtTime(CurrentTimeB, TargetSkeleton, PoseB_Data, 1);
+        AnimationA->SamplePoseAtTime(CurrentTimeA, TargetSkeleton, PoseDataA);
+        AnimationB->SamplePoseAtTime(CurrentTimeB, TargetSkeleton, PoseDataB);
 
-        AnimationUtils::BlendPoses(PoseA_Data, PoseB_Data, BlendAlpha, FinalBlendedPose);
+        AnimationUtils::BlendPoses(PoseDataA, PoseDataB, BlendAlpha, FinalBlendedPose);
 
-    }
-    else if (AnimationA && TargetSkeleton) // AnimA만 있을 경우
-    {
-        if (AnimationA->GetPlayLength() > 0.f)
-        {
-            CurrentTimeA += DeltaSeconds * AnimationA->GetRateScale();
-            CurrentTimeA = FMath::Fmod(CurrentTimeA, AnimationA->GetPlayLength());
-        }
-        //AnimationA->SamplePoseAtTime(CurrentTimeA, TargetSkeleton, FinalBlendedPose, 0);
     }
 }
