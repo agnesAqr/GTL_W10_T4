@@ -223,40 +223,6 @@ void USkeletalMeshComponent::UpdateBoneHierarchy()
     SkinningVertex();
 }
 
-void USkeletalMeshComponent::PlayAnimation(UAnimationAsset* NewAnimToPlay, bool bLooping)
-{
-    // Set AnimationMode
-    // Set Animation
-    Play(bLooping);
-
-    UAnimSequence* CurrentAnimSequence = Cast<UAnimSequence>(NewAnimToPlay);
-
-    if (OwningAnimInstance && CurrentAnimSequence)
-    {
-        UAnimSingleNodeInstance* SingleNodeInstance = Cast<UAnimSingleNodeInstance>(OwningAnimInstance);
-        if (SingleNodeInstance)
-        {
-            SingleNodeInstance->SetLooping(bLooping);
-            SingleNodeInstance->SetAnimation(CurrentAnimSequence, bLooping);
-        }
-    }
-    else if (OwningAnimInstance && !CurrentAnimSequence)
-    {
-        UAnimSingleNodeInstance* SingleNodeInstance = Cast<UAnimSingleNodeInstance>(OwningAnimInstance);
-        if (SingleNodeInstance)
-        {
-            SingleNodeInstance->SetAnimation(nullptr, false);
-        }
-
-        //UpdateBoneHierarchy();
-        SkinningVertex();
-    }
-}
-
-void USkeletalMeshComponent::Play(bool bLooping)
-{
-}
-
 void USkeletalMeshComponent::SetAnimInstance(UAnimInstance* InAnimInstance)
 {
     if (OwningAnimInstance == InAnimInstance)

@@ -41,9 +41,6 @@ public:
     void CreateBoneComponents();
     void UpdateBoneHierarchy();
 
-    void PlayAnimation(UAnimationAsset* NewAnimToPlay, bool bLooping = true);
-    void Play(bool bLooping);
-
     void SetAnimInstance(UAnimInstance* InAnimInstance);
     UAnimInstance* GetAnimInstance() const { return OwningAnimInstance; }
 
