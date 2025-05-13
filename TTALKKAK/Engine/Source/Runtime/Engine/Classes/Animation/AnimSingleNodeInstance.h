@@ -1,4 +1,6 @@
 #pragma once
+#include "UObject/Object.h"
+#include "UObject/ObjectMacros.h"
 #include "Animation/AnimInstance.h"
 
 class UAnimSequence;
@@ -22,13 +24,13 @@ protected:
     virtual void TriggerAnimNotifies(float PrevTime, float CurrTime) override;
     
 private:
-    UAnimSequence* CurrentAnimationSeq;
+    UAnimSequence* AnimationSequence;
     float CurrentTime;
     float PreviousTime;
     bool bLooping;
 
 public:
-    UAnimSequence* GetAnimation() const { return CurrentAnimationSeq; }
+    UAnimSequence* GetAnimation() const { return AnimationSequence; }
     void SetAnimation(UAnimSequence* AnimSequence, bool bShouldLoop);
 
     void SetLooping(bool InValue) { bLooping = InValue; }

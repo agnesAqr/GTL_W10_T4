@@ -50,16 +50,24 @@ namespace AnimationUtils
 {
     inline void BlendPoses(const FPoseData& PoseA, const FPoseData& PoseB, float BlendAlpha, FPoseData& OutBlendedPose)
     {
+        // 포즈의 뼈 개수가 다르면 블렌딩 불가 (에러 처리 또는 경고)
         if (PoseA.LocalBoneTransforms.Num() != PoseB.LocalBoneTransforms.Num())
         {
-            // 포즈의 뼈 개수가 다르면 블렌딩 불가 (에러 처리 또는 경고)
-            if (PoseA.LocalBoneTransforms.Num() > 0) OutBlendedPose = PoseA; // A를 그대로 사용
-            else if (PoseB.LocalBoneTransforms.Num() > 0) OutBlendedPose = PoseB; // B를 그대로 사용
+            if (PoseA.LocalBoneTransforms.Num() > 0)
+            {
+                OutBlendedPose = PoseA; // A를 그대로 사용
+            }
+            else if (PoseB.LocalBoneTransforms.Num() > 0)
+            {
+                OutBlendedPose = PoseB; // B를 그대로 사용
+            }
+
             return;
         }
 
         const int32 NumBones = PoseA.LocalBoneTransforms.Num();
         OutBlendedPose.Reset();
+        OutBlendedPose.LocalBoneTransforms.Init(FCompactPoseBone(), NumBones);
 
         for (int32 i = 0; i < NumBones; ++i)
         {

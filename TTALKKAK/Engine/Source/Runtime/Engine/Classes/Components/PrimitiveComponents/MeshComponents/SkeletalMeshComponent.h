@@ -1,11 +1,13 @@
 #pragma once
 #include "MeshComponent.h"
 #include "Components/Mesh/SkeletalMesh.h"
-#include "Animation/AnimSingleNodeInstance.h"
 #include "Classes/Engine/Assets/Animation/AnimationAsset.h"
 
 class UStaticMeshComponent;
+
 class UAnimInstance;
+class UAnimSingleNodeInstance;
+class UBlendAnimInstance;
 
 class USkeletalMeshComponent : public UMeshComponent
 {
@@ -29,7 +31,6 @@ public:
     virtual uint32 GetMaterialIndex(FName MaterialSlotName) const override;
     virtual TArray<FName> GetMaterialSlotNames() const override;
     virtual void GetUsedMaterials(TArray<UMaterial*>& Out) const override;
-
     
     virtual int CheckRayIntersection(FVector& rayOrigin, FVector& rayDirection, float& pfNearHitDistance) override;
     
@@ -39,14 +40,11 @@ public:
     void CreateBoneComponents();
     void UpdateBoneHierarchy();
 
-    // 이걸 여기 두는 것 자체가 별로긴 함. 근데 학습 자료에 그렇게 나와 있음.
-    void PlayAnimation(UAnimSequence* NewAnimToPlay, bool bLooping = true);
+    void SetAnimInstance(UAnimInstance* InAnimInstance);
     UAnimInstance* GetAnimInstance() const { return OwningAnimInstance; }
-    UAnimSequence* GetAnimSequence() const { return CurrentAnimSequence; }
 
     void UpdateBoneTransformsFromAnim();
     void HandleAnimNotify(const FAnimNotifyEvent& Notify);
-    bool HasAnimation() const { return OwningAnimInstance != nullptr && CurrentAnimSequence != nullptr; }
     
     /**
     * @brief 애니메이션 재생 위치를 설정하고 본 트랜스폼을 업데이트합니다.
@@ -60,9 +58,8 @@ private:
     void SkinningVertex();
     
     UAnimInstance* OwningAnimInstance;
-    UAnimSequence* CurrentAnimSequence;  // 안씀
 
 protected:
     USkeletalMesh* SkeletalMesh;
-    int SelectedSubMeshIndex = -1;
+    int SelectedSubMeshIndex = -1; 
 };

@@ -3,6 +3,7 @@
 #include "EditorEngine.h"
 #include "LaunchEngineLoop.h"
 #include "ShowFlags.h"
+#include "Animation/AnimationSettings.h"
 #include "BaseGizmos/GizmoBaseComponent.h"
 #include "D3D11RHI/CBStructDefine.h"
 #include "Engine/World.h"
@@ -29,15 +30,6 @@ extern UEngine* GEngine;
 
 FSkeletalMeshRenderPass::FSkeletalMeshRenderPass(const FName& InShaderName) : FBaseRenderPass(InShaderName)
 {
-    const FGraphicsDevice& Graphics = FEngineLoop::GraphicDevice;
-
-    D3D11_BUFFER_DESC constdesc = {};
-    constdesc.ByteWidth = sizeof(FLightingConstants);
-  
-    constdesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-    constdesc.Usage = D3D11_USAGE_DYNAMIC;
-    constdesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-    Graphics.Device->CreateBuffer(&constdesc, nullptr, &LightConstantBuffer);
 }
 
 void FSkeletalMeshRenderPass::AddRenderObjectsToRenderPass(UWorld* World)
@@ -124,6 +116,10 @@ void FSkeletalMeshRenderPass::Execute(const std::shared_ptr<FViewportClient> InV
         const FMatrix Model = SkeletalMeshComponent->GetWorldMatrix();
         UpdateMatrixConstants(SkeletalMeshComponent, View, Proj);
 
+        // GPU Skinning
+        if (GCurrentSkinningMode == ESkinningMode::GPU)
+            UpdateSkinningMatrixConstant(SkeletalMeshComponent);
+
         UpdateLightConstants();
 
         UpdateFlagConstant();
@@ -179,6 +175,15 @@ void FSkeletalMeshRenderPass::Execute(const std::shared_ptr<FViewportClient> InV
         }
     }
 
+    if (GCurrentSkinningMode == ESkinningMode::CPU)
+    {
+        Console::GetInstance().overlay.CPUSkinStat.End();
+    }
+    else if (GCurrentSkinningMode == ESkinningMode::GPU)
+    {
+        Console::GetInstance().overlay.GPUSkinStat.End(Graphics.DeviceContext);
+    }
+
     ID3D11ShaderResourceView* nullSRVs[8] = { nullptr };
     ID3D11ShaderResourceView* nullSRV[4] = { nullptr };
     Graphics.DeviceContext->PSSetShaderResources(2, 1, &nullSRVs[0]); //쓰고 해제 나중에 이쁘게 뺴기
@@ -220,12 +225,10 @@ void FSkeletalMeshRenderPass::UpdateFlagConstant()
     FRenderResourceManager* renderResourceManager = GEngineLoop.Renderer.GetResourceManager();
 
     FFlagConstants FlagConstant;
-
     FlagConstant.IsLit = GEngineLoop.Renderer.bIsLit;
-
     FlagConstant.IsNormal = GEngineLoop.Renderer.bIsNormal;
-
     FlagConstant.IsVSM = GEngineLoop.Renderer.GetShadowFilterMode();
+    FlagConstant.IsGPUSkinning = GCurrentSkinningMode == ESkinningMode::GPU ? true : false;
 
     renderResourceManager->UpdateConstantBuffer(TEXT("FFlagConstants"), &FlagConstant);
 }
@@ -352,9 +355,7 @@ void FSkeletalMeshRenderPass::UpdateLightConstants()
     LightConstant.NumPointLights = PointLightCount;
     LightConstant.NumSpotLights = SpotLightCount;
     
-    renderResourceManager->UpdateConstantBuffer(LightConstantBuffer, &LightConstant);
-    Graphics.DeviceContext->VSSetConstantBuffers(1, 1, &LightConstantBuffer);
-    Graphics.DeviceContext->PSSetConstantBuffers(2, 1, &LightConstantBuffer);
+    renderResourceManager->UpdateConstantBuffer(renderResourceManager->GetConstantBuffer(TEXT("FLightingConstants")), &LightConstant);
 }
 
 void FSkeletalMeshRenderPass::UpdateMaterialConstants(const FObjMaterialInfo& MaterialInfo)
@@ -415,6 +416,17 @@ void FSkeletalMeshRenderPass::UpdateCameraConstant(const std::shared_ptr<FViewpo
     CameraConstants.FarPlane = curEditorViewportClient->GetFarClip();
 
     renderResourceManager->UpdateConstantBuffer(renderResourceManager->GetConstantBuffer(TEXT("FCameraConstant")), &CameraConstants);
+}
+
+void FSkeletalMeshRenderPass::UpdateSkinningMatrixConstant(USkeletalMeshComponent* SkelComp)
+{
+    FBonesConstant BoneConstants;
+    const auto& Bones = SkelComp->GetSkeletalMesh()->GetRenderData().Bones;
+    for (int i=0; i < Bones.Num() && i < MAX_BONES; ++i)
+        BoneConstants.SkinningMatrices[i] = Bones[i].SkinningMatrix;
+
+    FRenderResourceManager* renderResourceManager = GEngineLoop.Renderer.GetResourceManager();
+    renderResourceManager->UpdateConstantBuffer(renderResourceManager->GetConstantBuffer(TEXT("FBonesConstants")), &BoneConstants);
 }
 
 bool FSkeletalMeshRenderPass::IsLightInFrustum(ULightComponentBase* LightComponent, const FFrustum& CameraFrustum) const

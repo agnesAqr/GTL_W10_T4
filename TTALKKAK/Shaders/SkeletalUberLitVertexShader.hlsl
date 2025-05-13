@@ -1,5 +1,6 @@
 #define NUM_POINT_LIGHT 4
 #define NUM_SPOT_LIGHT 4
+#define MAX_BONES 128  
 
 static const int CASCADE_COUNT = 4;
 
@@ -100,7 +101,8 @@ cbuffer FFlagConstants : register(b2)
 {
     uint IsLit;
     uint IsNormal;
-    float2 flagPad0;
+    uint IsVSM;
+    uint IsGPUSkinning;
 }
 
 cbuffer FCameraConstant : register(b3)
@@ -125,6 +127,11 @@ cbuffer FMaterialConstants : register(b4)
     float SpecularScalar;
     float3 EmissiveColor;
     float MaterialPad0;
+}
+
+cbuffer FBonesConstants : register(b5)
+{
+    row_major float4x4 SkinningMatrices[MAX_BONES];
 }
 
 float3 CalculateDirectionalLight(
@@ -224,8 +231,22 @@ float3 CalculateSpotLight(
 PS_INPUT mainVS(VS_INPUT input)
 {
     PS_INPUT output;
+
+    float4 localPos = input.position;
+    if (IsGPUSkinning == 1)
+    {
+        localPos = float4(0, 0, 0, 0);
+        [unroll]
+        for (int i=0; i<4; i++)
+        {
+            int idx = input.boneIndices[i];
+            float4 weight = input.boneWeights[i];
+            float4 skinned = mul(input.position, SkinningMatrices[idx]);
+            localPos += skinned * weight;
+        }
+    }
     
-    float4 worldPos = mul(input.position, Model);
+    float4 worldPos = mul(localPos, Model);
     output.position = mul(worldPos, ViewProj);
     output.worldPos = float3(worldPos.x, worldPos.y, worldPos.z);
     output.texcoord = input.texcoord;

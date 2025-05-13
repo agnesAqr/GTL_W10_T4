@@ -3,6 +3,7 @@
 #include "ImGUI/imgui.h"
 
 #include "LaunchEngineLoop.h"
+#include "Animation/AnimationSettings.h"
 #include "Renderer/Renderer.h"
 
 
@@ -10,11 +11,6 @@
 Console& Console::GetInstance() {
     static Console instance;
     return instance;
-}
-
-void StatOverlay::DrawTextOverlay(const std::string& text, int x, int y) {
-    ImGui::SetNextWindowPos(ImVec2(x, y));
-    ImGui::Text("%s", text.c_str());
 }
 
 // 생성자
@@ -42,7 +38,8 @@ void Console::AddLog(LogLevel level, const char* fmt, ...) {
 
 
 // 콘솔 창 렌더링
-void Console::Draw() {
+void Console::Draw()
+{
     if (!bWasOpen) return;
     // 창 크기 및 위치 계산
     ImVec2 displaySize = ImGui::GetIO().DisplaySize;
@@ -60,8 +57,9 @@ void Console::Draw() {
     //ImGui::SetNextWindowPos(windowPos, ImGuiCond_Always);
     //ImGui::SetNextWindowSize(windowSize, ImGuiCond_Always);
     // 창을 표시하고 닫힘 여부 확인
-    overlay.Render(GEngineLoop.GraphicDevice.DeviceContext, width, height);
+    overlay.Render();
     bExpand = ImGui::Begin("Console", &bWasOpen);
+    
     if (!bExpand)
     {
         ImGui::End();
@@ -168,16 +166,35 @@ void Console::ExecuteCommand(const std::string& command)
         AddLog(LogLevel::Display, " - help: Shows available commands");
         AddLog(LogLevel::Display, " - stat fps: Toggle FPS display");
         AddLog(LogLevel::Display, " - stat memory: Toggle Memory display");
+        AddLog(LogLevel::Display, " - stat skin: Toggle Skinning performance display");
+        AddLog(LogLevel::Display, " - stat skinning: Toggle Skinning performance display");
         AddLog(LogLevel::Display, " - stat none: Hide all stat overlays");
+        AddLog(LogLevel::Display, " - skinning cpu: Perform CPU skinning and log mode");
+        AddLog(LogLevel::Display, " - skinning gpu: Perform GPU skinning and log mode");
     }
-    else if (command.rfind("stat ", 0) == 0) { // stat 명령어 처리
+    else if (command.rfind("stat ", 0) == 0)
+    {
+        // stat 명령어 처리
         overlay.ToggleStat(command);
     }
     else if (command.rfind("shadow_filter ", 0) == 0) //shadow filter 명령어 처리
     {
         SetShadowFilterMode(command);
     }
-    else {
+    else if (command == "skinning cpu")
+    {
+        GCurrentSkinningMode = ESkinningMode::CPU;
+        OnCPUSkinning.ExecuteIfBound();
+        AddLog(LogLevel::Display, "Skinning mode : CPU");
+    }
+    else if (command == "skinning gpu")
+    {
+        GCurrentSkinningMode = ESkinningMode::GPU;
+        OnGPUSkinning.ExecuteIfBound();
+        AddLog(LogLevel::Display, "Skinning mode : GPU");
+    }
+    else
+    {
         AddLog(LogLevel::Error, "Unknown command: %s", command.c_str());
     }
 }
@@ -199,100 +216,5 @@ void Console::SetShadowFilterMode(const std::string& command)
     else if (command == "shadow_filter PCF")
     {
         GEngineLoop.Renderer.SetShadowFilterMode(EShadowFilterMode::PCF);
-    }
-}
-
-void StatOverlay::ToggleStat(const std::string& command)
-{
-    if (command == "stat fps") { showFPS = true; showRender = true; isOpen = true; }
-    else if (command == "stat memory") { showMemory = true; showRender = true; isOpen = true; }
-    else if (command == "stat shadow") { showShadow = true; showRender = true; isOpen = true; }
-    else if (command == "stat none") {
-        showFPS = false;
-        showMemory = false;
-        showRender = false;
-        isOpen = false;
-    }
-}
-
-void StatOverlay::Render(ID3D11DeviceContext* context, UINT width, UINT height)
-{
-    if (!showRender || !isOpen)
-        return;
-
-    ImVec2 displaySize = ImGui::GetIO().DisplaySize;
-    ImVec2 windowSize(displaySize.x * 0.5f, displaySize.y * 0.5f);
-    ImVec2 windowPos((displaySize.x - windowSize.x) * 0.5f, (displaySize.y - windowSize.y) * 0.5f);
-
-    //ImGui::SetNextWindowPos(windowPos, ImGuiCond_Always);
-    //ImGui::SetNextWindowSize(windowSize, ImGuiCond_Always);
-    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.0f, 1.0f));
-
-    ImGui::Begin("Stat Overlay", &isOpen);
-
-    if (showFPS) {
-        static float lastTime = ImGui::GetTime();
-        static int frameCount = 0;
-        static float fps = 0.0f;
-
-        frameCount++;
-        float currentTime = ImGui::GetTime();
-        float deltaTime = currentTime - lastTime;
-
-        if (deltaTime >= 1.0f) {
-            fps = frameCount / deltaTime;
-            frameCount = 0;
-            lastTime = currentTime;
-        }
-        ImGui::Text("FPS: %.2f", fps);
-        ImGui::Separator();
-    }
-
-    if (showMemory) {
-        ImGui::Text("Allocated Object Count: %llu", FPlatformMemory::GetAllocationCount<EAT_Object>());
-        ImGui::Text("Allocated Object Memory: %llu B", FPlatformMemory::GetAllocationBytes<EAT_Object>());
-        ImGui::Text("Allocated Container Count: %llu", FPlatformMemory::GetAllocationCount<EAT_Container>());
-        ImGui::Text("Allocated Container Memory: %llu B", FPlatformMemory::GetAllocationBytes<EAT_Container>());
-
-        ImGui::Separator();
-    }
-
-    if (showShadow)
-    {
-        FShadowMemoryUsageInfo Info = FShadowResourceFactory::GetShadowMemoryUsageInfo();
-        ImGui::Text("Shadow Memory Usage Info:");
-        size_t pointlightAtlasMemory = GEngineLoop.Renderer.GetAtlasMemoryUsage(ELightType::PointLight);
-        size_t spotlightAtlasMemory = GEngineLoop.Renderer.GetAtlasMemoryUsage(ELightType::SpotLight);
-        ImGui::Text("PointLight Atlas Memory Usage : %.2f MB", (float)pointlightAtlasMemory / (1024.f * 1024.f));
-        ImGui::Text("SpotLight Atlas Memory Usage : %.2f MB", (float)spotlightAtlasMemory / (1024.f * 1024.f));
-
-        float total = (float)(Info.TotalMemoryUsage + pointlightAtlasMemory + spotlightAtlasMemory) / (1024.f * 1024.f);
-        ImGui::Text("Total Memory: %.2f MB", total);
-        for (const auto& pair : Info.MemoryUsageByLightType)
-        {
-            switch (pair.Key)
-            {
-            case ELightType::DirectionalLight:
-            {
-                ImGui::Text("%d Directional Light", Info.LightCountByLightType[pair.Key] / 4); // cascade때문에 4개 
-                float mb = (float)pair.Value / (1024.f * 1024.f);
-                ImGui::Text("Memory: %.2f MB", mb);
-            }
-                break;
-            case ELightType::PointLight:
-                ImGui::Text("%d Point Light", Info.LightCountByLightType[pair.Key]);
-                break;
-            case ELightType::SpotLight:
-                ImGui::Text("%d Spot Light", Info.LightCountByLightType[pair.Key]);
-                break;
-            }
-        }
-    }
-
-    ImGui::PopStyleColor();
-    ImGui::End();
-
-    if (!isOpen) {
-        showRender = false;
     }
 }

@@ -508,11 +508,7 @@ void FBXLoader::ExtractTangents(FbxMesh* Mesh, FSkeletalMeshRenderData* MeshData
     }
 }
 
-void FBXLoader::ExtractSkinningData(
-    FbxMesh* Mesh,
-    FSkeletalMeshRenderData* MeshData,
-    FRefSkeletal* RefSkeletal,
-    int BaseVertexIndex)
+void FBXLoader::ExtractSkinningData(FbxMesh* Mesh, FSkeletalMeshRenderData* MeshData, FRefSkeletal* RefSkeletal, int BaseVertexIndex)
 {
     // 1) 매핑 모드 재확인
     auto* NormalElem = Mesh->GetElementNormal();

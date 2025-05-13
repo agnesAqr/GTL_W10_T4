@@ -5,6 +5,7 @@
 #include "Components/PrimitiveComponents/MeshComponents/SkeletalMeshComponent.h"
 #include "Engine/FEditorStateManager.h"
 #include "im-neo-sequencer/imgui_neo_sequencer.h"
+#include "Animation/AnimSingleNodeInstance.h"
 
 void AnimTimelinePanel::Initialize(SLevelEditor* levelEditor, float Width, float Height)
 {
