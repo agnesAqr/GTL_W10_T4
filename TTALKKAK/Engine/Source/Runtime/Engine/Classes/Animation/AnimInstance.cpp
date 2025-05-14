@@ -116,7 +116,7 @@ void UAnimInstance::InitializeForBlendAnimations(const uint32 IndexA, const uint
         OwningAnimSequences[IndexB]->SamplePoseAtTime(SampleTimeB, TargetSkeleton, PoseB);
         OwningPoseData.Add(PoseB);
 
-        AnimationUtils::BlendPoses(OwningPoseData[IndexA], OwningPoseData[IndexB], BlendAlpha, CurrentPoseData);
+        AnimationUtils::BlendPoses(OwningAnimSequences[IndexA]->GetAnimationTrackNames(), OwningPoseData[IndexA], OwningPoseData[IndexB], BlendAlpha, CurrentPoseData);
     }
 }
 
@@ -167,9 +167,12 @@ void UAnimInstance::BlendAnimations(float DeltaSeconds, const uint32 IndexA, con
     const int32 NumBones = TargetSkeleton->BoneTree.Num();
     OwningPoseData[IndexA].LocalBoneTransforms.Empty();
     OwningPoseData[IndexB].LocalBoneTransforms.Empty();
-
+    
     OwningPoseData[IndexA].LocalBoneTransforms.Init(FCompactPoseBone(), NumBones);
     OwningPoseData[IndexB].LocalBoneTransforms.Init(FCompactPoseBone(), NumBones);
+
+    OwningPoseData[IndexA].Init();
+    OwningPoseData[IndexB].Init();
 
     OwningAnimSequences[IndexA]->SamplePoseAtTime(CurrentTimeA, TargetSkeleton, OwningPoseData[IndexA]);
     OwningAnimSequences[IndexB]->SamplePoseAtTime(CurrentTimeB, TargetSkeleton, OwningPoseData[IndexB]);
@@ -184,7 +187,7 @@ void UAnimInstance::BlendAnimations(float DeltaSeconds, const uint32 IndexA, con
     }
     else if (OwningPoseData[IndexA].LocalBoneTransforms.Num() > 0 && OwningPoseData[IndexB].LocalBoneTransforms.Num() > 0)
     {
-        AnimationUtils::BlendPoses(OwningPoseData[IndexA], OwningPoseData[IndexB], BlendAlpha, CurrentPoseData);
+        AnimationUtils::BlendPoses(OwningAnimSequences[IndexA]->GetAnimationTrackNames(), OwningPoseData[IndexA], OwningPoseData[IndexB], BlendAlpha, CurrentPoseData);
     }
     else
     {

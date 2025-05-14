@@ -295,7 +295,7 @@ void UCustomAnimInstance::UpdateBlendedAnimations(float DeltaSeconds, int32 Inde
     }
     else if (PoseA.LocalBoneTransforms.Num() > 0 && PoseB.LocalBoneTransforms.Num() > 0)
     {
-        AnimationUtils::BlendPoses(PoseA, PoseB, InBlendAlpha, OutPose);
+        AnimationUtils::BlendPoses(OwningAnimSequences[IndexA]->GetAnimationTrackNames(), PoseA, PoseB, InBlendAlpha, OutPose);
     }
     else // 둘 다 샘플링 실패
     {

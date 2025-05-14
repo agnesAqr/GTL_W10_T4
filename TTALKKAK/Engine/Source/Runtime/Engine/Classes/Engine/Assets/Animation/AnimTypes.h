@@ -46,11 +46,19 @@ struct FPoseData
         LocalBoneTransformMap.Empty();
         //LocalBoneTransforms.AddDefaulted(NumBones); // 기본값(Identity)으로 초기화
     }
+
+    void Init()
+    {
+        for (int32 i = 0; i < LocalBoneTransformMap.Num(); i++)
+        {
+            LocalBoneTransforms[i] = FCompactPoseBone();
+        }
+    }
 };
 
 namespace AnimationUtils
 {
-    inline void BlendPoses(const FPoseData& PoseA, const FPoseData& PoseB, float BlendAlpha, FPoseData& OutBlendedPose)
+    inline void BlendPoses(TArray<FName> AnimationTrackNames, const FPoseData& PoseA, const FPoseData& PoseB, float BlendAlpha, FPoseData& OutBlendedPose)
     {
         // 포즈의 뼈 개수가 다르면 블렌딩 불가 (에러 처리 또는 경고)
         if (PoseA.LocalBoneTransforms.Num() != PoseB.LocalBoneTransforms.Num())
@@ -70,17 +78,23 @@ namespace AnimationUtils
         const int32 NumBones = PoseA.LocalBoneTransforms.Num();
         OutBlendedPose.Reset();
         OutBlendedPose.LocalBoneTransforms.Init(FCompactPoseBone(), NumBones);
+        OutBlendedPose.Init();
 
         for (int32 i = 0; i < NumBones; ++i)
         {
             const FCompactPoseBone& TransformA = PoseA.LocalBoneTransforms[i];
-            const FCompactPoseBone& TransformB = PoseB.LocalBoneTransforms[i];
+            const FCompactPoseBone& TransformB = PoseB.LocalBoneTransforms[i];           
             FCompactPoseBone& BlendedTransform = OutBlendedPose.LocalBoneTransforms[i];
 
             BlendedTransform.Translation = FMath::Lerp(TransformA.Translation, TransformB.Translation, BlendAlpha);
             BlendedTransform.Rotation = FQuat::Slerp(TransformA.Rotation, TransformB.Rotation, BlendAlpha);
             BlendedTransform.Rotation.Normalize();
             BlendedTransform.Scale3D = FMath::Lerp(TransformA.Scale3D, TransformB.Scale3D, BlendAlpha);
+
+            if (0 <= i && i < AnimationTrackNames.Num())
+            {
+                OutBlendedPose.LocalBoneTransformMap[AnimationTrackNames[i]] = BlendedTransform;
+            }
         }
     }
 }

@@ -193,6 +193,11 @@ void UAnimSequence::PopulateModel()
     }
 }
 
+TArray<FName> UAnimSequence::GetAnimationTrackNames() const
+{
+    return AnimationTrackNames;
+}
+
 // FIX-ME: UAnimSequence에 종속되지 않도록 추후 수정 요망
  void UAnimSequence::SamplePoseAtTime(float Time, const FRefSkeletal* Skeleton, FPoseData& OutPose) const
  {
@@ -300,7 +305,7 @@ void UAnimSequence::PopulateModel()
              {
                  BoneTransform.Scale3D = Track.ScaleKeys[KeyIndex1];
              }
-             
+
              OutPose.LocalBoneTransformMap[AnimationTrackNames[BoneIndex]] = BoneTransform;
          }
          // else : 애니메이션 트랙이 없는 뼈는 기본 바인드 포즈(또는 Identity)를 유지합니다.

@@ -113,6 +113,8 @@ public:
     void PopulateModel() override;
     TArray<FAnimNotifyEvent>& GetNotifies() {  return Notifies; };
 
+    TArray<FName> GetAnimationTrackNames() const;
+    
     //void SamplePoseAtTime(float Time, const FRefSkeletal* Skeleton, FPoseData& OutPose, const uint32 AnimCount) const;
     void SamplePoseAtTime(float Time, const FRefSkeletal* Skeleton, FPoseData& OutPose) const;
 
