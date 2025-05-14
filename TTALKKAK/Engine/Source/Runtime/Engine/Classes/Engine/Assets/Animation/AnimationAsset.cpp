@@ -4,8 +4,6 @@
 #include "FBXLoader.h"
 #include "UObject/Casts.h"
 
-// 여기에 AnimTypes.h을 원래 추가하기는 해야함. 그런데 왜 괜찮지.
-
 UAnimationAsset::UAnimationAsset()
     : RefSkeletal(nullptr)
 {
@@ -194,6 +192,7 @@ void UAnimSequence::PopulateModel()
     }
 }
 
+// FIX-ME: UAnimSequence에 종속되지 않도록 추후 수정 요망
  void UAnimSequence::SamplePoseAtTime(float Time, const FRefSkeletal* Skeleton, FPoseData& OutPose) const
  {
      if (!Skeleton || RawAnimationData.Num() == 0)
@@ -209,8 +208,8 @@ void UAnimSequence::PopulateModel()
      float CurrentTime = FMath::Fmod(Time, SequenceLength);
      if (CurrentTime < 0.0f) CurrentTime += SequenceLength;
 
-     UE_LOG(LogLevel::Display, "UAnimSequence-Time: %f", Time);
-     UE_LOG(LogLevel::Display, "UAnimSequence-CurrentTime: %f", CurrentTime);
+     //UE_LOG(LogLevel::Display, "UAnimSequence-Time: %f", Time);
+     //UE_LOG(LogLevel::Display, "UAnimSequence-CurrentTime: %f", CurrentTime);
 
      for (int32 BoneIndex = 0; BoneIndex < NumSkeletonBones; ++BoneIndex)
      {

@@ -3,8 +3,12 @@
 #include "UObject/ObjectMacros.h"
 #include "FBX/FBXDefine.h" // FIX-ME
 #include "Classes/Engine/Assets/Animation/AnimTypes.h"
+#include "AnimCondition.h"
 
+class UAnimSequence;
 class USkeletalMeshComponent;
+
+class UAnimationStateMachine;
 
 class UAnimInstance : public UObject
 {
@@ -26,7 +30,30 @@ public:
     virtual const FPoseData& GetCurrentPose() const;
     USkeletalMeshComponent* GetSkelMeshComponent() const;
 
+    virtual void InitializeForBlendAnimations(const uint32 IndexA, const uint32 IndexB, FPoseData& OutPose);
+    virtual void BlendAnimations(float DeltaSeconds, const uint32 IndexA, const uint32 IndexB, FPoseData& OutPose);
+
+    // FIX-ME: Hard coded
+    virtual void InitializeForAnimationStateMachine();
+
+    PROPERTY(float, BlendAlpha);
+
+    UAnimationStateMachine* GetStateMachine() const { return StateMachine; }
+    FAnimationConditionContext& GetStateMachineContext() { return StateMachineContext; }
+    const FAnimationConditionContext& GetStateMachineContext() const { return StateMachineContext; }
+
 protected:
     FPoseData CurrentPoseData;
-};
+    
+    TArray<UAnimSequence*> OwningAnimSequences; // FIX-ME: UAnimAsset
+    TArray<FPoseData> OwningPoseData;
 
+    float BlendAlpha;
+    float NormalizedTime;
+
+    UAnimationStateMachine* StateMachine;
+    FAnimationConditionContext StateMachineContext;
+
+    int32 CurrentMainAnimIndex;
+    int32 CurrentPrevAnimIndexForBlend; // 블렌딩 시에만 유효 (INDEX_NONE 가능)
+};
