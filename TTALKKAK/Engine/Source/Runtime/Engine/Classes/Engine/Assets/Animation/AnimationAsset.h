@@ -33,6 +33,13 @@ protected:
     const FRefSkeletal* RefSkeletal;    
 };
 
+struct FAnimNotifyEvent
+{
+    float TriggerTime;
+    float Duration;
+    FName NotifyName;
+};
+
 class UAnimSequenceBase : public UAnimationAsset
 {
     DECLARE_CLASS(UAnimSequenceBase, UAnimationAsset)
@@ -76,6 +83,9 @@ protected:
 
     // 소스 애니메이션 데이터
     UAnimDataModel* DataModel;
+
+    // 애니메이션 이벤트 배열
+    TArray<FAnimNotifyEvent> Notifies;
 };
 
 class UAnimSequence : public UAnimSequenceBase
@@ -101,6 +111,7 @@ public:
     float GetTimeAtFrame(const int32 Frame) const override;
     void TickAssetPlayer() override;
     void PopulateModel() override;
+    TArray<FAnimNotifyEvent>& GetNotifies() {  return Notifies; };
 
     //void SamplePoseAtTime(float Time, const FRefSkeletal* Skeleton, FPoseData& OutPose, const uint32 AnimCount) const;
     void SamplePoseAtTime(float Time, const FRefSkeletal* Skeleton, FPoseData& OutPose) const;
@@ -130,7 +141,7 @@ inline float UAnimSequence::GetPlayLength() const
 
 inline int32 UAnimSequence::GetNumberOfFrames() const
 {
-    return UAnimSequenceBase::GetNumberOfFrames();
+    return NumFrames;
 }
 
 inline int32 UAnimSequence::GetNumberOfSampledKeys() const

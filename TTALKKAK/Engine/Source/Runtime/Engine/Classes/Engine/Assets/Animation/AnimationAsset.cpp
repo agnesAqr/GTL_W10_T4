@@ -4,8 +4,6 @@
 #include "FBXLoader.h"
 #include "UObject/Casts.h"
 
-// 여기에 AnimTypes.h을 원래 추가하기는 해야함. 그런데 왜 괜찮지.
-
 UAnimationAsset::UAnimationAsset()
     : RefSkeletal(nullptr)
 {
@@ -195,115 +193,7 @@ void UAnimSequence::PopulateModel()
     }
 }
 
-//static void FindKeyIndices(const TArray<float>& KeyTimes, float CurrentTime, int32& OutKeyIndex1, int32& OutKeyIndex2)
-//{
-//    OutKeyIndex1 = -1;
-//    OutKeyIndex2 = -1;
-//
-//    if (KeyTimes.Num() == 0) return;
-//
-//    // 첫 번째 키보다 이전 시간 처리
-//    if (CurrentTime < KeyTimes[0])
-//    {
-//        OutKeyIndex1 = -1;
-//        OutKeyIndex2 = 0;  
-//        return;
-//    }
-//
-//    for (int32 K = 0; K < KeyTimes.Num(); ++K)
-//    {
-//        if (KeyTimes[K] <= CurrentTime)
-//        {
-//            OutKeyIndex1 = K;
-//        }
-//        else
-//        {
-//            OutKeyIndex2 = K;
-//            return; // 두 인덱스 모두 찾았으므로 종료
-//        }
-//    }
-//}
-
-//void UAnimSequence::SamplePoseAtTime(float Time, const FRefSkeletal* Skeleton, FPoseData& OutPose, const uint32 AnimTrackIndexToSample) const 
-//{
-//    OutPose.Reset();
-//    OutPose.Skeleton = Skeleton;
-//    if (!Skeleton || Skeleton->BoneTree.Num() == 0)
-//    {
-//        return;
-//    }
-//    DataModel->PlayLength;
-//    const int32 NumSkeletonBones = Skeleton->BoneTree.Num();
-//    OutPose.LocalBoneTransforms.Init(FCompactPoseBone(), NumSkeletonBones); // 모든 본을 항등 변환으로 초기화
-//
-//    const FRawAnimSequenceTrack& SelectedTrack = RawAnimationData[AnimTrackIndexToSample];
-//    float CurrentTime = SequenceLength > KINDA_SMALL_NUMBER ? FMath::Fmod(Time, SequenceLength) : 0.0f;
-//    if (CurrentTime < 0.0f)
-//    {
-//        CurrentTime += SequenceLength;
-//    }
-//    FCompactPoseBone AnimatedTransformForThisTrack; // 이 트랙에서 계산된 단일 변환 값
-//
-//    int32 KeyIndex1 = -1;
-//    int32 KeyIndex2 = -1;
-//    float Alpha = 0.0f;
-//
-//    if (SelectedTrack.PosKeys.Num() > 0)
-//    {
-//        FindKeyIndices(SelectedTrack.KeyTimes, CurrentTime, KeyIndex1, KeyIndex2);
-//        if (KeyIndex1 != -1 && KeyIndex2 != -1 && SelectedTrack.PosKeys.IsValidIndex(KeyIndex1) && SelectedTrack.PosKeys.IsValidIndex(KeyIndex2))
-//        {
-//            float Time1 = SelectedTrack.KeyTimes[KeyIndex1];
-//            float Time2 = SelectedTrack.KeyTimes[KeyIndex2];
-//            Alpha = (Time1 == Time2) ? 0.0f : FMath::Clamp((CurrentTime - Time1) / (Time2 - Time1), 0.0f, 1.0f);
-//            AnimatedTransformForThisTrack.Translation = FMath::Lerp(SelectedTrack.PosKeys[KeyIndex1], SelectedTrack.PosKeys[KeyIndex2], Alpha);
-//        }
-//        else if (KeyIndex1 != -1 && SelectedTrack.PosKeys.IsValidIndex(KeyIndex1))
-//        {
-//            AnimatedTransformForThisTrack.Translation = SelectedTrack.PosKeys[KeyIndex1];
-//        }
-//    }
-//
-//    if (SelectedTrack.RotKeys.Num() > 0)
-//    {
-//        FindKeyIndices(SelectedTrack.KeyTimes, CurrentTime, KeyIndex1, KeyIndex2);
-//        if (KeyIndex1 != -1 && KeyIndex2 != -1 && SelectedTrack.RotKeys.IsValidIndex(KeyIndex1) && SelectedTrack.RotKeys.IsValidIndex(KeyIndex2))
-//        {
-//            float Time1 = SelectedTrack.KeyTimes[KeyIndex1];
-//            float Time2 = SelectedTrack.KeyTimes[KeyIndex2];
-//            Alpha = (Time1 == Time2) ? 0.0f : FMath::Clamp((CurrentTime - Time1) / (Time2 - Time1), 0.0f, 1.0f);
-//            AnimatedTransformForThisTrack.Rotation = FQuat::Slerp(SelectedTrack.RotKeys[KeyIndex1], SelectedTrack.RotKeys[KeyIndex2], Alpha);
-//            AnimatedTransformForThisTrack.Rotation.Normalize();
-//        }
-//        else if (KeyIndex1 != -1 && SelectedTrack.RotKeys.IsValidIndex(KeyIndex1))
-//        {
-//            AnimatedTransformForThisTrack.Rotation = SelectedTrack.RotKeys[KeyIndex1];
-//            AnimatedTransformForThisTrack.Rotation.Normalize();
-//        }
-//    }
-//
-//    if (SelectedTrack.ScaleKeys.Num() > 0)
-//    {
-//        FindKeyIndices(SelectedTrack.KeyTimes, CurrentTime, KeyIndex1, KeyIndex2);
-//        if (KeyIndex1 != -1 && KeyIndex2 != -1 && SelectedTrack.ScaleKeys.IsValidIndex(KeyIndex1) && SelectedTrack.ScaleKeys.IsValidIndex(KeyIndex2))
-//        {
-//            float Time1 = SelectedTrack.KeyTimes[KeyIndex1];
-//            float Time2 = SelectedTrack.KeyTimes[KeyIndex2];
-//            Alpha = (Time1 == Time2) ? 0.0f : FMath::Clamp((CurrentTime - Time1) / (Time2 - Time1), 0.0f, 1.0f);
-//            AnimatedTransformForThisTrack.Scale3D = FMath::Lerp(SelectedTrack.ScaleKeys[KeyIndex1], SelectedTrack.ScaleKeys[KeyIndex2], Alpha);
-//        }
-//        else if (KeyIndex1 != -1 && SelectedTrack.ScaleKeys.IsValidIndex(KeyIndex1))
-//        {
-//            AnimatedTransformForThisTrack.Scale3D = SelectedTrack.ScaleKeys[KeyIndex1];
-//        }
-//    }
-//
-//    for (int32 BoneIndex = 0; BoneIndex < NumSkeletonBones; ++BoneIndex)
-//    {
-//        OutPose.LocalBoneTransforms[BoneIndex] = AnimatedTransformForThisTrack;
-//    }
-//}
- 
+// FIX-ME: UAnimSequence에 종속되지 않도록 추후 수정 요망
  void UAnimSequence::SamplePoseAtTime(float Time, const FRefSkeletal* Skeleton, FPoseData& OutPose) const
  {
      if (!Skeleton || RawAnimationData.Num() == 0)
@@ -319,8 +209,8 @@ void UAnimSequence::PopulateModel()
      float CurrentTime = FMath::Fmod(Time, SequenceLength);
      if (CurrentTime < 0.0f) CurrentTime += SequenceLength;
 
-     UE_LOG(LogLevel::Display, "UAnimSequence-Time: %f", Time);
-     UE_LOG(LogLevel::Display, "UAnimSequence-CurrentTime: %f", CurrentTime);
+     //UE_LOG(LogLevel::Display, "UAnimSequence-Time: %f", Time);
+     //UE_LOG(LogLevel::Display, "UAnimSequence-CurrentTime: %f", CurrentTime);
 
      for (int32 BoneIndex = 0; BoneIndex < NumSkeletonBones; ++BoneIndex)
      {

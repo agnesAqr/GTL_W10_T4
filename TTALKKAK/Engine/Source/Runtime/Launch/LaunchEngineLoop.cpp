@@ -10,6 +10,7 @@
 #include "LevelEditor/SLevelEditor.h"
 #include "PropertyEditor/ViewportTypePanel.h"
 #include "Renderer/Renderer.h"
+#include "UnrealEd/AnimationPreviewUI.h"
 #include "UnrealEd/SkeletalPreviewUI.h"
 #include "UnrealEd/UnrealEd.h"
 #include "UObject/Casts.h"
@@ -164,6 +165,7 @@ void FEngineLoop::Render()
             UWorld* TargetWorld = ViewportClients[0]->GetWorld();
             EditorEngine->GetUnrealEditor()->SetWorld(TargetWorld);
             EditorEngine->GetSkeletalPreviewUI()->SetWorld(TargetWorld);
+            EditorEngine->GetAnimationPreviewUI()->SetWorld(TargetWorld);
             EditorEngine->ContentsUI->SetWorld(TargetWorld);
             if (TargetWorld->WorldType == EWorldType::Editor)
             {
@@ -192,7 +194,15 @@ void FEngineLoop::Render()
             }
             else if (TargetWorld->WorldType == EWorldType::EditorPreview)
             {
-                EditorEngine->GetSkeletalPreviewUI()->Render();
+                switch (EditorEngine->GetPreviewMode())
+                {
+                    case EEditorPreviewMode::SkeletalMesh:
+                        EditorEngine->GetSkeletalPreviewUI()->Render();
+                        break;
+                    case EEditorPreviewMode::Animation:
+                        EditorEngine->GetAnimationPreviewUI()->Render();
+                        break;
+                }
             }
 
         }
@@ -270,6 +280,11 @@ void FEngineLoop::UpdateUI(HWND AppWnd) const
         if (FSkeletalPreviewUI* SkeletalPreviewUI = EditorEngine->GetSkeletalPreviewUI())
         {
             SkeletalPreviewUI->OnResize(AppWnd);
+        }
+
+        if (FAnimationPreviewUI* AnimationPreviewUI = EditorEngine->GetAnimationPreviewUI())
+        {
+            AnimationPreviewUI->OnResize(AppWnd);
         }
 
         if (EditorEngine->ContentsUI)

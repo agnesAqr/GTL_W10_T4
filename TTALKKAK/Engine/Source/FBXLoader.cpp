@@ -8,6 +8,7 @@
 #include "Engine/Assets/Animation/AnimDataModel.h"
 #include "Engine/Assets/Animation/IAnimationDataModel.h"
 #include "Engine/Assets/Animation/AnimationAsset.h"
+#include <format>
 
 FbxManager* FBXLoader::FbxManager = nullptr;
     
@@ -1249,8 +1250,21 @@ FObjMaterialInfo FBXLoader::ConvertFbxToObjMaterialInfo(
 USkeletalMesh* FBXLoader::CreateSkeletalMesh(const FString& FilePath)
 {
     FSkeletalMeshRenderData* MeshData = ParseFBX(FilePath);
-    if (MeshData == nullptr)
+    if (!MeshData)
+    {
+        std::wstring filePath = FilePath.ToWideString();
+        std::wstring Msg = std::format(
+            L"경고: FBX 파일을 찾을 수 없습니다:\n{}",
+            filePath
+        );
+        MessageBoxW(
+            nullptr,
+            Msg.c_str(),
+            L"FBXLoader",
+            MB_OK | MB_ICONWARNING
+        );
         return nullptr;
+    }
     
     USkeletalMesh* SkeletalMesh = FObjectFactory::ConstructObject<USkeletalMesh>(nullptr);
     SkeletalMesh->SetData(FilePath);
@@ -1261,14 +1275,7 @@ USkeletalMesh* FBXLoader::CreateSkeletalMesh(const FString& FilePath)
 
 USkeletalMesh* FBXLoader::GetSkeletalMesh(const FString& FilePath)
 {
-    if (SkeletalMeshMap.Contains(FilePath))
-    {
-        return SkeletalMeshMap[FilePath];
-    }
-    else
-    {
-        return CreateSkeletalMesh(FilePath);
-    }
+    return SkeletalMeshMap.Contains(FilePath) ? SkeletalMeshMap[FilePath] : CreateSkeletalMesh(FilePath);
 }
 
 FSkeletalMeshRenderData FBXLoader::GetCopiedSkeletalRenderData(FString FilePath)
@@ -1286,21 +1293,36 @@ FSkeletalMeshRenderData FBXLoader::GetCopiedSkeletalRenderData(FString FilePath)
 FRefSkeletal* FBXLoader::GetRefSkeletal(FString FilePath)
 {
     // TODO: 폴더에서 가져올 수 있으면 가져오기
-    if (RefSkeletalData.Contains(FilePath))
-    {
-        return RefSkeletalData[FilePath];
-    }
-    
-    return nullptr;
+    return RefSkeletalData.Contains(FilePath) ? RefSkeletalData[FilePath] : nullptr;
 }
 
 UAnimSequence* FBXLoader::CreateAnimationSequence(const FString& FilePath)
 {
-    ParseFBX(FilePath);
+    FSkeletalMeshRenderData* MeshData = ParseFBX(FilePath);
+    if (!MeshData)
+    {
+        std::wstring filePath = FilePath.ToWideString();
+        std::wstring Msg = std::format(
+            L"경고: 애니메이션 생성용 FBX 파일을 찾을 수 없습니다:\n{}",
+            filePath
+        );
+        MessageBoxW(nullptr, Msg.c_str(), L"FBXLoader", MB_OK | MB_ICONWARNING);
+        return nullptr;
+    }
 
     UAnimSequence* AnimSequence = FObjectFactory::ConstructObject<UAnimSequence>(nullptr);
-
     UAnimDataModel* AnimDataModel = GetAnimDataModel(FilePath);
+    if (!AnimDataModel)
+    {
+        std::wstring filePath = FilePath.ToWideString();
+        std::wstring Msg = std::format(
+            L"경고: AnimDataModel이 존재하지 않습니다:\n{}",
+            filePath
+        );
+        MessageBoxW(nullptr, Msg.c_str(), L"FBXLoader", MB_OK | MB_ICONWARNING);
+        return nullptr;
+    }
+    
     AnimSequence->SetAnimDataModel(AnimDataModel);
     SkeletalAnimSequences.Add(FilePath, AnimSequence);
     
@@ -1309,20 +1331,12 @@ UAnimSequence* FBXLoader::CreateAnimationSequence(const FString& FilePath)
 
 UAnimSequence* FBXLoader::GetAnimationSequence(const FString& FilePath)
 {
-    if (SkeletalAnimSequences.Contains(FilePath))
-    {
-        return SkeletalAnimSequences[FilePath];
-    }
-
-    return CreateAnimationSequence(FilePath);
+    return SkeletalAnimSequences.Contains(FilePath) ? SkeletalAnimSequences[FilePath] : CreateAnimationSequence(FilePath);
 }
 
 UAnimDataModel* FBXLoader::GetAnimDataModel(const FString& FilePath)
 {
-    if (AnimDataModels.Contains(FilePath))
-        return AnimDataModels[FilePath];
-
-    return nullptr;
+    return AnimDataModels.Contains(FilePath) ? AnimDataModels[FilePath] : nullptr;
 }
 
 void FBXLoader::AddVertexFromControlPoint(

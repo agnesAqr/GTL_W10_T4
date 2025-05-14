@@ -131,7 +131,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;FBXSDK_SHARED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)\Engine\Source\ThirdParty\FBX_SDK\2020.3.7\include;$(ProjectDir)\Shaders;$(ProjectDir)\Engine\Source\Runtime\InteractiveToolsFramework;$(ProjectDir)\Engine\Source\ThirdParty;$(VcpkgRoot)\installed\x64-windows\include;$(IncludePath);$(ProjectDir)\Engine\Source\ThirdParty\DirectXTK\Include;$(ProjectDir)\Engine\Source\Runtime;$(ProjectDir)\Engine\Source\Runtime\Windows;$(ProjectDir)\Engine\Source\ThirdParty\include;$(ProjectDir)\Engine\Source\Editor;$(ProjectDir)\Engine\Source\Runtime\CoreUObject;$(ProjectDir)\Engine\Source\Runtime\Core;$(ProjectDir)\Engine\Source\Runtime\Launch;$(ProjectDir)\Engine\Source\Runtime\Engine;$(ProjectDir)\Engine\Source\Runtime\Engine\Classes;$(ProjectDir)\Engine\Source;$(ProjectDir);$(ProjectDir)\Engine\Source\ThirdParty\Lua\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\Engine\Source\ThirdParty\FBX_SDK\2020.3.7\include;$(ProjectDir)\Shaders;$(ProjectDir)\Engine\Source\Runtime\InteractiveToolsFramework;$(ProjectDir)Engine\Source\ThirdParty\include\ImGUI;$(VcpkgRoot)\installed\x64-windows\include;$(IncludePath);$(ProjectDir)\Engine\Source\ThirdParty\DirectXTK\Include;$(ProjectDir)\Engine\Source\Runtime;$(ProjectDir)\Engine\Source\Runtime\Windows;$(ProjectDir)\Engine\Source\ThirdParty\include;$(ProjectDir)\Engine\Source\Editor;$(ProjectDir)\Engine\Source\Runtime\CoreUObject;$(ProjectDir)\Engine\Source\Runtime\Core;$(ProjectDir)\Engine\Source\Runtime\Launch;$(ProjectDir)\Engine\Source\Runtime\Engine;$(ProjectDir)\Engine\Source\Runtime\Engine\Classes;$(ProjectDir)\Engine\Source;$(ProjectDir);$(ProjectDir)\Engine\Source\ThirdParty\Lua\include;$(ProjectDir)\Engine\Source\ThirdParty;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalOptions>/utf-8 /bigobj %(AdditionalOptions)</AdditionalOptions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -171,7 +171,7 @@ robocopy "$(ProjectDir)Icon"     "$(OutDir)\Icon"     *.* /E /R:3 /W:5 /NFL /NDL
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(ProjectDir)Engine\Source\ThirdParty\FBX_SDK\2020.3.7\lib\x64\release;$(SolutionDir)Week0v2\Engine\Source\ThirdParty\DirectXTK\Lib\x64\Release;%(AdditionalLibraryDirectories);$(VcpkgRoot)\installed\x64-windows\lib;$(LibraryPath);$(ProjectDir)Engine\Source\ThirdParty\Lua\$(Configuration)\lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)Engine\Source\ThirdParty\FBX_SDK\2020.3.7\lib\x64\$(Configuration);$(ProjectDir)Engine\Source\ThirdParty\DirectXTK\Lib\x64\$(Configuration);%(AdditionalLibraryDirectories);$(VcpkgRoot)\installed\x64-windows\lib;$(LibraryPath);$(ProjectDir)Engine\Source\ThirdParty\Lua\$(Configuration)\lib</AdditionalLibraryDirectories>
       <AdditionalDependencies>DirectXTK.lib;libfbxsdk.lib;lua.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <FxCompile>
@@ -180,18 +180,21 @@ robocopy "$(ProjectDir)Icon"     "$(OutDir)\Icon"     *.* /E /R:3 /W:5 /NFL /NDL
     <PostBuildEvent>
       <Command>xcopy /y /d "$(ProjectDir)Engine\Source\ThirdParty\Lua\$(Configuration)\dll" "$(OutDir)"
 xcopy /y /d "$(ProjectDir)Engine\Source\ThirdParty\FBX_SDK\2020.3.7\lib\$(Platform)\$(Configuration)\libfbxsdk.dll" "$(OutDir)"
-robocopy "$(ProjectDir)Assets" "$(OutDir)\Assets" *.* /E /NFL /NDL
-robocopy "$(ProjectDir)Contents" "$(OutDir)\Contents" *.* /E /R:3 /W:5 /NFL /NDL
-robocopy "$(ProjectDir)Font"     "$(OutDir)\Font"     *.* /E /R:3 /W:5 /NFL /NDL
-robocopy "$(ProjectDir)Shaders"  "$(OutDir)\Shaders"  *.* /E /R:3 /W:5 /NFL /NDL
-robocopy "$(ProjectDir)Icon"     "$(OutDir)\Icon"     *.* /E /R:3 /W:5 /NFL /NDL
+robocopy "$(ProjectDir)Assets" "$(OutDir)Assets" *.* /E /NFL /NDL
+robocopy "$(ProjectDir)Contents" "$(OutDir)Contents" *.* /E /R:3 /W:5 /NFL /NDL
+robocopy "$(ProjectDir)Font"     "$(OutDir)Font"     *.* /E /R:3 /W:5 /NFL /NDL
+robocopy "$(ProjectDir)Shaders"  "$(OutDir)Shaders"  *.* /E /R:3 /W:5 /NFL /NDL
+robocopy "$(ProjectDir)Icon"     "$(OutDir)Icon"     *.* /E /R:3 /W:5 /NFL /NDL
 </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AnimationStateMachine.cpp" />
     <ClCompile Include="Engine\Source\Editor\LevelEditor\SlateAppMessageHandler.cpp" />
+    <ClCompile Include="Engine\Source\Editor\PropertyEditor\AnimTimelinePanel.cpp" />
     <ClCompile Include="Engine\Source\Editor\PropertyEditor\PreviewControlEditorPanel.cpp" />
     <ClCompile Include="Engine\Source\Editor\PropertyEditor\SkeletalPreviewPropertyEditorPanel.cpp" />
+    <ClCompile Include="Engine\Source\Editor\UnrealEd\AnimationPreviewUI.cpp" />
     <ClCompile Include="Engine\Source\Editor\UnrealEd\EditorPlayer.cpp" />
     <ClCompile Include="Engine\Source\Editor\UnrealEd\SkeletalPreviewUI.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Core\Container\FFileHelper.cpp" />
@@ -205,11 +208,14 @@ robocopy "$(ProjectDir)Icon"     "$(OutDir)\Icon"     *.* /E /R:3 /W:5 /NFL /NDL
     <ClCompile Include="Engine\Source\Runtime\Engine\Camera\CameraShake\DashShake.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Camera\CameraFadeInOut.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Camera\CameraLetterBox.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Actors\ACharacter.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Actors\APawn.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Actors\SkeletalMeshActor.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimationSettings.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimInstance.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimSingleNodeInstance.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Animation\BlendAnimInstance.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Animation\CustomAnimInstance.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework\ChracterMovementComponent.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework\MovementComponent.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework\PawnMovementComponent.cpp" />
@@ -360,6 +366,8 @@ robocopy "$(ProjectDir)Icon"     "$(OutDir)\Icon"     *.* /E /R:3 /W:5 /NFL /NDL
     <ClCompile Include="Engine\Source\Runtime\Windows\RawInput.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Windows\WindowsCursor.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Windows\WindowsPlatformTime.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\im-neo-sequencer\imgui_neo_internal.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\im-neo-sequencer\imgui_neo_sequencer.cpp" />
     <ClCompile Include="Engine\Source\ThirdParty\include\ImGUI\imgui.cpp" />
     <ClCompile Include="Engine\Source\ThirdParty\include\ImGUI\imgui_demo.cpp" />
     <ClCompile Include="Engine\Source\ThirdParty\include\ImGUI\imgui_draw.cpp" />
@@ -410,9 +418,13 @@ robocopy "$(ProjectDir)Icon"     "$(OutDir)\Icon"     *.* /E /R:3 /W:5 /NFL /NDL
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AnimCondition.h" />
+    <ClInclude Include="Engine\Source\AnimationStateMachine.h" />
     <ClInclude Include="Engine\Source\Editor\LevelEditor\SlateAppMessageHandler.h" />
+    <ClInclude Include="Engine\Source\Editor\PropertyEditor\AnimTimelinePanel.h" />
     <ClInclude Include="Engine\Source\Editor\PropertyEditor\PreviewControlEditorPanel.h" />
     <ClInclude Include="Engine\Source\Editor\PropertyEditor\SkeletalPreviewPropertyEditorPanel.h" />
+    <ClInclude Include="Engine\Source\Editor\UnrealEd\AnimationPreviewUI.h" />
     <ClInclude Include="Engine\Source\Editor\UnrealEd\EditorPlayer.h" />
     <ClInclude Include="Engine\Source\Editor\UnrealEd\SkeletalPreviewUI.h" />
     <ClInclude Include="Engine\Source\Editor\UnrealEd\UnrealEd.h" />
@@ -429,11 +441,14 @@ robocopy "$(ProjectDir)Icon"     "$(OutDir)\Icon"     *.* /E /R:3 /W:5 /NFL /NDL
     <ClInclude Include="Engine\Source\Runtime\Engine\Camera\CameraShake\DashShake.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Camera\CameraFadeInOut.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Camera\CameraLetterBox.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Actors\ACharacter.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Actors\APawn.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Actors\SkeletalMeshActor.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimationSettings.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimInstance.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimSingleNodeInstance.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Animation\BlendAnimInstance.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Animation\CustomAnimInstance.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework\ChracterMovementComponent.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework\MovementComponent.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\GameFramework\PawnMovementComponent.h" />
@@ -615,6 +630,8 @@ robocopy "$(ProjectDir)Icon"     "$(OutDir)\Icon"     *.* /E /R:3 /W:5 /NFL /NDL
     <ClInclude Include="Engine\Source\Runtime\Windows\WindowsCursor.h" />
     <ClInclude Include="Engine\Source\Runtime\Windows\WindowsPlatformTime.h" />
     <ClInclude Include="Engine\Source\ThirdParty\DirectXTK\Include\DDSTextureLoader.h" />
+    <ClInclude Include="Engine\Source\ThirdParty\im-neo-sequencer\imgui_neo_internal.h" />
+    <ClInclude Include="Engine\Source\ThirdParty\im-neo-sequencer\imgui_neo_sequencer.h" />
     <ClInclude Include="Engine\Source\ThirdParty\tinyfiledialogs\tinyfiledialogs.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Camera\CameraShake\ExplosionShake.h" />
     <ClInclude Include="Font\IconDefs.h" />

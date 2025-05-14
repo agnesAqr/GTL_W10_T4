@@ -52,6 +52,7 @@ private:
     void RenderDelegate(ULevel* level);
     
     void DrawSkeletalMeshPreviewButton(const FString& FilePath);
+    void DrawAnimationPreviewButton(const FString& FilePath);
     
 private:
     float Width = 0, Height = 0;
