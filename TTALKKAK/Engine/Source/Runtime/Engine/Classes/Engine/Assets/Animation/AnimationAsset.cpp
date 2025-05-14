@@ -208,8 +208,8 @@ void UAnimSequence::PopulateModel()
      float CurrentTime = FMath::Fmod(Time, SequenceLength);
      if (CurrentTime < 0.0f) CurrentTime += SequenceLength;
 
-     UE_LOG(LogLevel::Display, "UAnimSequence-Time: %f", Time);
-     UE_LOG(LogLevel::Display, "UAnimSequence-CurrentTime: %f", CurrentTime);
+     //UE_LOG(LogLevel::Display, "UAnimSequence-Time: %f", Time);
+     //UE_LOG(LogLevel::Display, "UAnimSequence-CurrentTime: %f", CurrentTime);
 
      for (int32 BoneIndex = 0; BoneIndex < NumSkeletonBones; ++BoneIndex)
      {

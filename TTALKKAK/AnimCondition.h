@@ -46,17 +46,15 @@ struct FAnimationTransition
     int32 Priority;
 
     FAnimationTransition()
-        : TargetStateName(""), BlendDuration(0.2f), Priority(0) {
+        : TargetStateName(""), BlendDuration(1.f), Priority(0) {
     }
 
-    FAnimationTransition(FName InTargetStateName, FTransitionPredicate InTransitionRule, float InBlendDuration = 0.2f, int32 InPriority = 0)
+    FAnimationTransition(FName InTargetStateName, FTransitionPredicate InTransitionRule, float InBlendDuration = 2.f, int32 InPriority = 0)
         : TargetStateName(InTargetStateName), TransitionRule(InTransitionRule), BlendDuration(InBlendDuration), Priority(InPriority) {
     }
 
     bool IsValid() const { return TargetStateName != "" && TransitionRule != nullptr; }
 };
-
-
 
 struct FAnimationState
 {
@@ -64,7 +62,6 @@ struct FAnimationState
     int32 OwningAnimIndex;
     TArray<FAnimationTransition> Transitions;
 
-    // 상태 진입/유지/탈출 시 호출될 델리게이트 (선택 사항)
      std::function<void(FAnimationConditionContext& Context)> OnEnter;
      std::function<void(FAnimationConditionContext& Context, float DeltaTime)> OnUpdate;
      std::function<void(FAnimationConditionContext& Context)> OnExit;
