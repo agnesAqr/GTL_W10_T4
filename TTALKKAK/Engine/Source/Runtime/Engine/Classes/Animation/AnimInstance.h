@@ -56,9 +56,4 @@ protected:
 
     int32 CurrentMainAnimIndex;
     int32 CurrentPrevAnimIndexForBlend; // 블렌딩 시에만 유효 (INDEX_NONE 가능)
-
-    // FIX-ME: Hard coded
-    void SampleSingleAnimationByIndex(float DeltaSeconds, int32 AnimIndex, FPoseData& OutPose);
-    void UpdateBlendedAnimations(float DeltaSeconds, int32 IndexA, int32 IndexB, float InBlendAlpha, FPoseData& OutPose);
-
 };

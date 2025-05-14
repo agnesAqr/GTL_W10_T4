@@ -41,6 +41,7 @@
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimSingleNodeInstance.h"
 #include "Animation/BlendAnimInstance.h"
+#include "Animation/CustomAnimInstance.h"
 #include "CoreUObject/UObject/NameTypes.h"
 
 void PropertyEditorPanel::Initialize(float InWidth, float InHeight)
@@ -1020,7 +1021,8 @@ void PropertyEditorPanel::RenderForSkeletalMesh2(USkeletalMeshComponent* Skeleta
         static const TArray<AnimInstanceOption> AnimInstanceOptions = {
             {"UAnimInstance", UAnimInstance::StaticClass()},
             {"AnimSingleNodeInstance", UAnimSingleNodeInstance::StaticClass()},
-            {"BlendAnimInstance", UBlendAnimInstance::StaticClass()}
+            {"BlendAnimInstance", UBlendAnimInstance::StaticClass()},
+            {"CustomAnimInstance", UCustomAnimInstance::StaticClass()}
         };
 
         int SelectedInstanceIndex = -1;
@@ -1078,6 +1080,10 @@ void PropertyEditorPanel::RenderForSkeletalMesh2(USkeletalMeshComponent* Skeleta
                             else if (TargetClass == UBlendAnimInstance::StaticClass())
                             {
                                 NewInstance = FObjectFactory::ConstructObject<UBlendAnimInstance>(SkeletalMeshComp);
+                            }
+                            else if (TargetClass == UCustomAnimInstance::StaticClass())
+                            {
+                                NewInstance = FObjectFactory::ConstructObject<UCustomAnimInstance>(SkeletalMeshComp);
                             }
                             else
                             {
