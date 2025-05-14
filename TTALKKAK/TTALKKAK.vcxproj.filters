@@ -522,6 +522,8 @@
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimationSettings.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Animation\BlendAnimInstance.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\UserInterface\Stat.h" />
+    <ClInclude Include="Engine\Source\AnimationStateMachine.h" />
+    <ClInclude Include="AnimCondition.h" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\Source\ThirdParty\DirectXTK\Include\DDSTextureLoader.h" />
@@ -783,6 +785,7 @@
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimationSettings.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Animation\BlendAnimInstance.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\UserInterface\Stat.cpp" />
+    <ClCompile Include="AnimationStateMachine.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\ShaderHeaders\GConstantBuffers.hlsli" />

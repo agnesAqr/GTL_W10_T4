@@ -4,8 +4,6 @@
 #include "FBXLoader.h"
 #include "UObject/Casts.h"
 
-// 여기에 AnimTypes.h을 원래 추가하기는 해야함. 그런데 왜 괜찮지.
-
 UAnimationAsset::UAnimationAsset()
     : RefSkeletal(nullptr)
 {

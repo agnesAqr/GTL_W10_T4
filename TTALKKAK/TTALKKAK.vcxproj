@@ -189,6 +189,7 @@ robocopy "$(ProjectDir)Icon"     "$(OutDir)\Icon"     *.* /E /R:3 /W:5 /NFL /NDL
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AnimationStateMachine.cpp" />
     <ClCompile Include="Engine\Source\Editor\LevelEditor\SlateAppMessageHandler.cpp" />
     <ClCompile Include="Engine\Source\Editor\PropertyEditor\AnimTimelinePanel.cpp" />
     <ClCompile Include="Engine\Source\Editor\PropertyEditor\PreviewControlEditorPanel.cpp" />
@@ -416,6 +417,8 @@ robocopy "$(ProjectDir)Icon"     "$(OutDir)\Icon"     *.* /E /R:3 /W:5 /NFL /NDL
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AnimCondition.h" />
+    <ClInclude Include="Engine\Source\AnimationStateMachine.h" />
     <ClInclude Include="Engine\Source\Editor\LevelEditor\SlateAppMessageHandler.h" />
     <ClInclude Include="Engine\Source\Editor\PropertyEditor\AnimTimelinePanel.h" />
     <ClInclude Include="Engine\Source\Editor\PropertyEditor\PreviewControlEditorPanel.h" />
