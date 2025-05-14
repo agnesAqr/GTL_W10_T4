@@ -3,6 +3,7 @@
 #include "UObject/ObjectMacros.h"
 #include "FBX/FBXDefine.h" // FIX-ME
 #include "Classes/Engine/Assets/Animation/AnimTypes.h"
+class UAnimSequence;
 
 class USkeletalMeshComponent;
 
@@ -26,7 +27,21 @@ public:
     virtual const FPoseData& GetCurrentPose() const;
     USkeletalMeshComponent* GetSkelMeshComponent() const;
 
+    virtual void InitializeForBlendAnimations(const uint32 IndexA, const uint32 IndexB, FPoseData& OutPose);
+    virtual void BlendAnimations(float DeltaSeconds, const uint32 IndexA, const uint32 IndexB, FPoseData& OutPose);
+
+    PROPERTY(float, BlendAlpha);
+
+
 protected:
     FPoseData CurrentPoseData;
+
+    TArray<UAnimSequence*> OwningAnimSequences;
+    TArray<FPoseData> OwningPoseData;
+
+    float BlendAlpha;
+    float NormalizedTime;
+
+private:
 };
 

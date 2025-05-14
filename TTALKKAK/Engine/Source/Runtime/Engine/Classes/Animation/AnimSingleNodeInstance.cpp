@@ -7,18 +7,13 @@
 #include "Classes/Engine/Assets/Animation/AnimDataModel.h"
 
 UAnimSingleNodeInstance::UAnimSingleNodeInstance()
-    : AnimationSequence(nullptr)
-    , CurrentTime(0.0f)
+    : CurrentTime(0.0f)
     , bLooping(true)
 {
-    // 이거를 삭제하라고 하는디 아무리 생각해도 여기 맞긴 함
-    AnimationSequence = FBXLoader::GetAnimationSequence("FBX/Sneak_Walking.fbx");
 }
 
 UAnimSingleNodeInstance::UAnimSingleNodeInstance(const UAnimSingleNodeInstance& Other)
-    : UAnimInstance(Other)
-    , AnimationSequence(Other.AnimationSequence) 
-    , CurrentTime(Other.CurrentTime)
+    : CurrentTime(Other.CurrentTime)
     , bLooping(Other.bLooping)
 {
 }
@@ -40,7 +35,7 @@ void UAnimSingleNodeInstance::DuplicateSubObjects(const UObject* Source, UObject
     const UAnimSingleNodeInstance* Origin = Cast<UAnimSingleNodeInstance>(Source);
     if (Origin)
     {
-        this->AnimationSequence = Origin->AnimationSequence;
+        //this->AnimationSequence = Origin->AnimationSequence;
     }
 }
 
@@ -51,12 +46,12 @@ void UAnimSingleNodeInstance::PostDuplicate()
 
 void UAnimSingleNodeInstance::SetAnimation(UAnimSequence* AnimSequence, bool bShouldLoop)
 {
-    AnimationSequence = AnimSequence;
+    //AnimationSequence = AnimSequence;
     CurrentTime = 0.0f;
     PreviousTime = 0.0f;
     bLooping = bShouldLoop;
 
-    if (AnimationSequence && TargetSkeleton)
+    if (OwningAnimSequences[0] && TargetSkeleton)
     {
         CurrentPoseData.Reset();
         CurrentPoseData.Skeleton = TargetSkeleton;
@@ -68,7 +63,7 @@ void UAnimSingleNodeInstance::SetAnimation(UAnimSequence* AnimSequence, bool bSh
                 Bone = FCompactPoseBone(); // Identity transform
             }
         }
-        AnimationSequence->SamplePoseAtTime(CurrentTime, TargetSkeleton, CurrentPoseData);
+        OwningAnimSequences[0]->SamplePoseAtTime(CurrentTime, TargetSkeleton, CurrentPoseData);
     }
     else
     {
@@ -88,7 +83,7 @@ void UAnimSingleNodeInstance::SetAnimation(UAnimSequence* AnimSequence, bool bSh
 void UAnimSingleNodeInstance::SetPosition(float InTime, bool bFireNotifies /*= false*/)
 {
     // ▶ PlayAsset이나 Skeleton이 없으면 아무 것도 안 함
-    if (!AnimationSequence || !TargetSkeleton)
+    if (!OwningAnimSequences[0] || !TargetSkeleton)
     {
         return;
     }
@@ -97,7 +92,7 @@ void UAnimSingleNodeInstance::SetPosition(float InTime, bool bFireNotifies /*= f
     PreviousTime = CurrentTime;
 
     // ▶ 요청된 시간(InTime)으로 세팅하되, 루핑/클램프 처리
-    const float PlayLength = AnimationSequence->GetPlayLength();
+    const float PlayLength = OwningAnimSequences[0]->GetPlayLength();
     float NewTime = InTime;
 
     if (bLooping && PlayLength > KINDA_SMALL_NUMBER)
@@ -127,7 +122,7 @@ void UAnimSingleNodeInstance::SetPosition(float InTime, bool bFireNotifies /*= f
     CurrentPoseData.LocalBoneTransforms.Init(FCompactPoseBone(), NumBones);
 
     // ▶ 해당 시간의 포즈 샘플링
-    AnimationSequence->SamplePoseAtTime(CurrentTime, TargetSkeleton, CurrentPoseData);
+    OwningAnimSequences[0]->SamplePoseAtTime(CurrentTime, TargetSkeleton, CurrentPoseData);
 }
 
 void UAnimSingleNodeInstance::NativeInitializeAnimation()
@@ -137,35 +132,22 @@ void UAnimSingleNodeInstance::NativeInitializeAnimation()
     CurrentTime = 0.0f;
     PreviousTime = 0.0f;
 
-    if (TargetSkeleton)
-    {
-        CurrentPoseData.Skeleton = TargetSkeleton;
-        if (TargetSkeleton->BoneTree.Num() > 0)
-        {
-            CurrentPoseData.LocalBoneTransforms.Init(FCompactPoseBone(), TargetSkeleton->BoneTree.Num());
-        }
-    }
-
-    if (AnimationSequence && TargetSkeleton)
-    {
-        AnimationSequence->SamplePoseAtTime(CurrentTime, TargetSkeleton, CurrentPoseData);
-    }
-
-    //SetAnimation(AnimationSequence, true);
+    OwningAnimSequences.Add(FBXLoader::GetAnimationSequence("FBX/Walking.fbx"));
+    SetAnimation(OwningAnimSequences[0], true);
 }
 
 
 void UAnimSingleNodeInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
     Super::NativeUpdateAnimation(DeltaSeconds);
-    AnimationSequence->SetSkeletal(TargetSkeleton);
-    if (AnimationSequence && TargetSkeleton)
+    OwningAnimSequences[0]->SetSkeletal(TargetSkeleton);
+    if (OwningAnimSequences[0] && TargetSkeleton)
     {
         PreviousTime = CurrentTime;
         
-        const float PlayLength = AnimationSequence->GetPlayLength();
+        const float PlayLength = OwningAnimSequences[0]->GetPlayLength();
         float ActualRateScale = 1.0f;
-        if (AnimationSequence) ActualRateScale = AnimationSequence->GetRateScale();
+        if (OwningAnimSequences[0]) ActualRateScale = OwningAnimSequences[0]->GetRateScale();
 
         if (PlayLength > KINDA_SMALL_NUMBER)
         {
@@ -185,7 +167,7 @@ void UAnimSingleNodeInstance::NativeUpdateAnimation(float DeltaSeconds)
             this->CurrentPoseData.LocalBoneTransforms.Init(FCompactPoseBone(), TargetSkeleton->BoneTree.Num());
         }
         TriggerAnimNotifies(PreviousTime, CurrentTime);
-        AnimationSequence->SamplePoseAtTime(CurrentTime, TargetSkeleton, CurrentPoseData);
+        OwningAnimSequences[0]->SamplePoseAtTime(CurrentTime, TargetSkeleton, CurrentPoseData);
     }
     else
     {
@@ -204,10 +186,10 @@ void UAnimSingleNodeInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 void UAnimSingleNodeInstance::TriggerAnimNotifies(float PrevTime, float CurrTime)
 {
-    const float Length = AnimationSequence->GetPlayLength();
+    const float Length = OwningAnimSequences[0]->GetPlayLength();
     bool bWrapped = CurrTime < PrevTime;
 
-    for (auto& Notify : AnimationSequence->GetNotifies())
+    for (auto& Notify : OwningAnimSequences[0]->GetNotifies())
     {
         if (!bWrapped)
         {

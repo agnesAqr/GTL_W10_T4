@@ -24,14 +24,12 @@ protected:
     virtual void TriggerAnimNotifies(float PrevTime, float CurrTime) override;
     
 private:
-    UAnimSequence* AnimationSequence;
     float CurrentTime;
     float PreviousTime;
     bool bLooping;
 
 public:
-    UAnimSequence* GetAnimation() const { return AnimationSequence; }
-    void SetAnimation(UAnimSequence* AnimSequence);
+    UAnimSequence* GetAnimation() const { return OwningAnimSequences[0]; }
     void SetAnimation(UAnimSequence* AnimSequence, bool bShouldLoop);
 
     void SetLooping(bool InValue) { bLooping = InValue; }

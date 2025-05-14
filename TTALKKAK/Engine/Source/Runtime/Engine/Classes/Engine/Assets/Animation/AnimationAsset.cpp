@@ -194,6 +194,7 @@ void UAnimSequence::PopulateModel()
     }
 }
 
+// FIX-ME: UAnimSequence에 종속되지 않도록 추후 수정 요망
  void UAnimSequence::SamplePoseAtTime(float Time, const FRefSkeletal* Skeleton, FPoseData& OutPose) const
  {
      if (!Skeleton || RawAnimationData.Num() == 0)
