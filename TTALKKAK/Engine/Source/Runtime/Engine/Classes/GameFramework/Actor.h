@@ -11,6 +11,7 @@
 #include "Components/PrimitiveComponents/PrimitiveComponent.h"
 #include "Core/Delegates/DelegateCombination.h"
 
+struct FAnimNotifyEvent;
 class UActorComponent;
 
 class AActor : public UObject
@@ -239,6 +240,9 @@ private:
     /** 에디터상에 보이는 Actor의 이름 */
     FString ActorLabel;
 #endif
+
+public:
+    virtual void HandleAnimNotify(const FAnimNotifyEvent& Notify);
 };
 
 

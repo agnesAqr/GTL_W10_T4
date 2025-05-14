@@ -76,14 +76,17 @@ void AnimTimelinePanel::DrawAnimationTimeline()
     
     const float fps            = CurrAnimSeq->GetSamplingFrameRate().AsDecimal();
     const int32_t totalFrames  = CurrAnimSeq->GetNumberOfFrames();
+    
     static int32_t currentFrame = 0;
-    static int32_t startFrame   = std::max(0, std::min(startFrame, totalFrames - 1));
-    static int32_t endFrame     = std::max(1, std::min(endFrame, totalFrames));
+    static int32_t startFrame = 0;
+    static int32_t endFrame   = 0;
     static int     playbackDir  = 0;
     static double  lastTime     = ImGui::GetTime();
 
     if (endFrame == 0)
-        endFrame = totalFrames;
+        endFrame = totalFrames - 1;
+    startFrame = std::clamp(startFrame, 0, totalFrames - 1);
+    endFrame   = std::clamp(endFrame,   1, totalFrames);
 
     double now = ImGui::GetTime();
     if (playbackDir != 0)
@@ -101,84 +104,118 @@ void AnimTimelinePanel::DrawAnimationTimeline()
 
     ImGui::Begin("Animation Sequencer");
     
-    // ◀ Reverse 버튼
-    if (ImGui::Button("Reverse"))
-        playbackDir = -1;
-    
+    // ◀ Reverse, ■ Pause, ▶ Play
+    if (ImGui::Button("Reverse")) playbackDir = -1;
     ImGui::PushFont(IconFont);
     ImGui::SameLine();
-    // ■ Pause 버튼
-    if (ImGui::Button("\ue99c"))
-        playbackDir = 0;
+    if (ImGui::Button("\ue99c")) playbackDir = 0;
     ImGui::SameLine();
-    // ▶ Play 버튼
-    if (ImGui::Button("\ue9a8"))
-        playbackDir = 1;
+    if (ImGui::Button("\ue9a8")) playbackDir = 1;
     ImGui::PopFont();
-    
-    ImGui::SameLine();
-    if (ImGui::SliderInt("Frame", &currentFrame, 0, totalFrames - 1))
-    {
-        lastTime = now;
-    }
 
-    std::vector<ImGui::FrameIndexType> notifyFrames;
-    for (auto& ev : CurrAnimSeq->GetNotifies())
-    {
-        notifyFrames.push_back(FMath::RoundToInt(ev.TriggerTime * fps));
-    }
-    
-    const int seqFlags =
-          ImGuiNeoSequencerFlags_AllowLengthChanging
-        | ImGuiNeoSequencerFlags_EnableSelection
-        | ImGuiNeoSequencerFlags_AlwaysShowHeader
-        | ImGuiNeoSequencerFlags_Selection_EnableDragging
-        | ImGuiNeoSequencerFlags_Selection_EnableDeletion;
+    static bool     notifiesOpen    = true;
+    static bool     openNotifyModal = false;
+    static char     notifyNameBuffer[64] = "";
+    static int32_t  inputFrame    = 0;
+    static int32_t  pendingFrame    = 0;
 
-    // Sequencer 그리기
-    if (ImGui::BeginNeoSequencer("Sequencer", &currentFrame, &startFrame, &endFrame, ImVec2(0,0), seqFlags))
+    if (ImGui::BeginNeoSequencer("Sequencer", &currentFrame, &startFrame, &endFrame, {0,0},
+                                 ImGuiNeoSequencerFlags_EnableSelection |
+                                 ImGuiNeoSequencerFlags_Selection_EnableDragging |
+                                 ImGuiNeoSequencerFlags_Selection_EnableDeletion))
     {
-        // 1. 빈 공간 우클릭 시 Notify 추가 메뉴
-        if (ImGui::BeginPopupContextWindow("add_notify", ImGuiPopupFlags_MouseButtonRight))
+        if (ImGui::BeginNeoGroup("Notifies", &notifiesOpen))
         {
-            if (ImGui::MenuItem("Add Notify at Current"))
+            TArray<ImGui::FrameIndexType> notifyFrames;
+            for (auto& ev : CurrAnimSeq->GetNotifies())
+                notifyFrames.Add(FMath::RoundToInt(ev.TriggerTime * fps));
+
+            ImVec2 trackMin, trackMax;
+            if (ImGui::BeginNeoTimelineEx("Track 1"))
             {
-                FAnimNotifyEvent newEv;
-                newEv.TriggerTime = float(currentFrame) / fps;
-                CurrAnimSeq->GetNotifies().Add(newEv);
+                for (auto f : notifyFrames)
+                    ImGui::NeoKeyframe(&f);
+                ImGui::EndNeoTimeLine();
+
+                trackMin = ImGui::GetItemRectMin();
+                trackMax = ImGui::GetItemRectMax();
             }
-            ImGui::EndPopup();
-        }
 
-        // 2. Notify 트랙
-        bool showNotifies = true;
-        if (ImGui::BeginNeoTimeline("Notifies", notifyFrames, &showNotifies,
-                                    ImGuiNeoTimelineFlags_AllowFrameChanging))
-        {
-            ImGui::EndNeoTimeLine();
-        }
+            ImGui::SetCursorScreenPos(trackMin);
+            ImVec2 trackSize(trackMax.x - trackMin.x, trackMax.y - trackMin.y);
+            ImGui::InvisibleButton("##track_ctx", trackSize);
 
-        // 3. 선택된 키프레임 삭제 처리
-        if (ImGui::NeoCanDeleteSelection())
-        {
-            uint32_t count = ImGui::GetNeoKeyframeSelectionSize();
-            std::vector<ImGui::FrameIndexType> toRemove(count);
-            ImGui::GetNeoKeyframeSelection(toRemove.data());
+            if (ImGui::BeginPopupContextItem("##track_ctx", ImGuiPopupFlags_MouseButtonRight))
+            {
+                if (ImGui::MenuItem("Add Notify"))
+                {
+                    ImVec2 mp = ImGui::GetMousePos();
+                    float t   = (mp.x - trackMin.x) / trackSize.x;
+                    t = FMath::Clamp(t, 0.f, 1.f);
+                    pendingFrame = startFrame + int32(t * (endFrame - startFrame));
 
-            // 역순으로 지워야 인덱스 꼬임 방지
-            std::sort(toRemove.begin(), toRemove.end(), std::greater<int32_t>());
-            for (auto idx : toRemove)
-                CurrAnimSeq->GetNotifies().RemoveAt(idx);
+                    openNotifyModal = true;
+                    inputFrame = pendingFrame;
+                }
+                ImGui::EndPopup();
+            }
+            
+            if (ImGui::NeoCanDeleteSelection())
+            {
+                uint32_t n = ImGui::GetNeoKeyframeSelectionSize();
+                std::vector<ImGui::FrameIndexType> toRemove(n);
+                ImGui::GetNeoKeyframeSelection(toRemove.data());
+                std::sort(toRemove.begin(), toRemove.end(), std::greater<>());
+                for (auto idx : toRemove)
+                    CurrAnimSeq->GetNotifies().RemoveAt(idx);
+                ImGui::NeoClearSelection();
+            }
 
-            ImGui::NeoClearSelection();
+            ImGui::EndNeoGroup();
         }
         ImGui::EndNeoSequencer();
     }
+
     ImGui::End();
+
+    if (openNotifyModal)
+    {
+        openNotifyModal = false;
+        ImGui::SetNextWindowPos(ImGui::GetMousePos(), ImGuiCond_Appearing);
+        ImGui::OpenPopup("Notify Popup");
+    }
+    if (ImGui::BeginPopupModal("Notify Popup", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        ImGui::InputText("Name", notifyNameBuffer, IM_ARRAYSIZE(notifyNameBuffer));
+        ImGui::InputInt("Frame", &inputFrame);
+        inputFrame = FMath::Clamp(inputFrame, startFrame, endFrame);
+
+        if (ImGui::Button("OK"))
+        {
+            AddNotifyAtFrame(notifyNameBuffer, inputFrame, fps);
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Cancel"))
+            ImGui::CloseCurrentPopup();
+        ImGui::EndPopup();
+    }
 
     if (SkeletalMeshComponent)
     {
         float time = CurrAnimSeq->GetTimeAtFrame(currentFrame);
         SkeletalMeshComponent->SetPosition(time, false);
     }
+}
+
+void AnimTimelinePanel::AddNotifyAtFrame(ANSICHAR* name, int32_t frame, float fps)
+{
+    if (!CurrAnimSeq) return;
+
+    FAnimNotifyEvent newEv;
+    newEv.TriggerTime = float(frame) / fps;
+    newEv.Duration = 0;
+    newEv.NotifyName = FName(name);
+
+    CurrAnimSeq->GetNotifies().Add(newEv);
 }

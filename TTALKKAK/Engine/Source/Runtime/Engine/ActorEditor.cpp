@@ -34,4 +34,8 @@ void AActor::SetActorLabel(const FString& NewActorLabel)
     }
 }
 
+void AActor::HandleAnimNotify(const FAnimNotifyEvent& Notify)
+{
+}
+
 #endif

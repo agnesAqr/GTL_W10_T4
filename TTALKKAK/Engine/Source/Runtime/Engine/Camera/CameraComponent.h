@@ -29,7 +29,7 @@ private:
     FVector yAxis;
     float FOV;
     float nearClip = 0.1f;
-    float farClip = 1000.f;
+    float farClip = 10000.f;
 public:
     void SetFOV(float _fov) { FOV = _fov; }
     float& GetFOV() { return FOV; }

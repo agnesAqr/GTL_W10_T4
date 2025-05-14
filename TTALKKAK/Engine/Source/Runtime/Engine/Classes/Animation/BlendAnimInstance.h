@@ -24,6 +24,7 @@ public:
 protected:
     virtual void NativeInitializeAnimation() override;
     virtual void NativeUpdateAnimation(float DeltaSeconds) override;
+    virtual void TriggerAnimNotifies(float PrevTime, float CurrTime) override;
 
 private:
     UAnimSequence* AnimationA;

@@ -64,8 +64,14 @@ void ACharacter::PostDuplicate()
 
 void ACharacter::HandleAnimNotify(const FAnimNotifyEvent& Notify)
 {
-    if (Notify.NotifyName == "")
-    {
-        // TriggerFire();  // 실제 로직 호출
-    }
+    UE_LOG(LogLevel::Display, "Notify!!");
+     FString Name = Notify.NotifyName.ToString();
+    
+     if (Name == TEXT("Test"))
+         TestNotify();
+}
+
+void ACharacter::TestNotify()
+{
+    UE_LOG(LogLevel::Display, "Notify!!");
 }

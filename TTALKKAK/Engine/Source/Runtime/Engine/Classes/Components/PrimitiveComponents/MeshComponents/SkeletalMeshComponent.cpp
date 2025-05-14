@@ -425,7 +425,7 @@ void USkeletalMeshComponent::UpdateBoneTransformsFromAnim()
 
 void USkeletalMeshComponent::HandleAnimNotify(const FAnimNotifyEvent& Notify)
 {
-    //Owner->HandleAnimNotify(Notify);
+    GetOwner()->HandleAnimNotify(Notify);
 }
 
 void USkeletalMeshComponent::SetPosition(float InTime, bool bFireNotifies)

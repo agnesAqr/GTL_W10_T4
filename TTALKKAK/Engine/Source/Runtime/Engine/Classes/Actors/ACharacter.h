@@ -27,11 +27,13 @@ public:
     virtual void PostDuplicate() override;
 
     /** Anim Notify 전달을 받는 함수 */
-    virtual void HandleAnimNotify(const FAnimNotifyEvent& Notify);
+    virtual void HandleAnimNotify(const FAnimNotifyEvent& Notify) override;
 
 protected:
     /** 캐릭터 전용 움직임 컴포넌트 */
     //UCharacterMovementComponent*  CharacterMovement   = nullptr;
     /** 스켈레탈 메시 컴포넌트 */
     USkeletalMeshComponent*       SkeletalMeshComponent = nullptr;
+
+    void TestNotify();
 };

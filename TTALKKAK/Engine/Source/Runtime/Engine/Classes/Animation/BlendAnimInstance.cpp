@@ -154,3 +154,10 @@ void UBlendAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
         CurrentPoseData.LocalBoneTransforms.Init(FCompactPoseBone(), NumBones); // 예: 바인드 포즈로 초기화
     }
 }
+
+void UBlendAnimInstance::TriggerAnimNotifies(float PrevTime, float CurrTime)
+{
+    Super::TriggerAnimNotifies(PrevTime, CurrTime);
+
+    
+}

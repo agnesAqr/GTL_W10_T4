@@ -5,6 +5,7 @@
 #include "Math/MathUtility.h"
 #include "FBXLoader.h"
 #include "Classes/Engine/Assets/Animation/AnimDataModel.h"
+#include "Components/PrimitiveComponents/MeshComponents/SkeletalMeshComponent.h"
 
 UAnimSingleNodeInstance::UAnimSingleNodeInstance()
     : AnimationSequence(nullptr)
@@ -204,18 +205,27 @@ void UAnimSingleNodeInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 void UAnimSingleNodeInstance::TriggerAnimNotifies(float PrevTime, float CurrTime)
 {
-    const float Length = AnimationSequence->GetPlayLength();
-    bool bWrapped = CurrTime < PrevTime;
+    Super::TriggerAnimNotifies(PrevTime, CurrTime);
 
-    for (auto& Notify : AnimationSequence->GetNotifies())
+    USkeletalMeshComponent* MeshComp = GetSkelMeshComponent();
+    if (!MeshComp || !AnimationSequence)
+        return;
+    
+    const float PlayLength = AnimationSequence->GetPlayLength();
+    bool bWrapped = CurrTime < PrevTime;  // 루핑 된 경우
+
+    for (const FAnimNotifyEvent& NotifyEvent : AnimationSequence->GetNotifies())
     {
-        if (!bWrapped)
+        const float NotifyTime = NotifyEvent.TriggerTime;
+        bool bInRange = 
+            (!bWrapped && NotifyTime > PrevTime && NotifyTime <= CurrTime) ||
+            ( bWrapped && 
+              ((NotifyTime > PrevTime && NotifyTime <= PlayLength) ||
+               (NotifyTime >= 0.f     && NotifyTime <= CurrTime))
+            );
+        if (bInRange)
         {
-                
-        }
-        else
-        {
-            
+            MeshComp->HandleAnimNotify(NotifyEvent);
         }
     }
 }

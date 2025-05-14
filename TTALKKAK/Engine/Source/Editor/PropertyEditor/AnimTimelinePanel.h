@@ -21,4 +21,5 @@ private:
     ImFont* IconFont;
 
     void DrawAnimationTimeline();
+    void AddNotifyAtFrame(ANSICHAR* name, int32_t frame, float fps);
 };

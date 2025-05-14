@@ -2087,7 +2087,7 @@ void PropertyEditorPanel::DrawAnimationPreviewButton(const FString& FilePath)
         MeshComp->GetStaticMesh()->GetMaterials()[0]->Material->SetDiffuse(FVector::OneVector);
         MeshComp->GetStaticMesh()->GetMaterials()[0]->Material->SetEmissive(FVector::OneVector);
         MeshComp->SetWorldRotation(FRotator(0.0f, 0.0f, 90.0f));
-        TempActor->SetActorScale(FVector(1.0f, 1.0f, 1.0f));
+        TempActor->SetActorScale(FVector(0.8f, 0.8f, 0.8f));
 
         ASkeletalMeshActor* SkeletalMeshActor = World->SpawnActor<ASkeletalMeshActor>();
         SkeletalMeshActor->SetActorLabel("SkeletalMesh");
