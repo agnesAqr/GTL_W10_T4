@@ -5,8 +5,8 @@
 #ifndef IMGUI_NEO_INTERNAL_H
 #define IMGUI_NEO_INTERNAL_H
 
-#include "imgui.h"
-#include "imgui_internal.h"
+#include "ImGUI/imgui.h"
+#include "ImGUI/imgui_internal.h"
 #include <cstdint>
 
 namespace ImGui {

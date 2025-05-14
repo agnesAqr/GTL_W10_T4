@@ -4,7 +4,7 @@
 #define IMGUI_DEFINE_MATH_OPERATORS
 
 #include "imgui_neo_sequencer.h"
-#include "imgui_internal.h"
+#include "ImGUI/imgui_internal.h"
 #include "imgui_neo_internal.h"
 
 #include <unordered_map>

@@ -5,7 +5,7 @@
 #ifndef IMGUI_NEO_SEQUENCER_H
 #define IMGUI_NEO_SEQUENCER_H
 
-#include "imgui.h"
+#include "ImGUI/imgui.h"
 #include <vector>
 
 typedef int ImGuiNeoSequencerFlags;
