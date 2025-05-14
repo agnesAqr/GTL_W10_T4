@@ -1,5 +1,4 @@
 #include "SkeletalMeshActor.h"
-#include "FBXLoader.h"
 #include "Components/PrimitiveComponents/MeshComponents/SkeletalMeshComponent.h"
 
 ASkeletalMeshActor::ASkeletalMeshActor()
