@@ -5,8 +5,6 @@
 #include "Animation/AnimSingleNodeInstance.h"
 #include "Classes/Engine/Assets/Animation/AnimTypes.h"
 
-class UAnimSequence;
-
 class UBlendAnimInstance : public UAnimInstance
 {
     DECLARE_CLASS(UBlendAnimInstance, UAnimInstance)
@@ -19,20 +17,13 @@ public:
     void DuplicateSubObjects(const UObject* Source, UObject* InOuter) override;
     void PostDuplicate() override;
 
-    PROPERTY(float, BlendAlpha);
-
 protected:
     virtual void NativeInitializeAnimation() override;
     virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 
+    virtual void InitializeForBlendAnimations(const uint32 IndexA, const uint32 IndexB, FPoseData& OutPose) override;
+    virtual void BlendAnimations(float DeltaSeconds, const uint32 IndexA, const uint32 IndexB, FPoseData& OutPose) override;
 private:
-    UAnimSequence* AnimationA;
-    UAnimSequence* AnimationB;
-    float BlendAlpha;
 
-    float NormalizedTime;
-
-    FPoseData PoseDataA;
-    FPoseData PoseDataB;
 };
 

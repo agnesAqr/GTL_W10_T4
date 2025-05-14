@@ -56,7 +56,7 @@ void UnrealEd::SetWorld(UWorld* InWorld)
     for (auto& [_, Panel] : Panels)
     {
         Panel->SetWorld(World);
-    } 
+    }
 }
 
 std::shared_ptr<UEditorPanel> UnrealEd::GetEditorPanel(const FString& PanelId)

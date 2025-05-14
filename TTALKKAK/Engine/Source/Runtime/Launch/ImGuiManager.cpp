@@ -67,7 +67,7 @@ void ImGuiManager::InitializeWindow()
     //     style.Colors[ImGuiCol_WindowBg].w = 1.0f;
     // }
     
-    io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\malgun.ttf", 17.0f, NULL, io.Fonts->GetGlyphRangesKorean());
+    io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\malgun.ttf", 17.0f, NULL, io.Fonts->GetGlyphRangesDefault());
     ImGui::GetStyle().ScaleAllSizes(0.8f);
 
     ImFontConfig FeatherFontConfig;

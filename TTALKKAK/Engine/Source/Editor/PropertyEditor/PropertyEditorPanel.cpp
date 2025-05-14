@@ -41,6 +41,7 @@
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimSingleNodeInstance.h"
 #include "Animation/BlendAnimInstance.h"
+#include "Animation/CustomAnimInstance.h"
 #include "CoreUObject/UObject/NameTypes.h"
 
 void PropertyEditorPanel::Initialize(float InWidth, float InHeight)
@@ -970,7 +971,8 @@ void PropertyEditorPanel::RenderForSkeletalMesh(USkeletalMeshComponent* Skeletal
                 {
                     currentIndex = i;
                     std::string fullPath = "FBX/" + fbxFiles[i];
-                    SkeletalMeshComp->LoadSkeletalMesh(fullPath);
+                    USkeletalMesh* Mesh = FBXLoader::GetSkeletalMesh(fullPath);
+                    SkeletalMeshComp->SetSkeletalMesh(Mesh);
                 }
                 if (isSelected)
                     ImGui::SetItemDefaultFocus();
@@ -1007,10 +1009,6 @@ void PropertyEditorPanel::RenderForSkeletalMesh2(USkeletalMeshComponent* Skeleta
     {
         ImGui::Text("Skeletal Mesh: %s", *SkeletalMeshComp->GetSkeletalMesh()->GetRenderData().Name); // 메시 이름 표시
 
-        DrawSkeletalMeshPreviewButton(SkeletalMeshComp->GetSkeletalMesh()->GetRenderData().Name);
-
-
-
         UAnimInstance* CurrentActualAnimInstance = SkeletalMeshComp->GetAnimInstance();
         FString CurrentInstanceName = CurrentActualAnimInstance ? CurrentActualAnimInstance->GetClass()->GetName() : TEXT("None");
 
@@ -1023,7 +1021,8 @@ void PropertyEditorPanel::RenderForSkeletalMesh2(USkeletalMeshComponent* Skeleta
         static const TArray<AnimInstanceOption> AnimInstanceOptions = {
             {"UAnimInstance", UAnimInstance::StaticClass()},
             {"AnimSingleNodeInstance", UAnimSingleNodeInstance::StaticClass()},
-            {"BlendAnimInstance", UBlendAnimInstance::StaticClass()}
+            {"BlendAnimInstance", UBlendAnimInstance::StaticClass()},
+            {"CustomAnimInstance", UCustomAnimInstance::StaticClass()}
         };
 
         int SelectedInstanceIndex = -1;
@@ -1082,6 +1081,10 @@ void PropertyEditorPanel::RenderForSkeletalMesh2(USkeletalMeshComponent* Skeleta
                             {
                                 NewInstance = FObjectFactory::ConstructObject<UBlendAnimInstance>(SkeletalMeshComp);
                             }
+                            else if (TargetClass == UCustomAnimInstance::StaticClass())
+                            {
+                                NewInstance = FObjectFactory::ConstructObject<UCustomAnimInstance>(SkeletalMeshComp);
+                            }
                             else
                             {
                                 UE_LOG(LogLevel::Error, TEXT("Cannot construct AnimInstance: Unknown class type selected."));
@@ -1104,6 +1107,49 @@ void PropertyEditorPanel::RenderForSkeletalMesh2(USkeletalMeshComponent* Skeleta
             }
             ImGui::EndCombo();
         }
+
+        #pragma region FBX Combo
+        std::vector<std::string> fbxFiles;
+        static const std::string folder = std::filesystem::current_path().string() + "/Contents/FBX";
+        for (auto& entry : std::filesystem::directory_iterator(folder))
+        {
+            if (!entry.is_regular_file()) continue;
+            if (entry.path().extension() == ".fbx")
+                fbxFiles.push_back(entry.path().filename().string());
+        }
+
+        static int currentIndex = 0;
+        const char* preview = fbxFiles.empty() 
+            ? "No .fbx files" 
+            : fbxFiles[currentIndex].c_str();
+
+        FString PreviewName = SkeletalMeshComp->GetSkeletalMesh()->GetRenderData().Name;
+        std::filesystem::path P = PreviewName;
+        FString FileName = FString( P.filename().string() ); 
+        
+        const TMap<FString, USkeletalMesh*> Meshes = FBXLoader::GetSkeletalMeshes();
+        if (ImGui::BeginCombo("##SkeletalMesh", GetData(FileName), ImGuiComboFlags_None))
+        {
+            for (int i = 0; i < (int)fbxFiles.size(); ++i)
+            {
+                bool isSelected = (i == currentIndex);
+                if (ImGui::Selectable(fbxFiles[i].c_str(), isSelected))
+                {
+                    currentIndex = i;
+                    std::string fullPath = "FBX/" + fbxFiles[i];
+                    USkeletalMesh* Mesh = FBXLoader::GetSkeletalMesh(fullPath);
+                    SkeletalMeshComp->SetSkeletalMesh(Mesh);
+                }
+                if (isSelected)
+                    ImGui::SetItemDefaultFocus();
+            }
+            ImGui::EndCombo();
+        }
+        #pragma endregion
+
+        DrawSkeletalMeshPreviewButton(SkeletalMeshComp->GetSkeletalMesh()->GetRenderData().Name);
+        if (SkeletalMeshComp->HasAnimation())
+            DrawAnimationPreviewButton(SkeletalMeshComp->GetSkeletalMesh()->GetRenderData().Name);
 
         ImGui::TreePop();
     }
@@ -1978,23 +2024,21 @@ void PropertyEditorPanel::RenderDelegate(ULevel* level)
 
 void PropertyEditorPanel::DrawSkeletalMeshPreviewButton(const FString& FilePath)
 {
+    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.1f, 0.1f, 0.1f, 0.5f));
     if (ImGui::Button("SkeletalMesh Viewer##"))
     {
         UEditorEngine* EditorEngine = Cast<UEditorEngine>(GEngine);
         if (EditorEngine == nullptr)
-        {
             return;
-        }
-        
+
+        EditorEngine->SetPreviewMode(EEditorPreviewMode::SkeletalMesh);
         UWorld* World = EditorEngine->CreatePreviewWindow();
 
         const TArray<AActor*> CopiedActors = World->GetActors();
         for (AActor* Actor : CopiedActors)
         {
             if (Actor->IsA<UTransformGizmo>() || Actor->IsA<APlayerCameraManager>())
-            {
                 continue;
-            }
 
             Actor->Destroy();
         }
@@ -2013,9 +2057,52 @@ void PropertyEditorPanel::DrawSkeletalMeshPreviewButton(const FString& FilePath)
         ASkeletalMeshActor* SkeletalMeshActor = World->SpawnActor<ASkeletalMeshActor>();
         SkeletalMeshActor->SetActorLabel("SkeletalMesh");
         USkeletalMeshComponent* SkeletalMeshComp = SkeletalMeshActor->GetComponentByClass<USkeletalMeshComponent>();
-
-        SkeletalMeshComp->SetSkeletalMesh(FBXLoader::GetSkeletalMesh(FilePath));
+        SkeletalMeshComp->SetSkeletalMesh(FBXLoader::CreateSkeletalMesh(FilePath));
     }
+    ImGui::PopStyleColor(1);
+}
+
+void PropertyEditorPanel::DrawAnimationPreviewButton(const FString& FilePath)
+{
+    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.1f, 0.1f, 0.1f, 0.5f));
+    if (ImGui::Button("Animation Viewer##"))
+    {
+        UEditorEngine* EditorEngine = Cast<UEditorEngine>(GEngine);
+        if (EditorEngine == nullptr)
+            return;
+
+        EditorEngine->SetPreviewMode(EEditorPreviewMode::Animation);
+        // TODO : 추후 World 새로 생성하는 방식으로 변경
+        UWorld* World = EditorEngine->CreatePreviewWindow();
+
+        const TArray<AActor*> CopiedActors = World->GetActors();
+        for (AActor* Actor : CopiedActors)
+        {
+            if (Actor->IsA<UTransformGizmo>() || Actor->IsA<APlayerCameraManager>())
+                continue;
+
+            Actor->Destroy();
+        }
+        World->ClearSelectedActors();
+        
+        AStaticMeshActor* TempActor = World->SpawnActor<AStaticMeshActor>();
+        TempActor->SetActorLabel(TEXT("OBJ_SKYSPHERE"));
+        UStaticMeshComponent* MeshComp = TempActor->GetStaticMeshComponent();
+        FManagerOBJ::CreateStaticMesh("Assets/SkySphere.obj");
+        MeshComp->SetStaticMesh(FManagerOBJ::GetStaticMesh(L"SkySphere.obj"));
+        MeshComp->GetStaticMesh()->GetMaterials()[0]->Material->SetDiffuse(FVector::OneVector);
+        MeshComp->GetStaticMesh()->GetMaterials()[0]->Material->SetEmissive(FVector::OneVector);
+        MeshComp->SetWorldRotation(FRotator(0.0f, 0.0f, 90.0f));
+        TempActor->SetActorScale(FVector(1.0f, 1.0f, 1.0f));
+
+        ASkeletalMeshActor* SkeletalMeshActor = World->SpawnActor<ASkeletalMeshActor>();
+        SkeletalMeshActor->SetActorLabel("SkeletalMesh");
+        USkeletalMeshComponent* SkeletalMeshComp = SkeletalMeshActor->GetComponentByClass<USkeletalMeshComponent>();
+        //SkeletalMeshComp->SetSkeletalMesh(FBXLoader::GetSkeletalMesh(FilePath));
+        USkeletalMesh* Mesh = FBXLoader::GetSkeletalMesh(TEXT("FBX/mixmix2_2.fbx"));
+        SkeletalMeshComp->SetSkeletalMesh(Mesh);
+    }
+    ImGui::PopStyleColor(1);
 }
 
 void PropertyEditorPanel::OnResize(HWND hWnd)

@@ -20,7 +20,6 @@ USkeletalMeshComponent::USkeletalMeshComponent()
     , SelectedSubMeshIndex(-1)
     , OwningAnimInstance(nullptr)
 {
-    OwningAnimInstance = FObjectFactory::ConstructObject<UAnimInstance>(this);
 }
 
 USkeletalMeshComponent::USkeletalMeshComponent(const USkeletalMeshComponent& Other)
@@ -147,11 +146,10 @@ void USkeletalMeshComponent::SetSkeletalMesh(USkeletalMesh* value)
     if (SkeletalMesh == value) return;
 
     SkeletalMesh = value;
-
     if (SkeletalMesh)
     {
         VBIBTopologyMappingName = SkeletalMesh->GetFName();
-         SkeletalMesh->UpdateBoneHierarchy();
+        SkeletalMesh->UpdateBoneHierarchy();
 
         // 머티리얼 오버라이드 배열 크기 조정
         OverrideMaterials.Init(nullptr, SkeletalMesh->GetMaterials().Num());
@@ -159,7 +157,7 @@ void USkeletalMeshComponent::SetSkeletalMesh(USkeletalMesh* value)
 
         if (OwningAnimInstance == nullptr)
         {
-            OwningAnimInstance = FObjectFactory::ConstructObject<UAnimInstance>(this);
+            OwningAnimInstance = FObjectFactory::ConstructObject<UAnimSingleNodeInstance>(this);
         }
 
         if (OwningAnimInstance)
@@ -198,17 +196,6 @@ void USkeletalMeshComponent::CreateBoneComponents()
         BoneComp->SetFName(Bone.BoneName);
         BoneComponents.Add(BoneComp);
     }
-}
-
-USkeletalMesh* USkeletalMeshComponent::LoadSkeletalMesh(const FString& FilePath)
-{
-    USkeletalMesh* NewSkeletalMesh = FBXLoader::GetSkeletalMesh(FilePath);
-    if (NewSkeletalMesh)
-    {
-        SetSkeletalMesh(NewSkeletalMesh);
-    }
-
-    return NewSkeletalMesh;
 }
 
 void USkeletalMeshComponent::UpdateBoneHierarchy()
@@ -431,9 +418,47 @@ void USkeletalMeshComponent::UpdateBoneTransformsFromAnim()
         // else: 루트 본이거나 ParentIndex가 유효하지 않으면, ParentGlobalTransformMatrix는 Identity로 유지됩니다.
 
         RenderData.Bones[BoneTreeIndex].GlobalTransform = RenderData.Bones[BoneTreeIndex].LocalTransform * ParentGlobalTransformMatrix;
-        //RenderData.Bones[BoneTreeIndex].GlobalTransform = ParentGlobalTransformMatrix * RenderData.Bones[BoneTreeIndex].LocalTransform;
 
         RenderData.Bones[BoneTreeIndex].SkinningMatrix = RenderData.Bones[BoneTreeIndex].InverseBindPoseMatrix * RenderData.Bones[BoneTreeIndex].GlobalTransform;
-        //RenderData.Bones[BoneTreeIndex].SkinningMatrix = RenderData.Bones[BoneTreeIndex].GlobalTransform * RenderData.Bones[BoneTreeIndex].InverseBindPoseMatrix;
     }
+}
+
+void USkeletalMeshComponent::HandleAnimNotify(const FAnimNotifyEvent& Notify)
+{
+    //Owner->HandleAnimNotify(Notify);
+}
+
+void USkeletalMeshComponent::SetPosition(float InTime, bool bFireNotifies)
+{
+    if (OwningAnimInstance)
+    {
+        // UAnimSingleNodeInstance에 시간 세팅
+        UAnimSingleNodeInstance* SingleNodeInst = Cast<UAnimSingleNodeInstance>(OwningAnimInstance);
+        if (SingleNodeInst)
+        {
+            // AnimSingleNodeInstance 의 내부 시간·포즈 업데이트
+            SingleNodeInst->SetPosition(InTime, bFireNotifies);
+        }
+    }
+    else
+    {
+        // 애니메이션이 없는 경우 참조 포즈로 초기화
+        if (SkeletalMesh)
+            SkeletalMesh->UpdateBoneHierarchy();
+    }
+
+    // 애니메이션에 따라 본 트랜스폼을 재계산하여 RenderData 에 반영
+    UpdateBoneTransformsFromAnim();
+    SkeletalMesh->UpdateSkinnedVertices();
+}
+
+bool USkeletalMeshComponent::HasAnimation() const
+{
+    if (!OwningAnimInstance)
+        return false;
+
+    if (auto* SingleNode = Cast<UAnimSingleNodeInstance>(OwningAnimInstance))
+        return SingleNode->GetAnimation() != nullptr;
+
+    return false;
 }

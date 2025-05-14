@@ -1,8 +1,10 @@
 #pragma once
+#include "Actors/SkeletalMeshActor.h"
 #include "Engine/Engine.h"
 #include "Coroutine/CoroutineManager.h"
 
 class FSkeletalPreviewUI;
+class FAnimationPreviewUI;
 class FCollisionManager;
 class FRenderer;
 class UEditorPlayer;
@@ -11,6 +13,12 @@ class UnrealEd;
 class SLevelEditor;
 
 extern UWorld* GWorld;
+
+enum class EEditorPreviewMode
+{
+    SkeletalMesh,
+    Animation
+};
 
 class UEditorEngine : public UEngine
 {
@@ -50,6 +58,7 @@ public:
     SLevelEditor* GetLevelEditor() const { return LevelEditor; }
     UnrealEd* GetUnrealEditor() const { return UnrealEditor; }
     FSkeletalPreviewUI* GetSkeletalPreviewUI() const { return SkeletalPreviewUI; }    
+    FAnimationPreviewUI* GetAnimationPreviewUI() const { return AnimationPreviewUI; }    
 
 
     float testBlurStrength;
@@ -66,8 +75,15 @@ public:
 private:
     UnrealEd* UnrealEditor = nullptr;
     FSkeletalPreviewUI* SkeletalPreviewUI = nullptr;
+    FAnimationPreviewUI* AnimationPreviewUI = nullptr;
     
     SLevelEditor* LevelEditor = nullptr;
     UEditorPlayer* EditorPlayer = nullptr;
+    
     UWorld* PreviewWorld = nullptr;
+    EEditorPreviewMode PreviewMode = EEditorPreviewMode::SkeletalMesh;
+
+public:
+    void SetPreviewMode(EEditorPreviewMode NewMode) { PreviewMode = NewMode; }
+    EEditorPreviewMode GetPreviewMode() const     { return PreviewMode; }
 };

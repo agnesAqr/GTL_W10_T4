@@ -17,9 +17,9 @@
 #include "UObject/Casts.h"
 #include "Engine/AssetManager.h"
 #include "UnrealEd/SkeletalPreviewUI.h"
+#include "UnrealEd/AnimationPreviewUI.h"
 
 class ULevel;
-
 
 FCollisionManager UEditorEngine::CollisionManager;
 FCoroutineManager UEditorEngine::CoroutineManager;
@@ -31,14 +31,19 @@ void UEditorEngine::Init()
     UnrealEditor = new UnrealEd();
     ContentsUI = new FContentsUI();
     SkeletalPreviewUI = new FSkeletalPreviewUI();
+    AnimationPreviewUI = new FAnimationPreviewUI();
 
     UWorld* EditorWorld = CreateWorld(EWorldType::Editor, LEVELTICK_ViewportsOnly);
     
     /* must be initialized before window. */
     LevelEditor->Initialize(EditorWorld, GEngineLoop.GetDefaultWindow());
 
-    UnrealEditor->Initialize(LevelEditor, GEngineLoop.GraphicDevice.GetDefaultWindowData().ScreenWidth, GEngineLoop.GraphicDevice.GetDefaultWindowData().ScreenHeight);
-    SkeletalPreviewUI->Initialize(LevelEditor, GEngineLoop.GraphicDevice.GetDefaultWindowData().ScreenWidth, GEngineLoop.GraphicDevice.GetDefaultWindowData().ScreenHeight);
+    float PreviewWidth  = GEngineLoop.GraphicDevice.GetDefaultWindowData().ScreenWidth;
+    float PreviewHeight = GEngineLoop.GraphicDevice.GetDefaultWindowData().ScreenHeight;
+
+    UnrealEditor->Initialize(LevelEditor, PreviewWidth, PreviewHeight);
+    SkeletalPreviewUI->Initialize(LevelEditor, PreviewWidth, PreviewHeight);
+    AnimationPreviewUI->Initialize(LevelEditor, PreviewWidth, PreviewHeight);
     ContentsUI->Initialize();
     
     CollisionManager.Initialize();  
@@ -46,7 +51,7 @@ void UEditorEngine::Init()
 
     EditorPlayer = FObjectFactory::ConstructObject<UEditorPlayer>(this);
     EditorPlayer->Initialize();
-    
+
     RegisterWaitHelpers(FLuaManager::Get().GetLuaState());
 
     if (AssetManager == nullptr)
@@ -274,10 +279,8 @@ std::shared_ptr<FWorldContext> UEditorEngine::CreateNewWorldContext(UWorld* InWo
     NewWorldContext->WorldType = InWorldType;
     WorldContexts.Add(InWorld, NewWorldContext);
     
-
     NewWorldContext->LevelType = LevelType;
     NewWorldContext->SetWorld(InWorld);
     
-
     return NewWorldContext;
 }

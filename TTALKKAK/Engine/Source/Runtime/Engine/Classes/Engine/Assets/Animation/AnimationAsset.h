@@ -33,6 +33,13 @@ protected:
     const FRefSkeletal* RefSkeletal;    
 };
 
+struct FAnimNotifyEvent
+{
+    float TriggerTime;
+    float Duration;
+    FName NotifyName;
+};
+
 class UAnimSequenceBase : public UAnimationAsset
 {
     DECLARE_CLASS(UAnimSequenceBase, UAnimationAsset)
@@ -101,6 +108,7 @@ public:
     float GetTimeAtFrame(const int32 Frame) const override;
     void TickAssetPlayer() override;
     void PopulateModel() override;
+    TArray<FAnimNotifyEvent> GetNotifies() const { return Notifies;};
 
     //void SamplePoseAtTime(float Time, const FRefSkeletal* Skeleton, FPoseData& OutPose, const uint32 AnimCount) const;
     void SamplePoseAtTime(float Time, const FRefSkeletal* Skeleton, FPoseData& OutPose) const;
@@ -122,6 +130,9 @@ protected:
     // “만약 RefPoseType 이 AnimFrame 일 때, 애디티브(additive) 블렌딩을 위해 이 프레임을 기준(참조) 포즈로 사용하라”
     // 기준 포즈를 어떤 값으로 잡을지를 결정하는 조건 주석.
     int32 RefFrameIndex;
+
+    // 애니메이션 이벤트 배열
+    TArray<FAnimNotifyEvent> Notifies;
 };
 
 inline float UAnimSequence::GetPlayLength() const
@@ -131,7 +142,7 @@ inline float UAnimSequence::GetPlayLength() const
 
 inline int32 UAnimSequence::GetNumberOfFrames() const
 {
-    return UAnimSequenceBase::GetNumberOfFrames();
+    return NumFrames;
 }
 
 inline int32 UAnimSequence::GetNumberOfSampledKeys() const

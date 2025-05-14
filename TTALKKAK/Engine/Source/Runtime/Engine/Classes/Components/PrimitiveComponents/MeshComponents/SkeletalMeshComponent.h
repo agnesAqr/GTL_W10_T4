@@ -31,13 +31,11 @@ public:
     virtual uint32 GetMaterialIndex(FName MaterialSlotName) const override;
     virtual TArray<FName> GetMaterialSlotNames() const override;
     virtual void GetUsedMaterials(TArray<UMaterial*>& Out) const override;
-
     
     virtual int CheckRayIntersection(FVector& rayOrigin, FVector& rayDirection, float& pfNearHitDistance) override;
     
     USkeletalMesh* GetSkeletalMesh() const { return SkeletalMesh; }
     void SetSkeletalMesh(USkeletalMesh* value);
-    USkeletalMesh* LoadSkeletalMesh(const FString& FilePath);
     void CreateBoneComponents();
     void UpdateBoneHierarchy();
 
@@ -45,6 +43,16 @@ public:
     UAnimInstance* GetAnimInstance() const { return OwningAnimInstance; }
 
     void UpdateBoneTransformsFromAnim();
+    void HandleAnimNotify(const FAnimNotifyEvent& Notify);
+    
+    /**
+    * @brief 애니메이션 재생 위치를 설정하고 본 트랜스폼을 업데이트합니다.
+    * @param InTime       재생할 시간(초 단위)
+    * @param bFireNotifies true 이면 해당 시간에 걸친 Notify 이벤트를 HandleAnimNotify()로 전달
+    */
+    void SetPosition(float InTime, bool bFireNotifies = false);
+
+    bool HasAnimation() const;
 
 private:
     TArray<UStaticMeshComponent*> BoneComponents;
