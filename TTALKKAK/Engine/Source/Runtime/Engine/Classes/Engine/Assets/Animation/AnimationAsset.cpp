@@ -151,6 +151,7 @@ void UAnimSequence::SetAnimDataModel(UAnimDataModel* AnimDataModel)
     for (auto BoneAnimTrack : AnimDataModel->BoneAnimationTracks)
     {
         RawAnimationData.Add(BoneAnimTrack.InternalTrackData);
+        AnimationTrackNames.Add(BoneAnimTrack.Name);
     }
 
 
@@ -409,6 +410,8 @@ void UAnimSequence::PopulateModel()
              {
                  BoneTransform.Scale3D = Track.ScaleKeys[KeyIndex1];
              }
+             
+             OutPose.LocalBoneTransformMap[AnimationTrackNames[BoneIndex]] = BoneTransform;
          }
          // else : 애니메이션 트랙이 없는 뼈는 기본 바인드 포즈(또는 Identity)를 유지합니다.
          // 이 부분은 OutPose.Reset()에서 FCompactPoseBone의 기본 생성자에 의해 Identity로 초기화되거나,

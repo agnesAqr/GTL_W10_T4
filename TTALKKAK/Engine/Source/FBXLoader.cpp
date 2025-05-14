@@ -146,14 +146,7 @@ FSkeletalMeshRenderData* FBXLoader::ParseFBX(const FString& FilePath, bool bIsAb
         {
             ExtractAnimation(RootIdx, *RefSkeletal, Layer, AnimModel, NodeMap, SampleTimes);
         }
-
-        //
-        // // 3) 루트 본부터 재귀하며 키 트랙 추출
-        // for (const int RootIdx : RefSkeletal->RootBoneIndices)
-        // {
-        //     ExtractAnimation(RootIdx, *RefSkeletal, Layer, AnimModel, NodeMap);
-        // }
-
+        
         DebugWriteAnimationModel(AnimModel);
 
         AnimDataModels.Add(FilePath, AnimModel);
@@ -250,11 +243,18 @@ void FBXLoader::ExtractMeshFromNode(FbxNode* Node, FSkeletalMeshRenderData* Mesh
     }
     
     FbxMesh* Mesh = Node->GetMesh();
-    FbxGeometryConverter geomConverter(FbxManager);
-    geomConverter.Triangulate(Mesh, /*replace=*/true);
-    
     if (Mesh)
-    {        
+    {
+        FbxGeometryConverter geomConverter(FbxManager);
+        FbxNodeAttribute* triAttr = geomConverter.Triangulate(Mesh, /*replace=*/true);
+        if (triAttr && triAttr->GetAttributeType() == FbxNodeAttribute::eMesh)
+        {
+            Mesh = static_cast<FbxMesh*>(triAttr);
+        }
+        else
+        {
+            // (필요시) 실패 처리
+        }
         int BaseVertexIndex = MeshData->Vertices.Num();
         int BaseIndexOffset = MeshData->Indices.Num();
         
@@ -310,42 +310,6 @@ void FBXLoader::ExtractVertices(FbxMesh* Mesh, FSkeletalMeshRenderData* MeshData
         }
     }
     
-    // // 0) 매핑 모드 종합
-    // auto* normElem = Mesh->GetElementNormal();
-    // auto* uvElem   = Mesh->GetElementUV(0);
-    // auto normMode  = normElem ? normElem->GetMappingMode() : FbxGeometryElement::eByControlPoint;
-    // auto uvMode    = uvElem   ? uvElem  ->GetMappingMode() : FbxGeometryElement::eByControlPoint;
-    // bool usePV     = normMode == FbxGeometryElement::eByPolygonVertex ||
-    //                  uvMode   == FbxGeometryElement::eByPolygonVertex;
-    // auto finalMode = usePV ? FbxGeometryElement::eByPolygonVertex
-    //                        : FbxGeometryElement::eByControlPoint;
-    //
-    // int BaseIndex = MeshData->Vertices.Num();
-    //
-    // if (finalMode == FbxGeometryElement::eByControlPoint)
-    // {
-    //     int cpCount = Mesh->GetControlPointsCount();
-    //     MeshData->Vertices.Reserve(BaseIndex + cpCount);
-    //     for (int i = 0; i < cpCount; ++i)
-    //         AddVertexFromControlPoint(Mesh, MeshData, i);
-    // }
-    // else // eByPolygonVertex
-    // {
-    //     int totalPV = 0, polyCnt = Mesh->GetPolygonCount();
-    //     for (int p = 0; p < polyCnt; ++p)
-    //         totalPV += Mesh->GetPolygonSize(p);
-    //
-    //     MeshData->Vertices.Reserve(BaseIndex + totalPV);
-    //     for (int p = 0; p < polyCnt; ++p)
-    //         for (int v = 0, sz = Mesh->GetPolygonSize(p); v < sz; ++v)
-    //             AddVertexFromControlPoint(Mesh, MeshData, Mesh->GetPolygonVertex(p, v));
-    // }
-    //
-    // // 3) Attribute(법선, UV, 탄젠트, 스키닝) 채우기
-    // ExtractNormals       (Mesh, MeshData, BaseIndex);
-    // ExtractUVs           (Mesh, MeshData, BaseIndex);
-    // ExtractTangents      (Mesh, MeshData, BaseIndex);
-    // ExtractSkinningData  (Mesh, MeshData, RefSkeletal, BaseIndex);
 }
 
 FSkeletalVertex FBXLoader::GetVertexFromControlPoint(FbxMesh* Mesh, int PolygonIndex, int VertexIndex)

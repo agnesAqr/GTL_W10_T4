@@ -116,7 +116,6 @@ protected:
     // 애니메이션 시퀀스의 원시 키프레임 데이터를 저장하는 배열
     TArray<FRawAnimSequenceTrack> RawAnimationData;
 
-    // 이게 뭐하는 지 모르겠음
     TArray<FName> AnimationTrackNames;
 
     // “만약 RefPoseType 이 AnimFrame 일 때, 애디티브(additive) 블렌딩을 위해 이 프레임을 기준(참조) 포즈로 사용하라”

@@ -36,12 +36,14 @@ struct FPoseData
 {
     FPoseData() { LocalBoneTransforms = {}, Skeleton = nullptr; }
     TArray<FCompactPoseBone> LocalBoneTransforms;
+    TMap<FName, FCompactPoseBone> LocalBoneTransformMap;
 
     const FRefSkeletal* Skeleton;
 
     void Reset()
     {
         LocalBoneTransforms.Empty();
+        LocalBoneTransformMap.Empty();
         //LocalBoneTransforms.AddDefaulted(NumBones); // 기본값(Identity)으로 초기화
     }
 };

@@ -409,7 +409,12 @@ void USkeletalMeshComponent::UpdateBoneTransformsFromAnim()
             continue;
         }
 
-        RenderData.Bones[BoneTreeIndex].LocalTransform = CurrentPose.LocalBoneTransforms[BoneTreeIndex].ToTransform().ToMatrix();
+        //RenderData.Bones[BoneTreeIndex].LocalTransform = CurrentPose.LocalBoneTransforms[BoneTreeIndex].ToTransform().ToMatrix();
+        FString curBoneName = SkeletalMesh->GetRefSkeletal()->BoneTree[BoneTreeIndex].BoneName;
+        if (CurrentPose.LocalBoneTransformMap.Contains(curBoneName))
+        {
+            RenderData.Bones[BoneTreeIndex].LocalTransform = CurrentPose.LocalBoneTransformMap[curBoneName].ToTransform().ToMatrix();
+        }
     }
 
     for (int32 BoneTreeIndex = 0; BoneTreeIndex < RefSkeleton->BoneTree.Num(); ++BoneTreeIndex)
