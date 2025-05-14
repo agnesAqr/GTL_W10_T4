@@ -2,7 +2,6 @@
 #include "CoreUObject/UObject/Casts.h"
 #include "Components/PrimitiveComponents/MeshComponents/SkeletalMeshComponent.h"
 
-
 UAnimInstance::UAnimInstance(const UAnimInstance& Other)
     : UObject(Other)
     , TargetSkeleton(Other.TargetSkeleton)

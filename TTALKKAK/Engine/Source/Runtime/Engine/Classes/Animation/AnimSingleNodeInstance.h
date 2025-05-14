@@ -31,6 +31,7 @@ private:
 
 public:
     UAnimSequence* GetAnimation() const { return AnimationSequence; }
+    void SetAnimation(UAnimSequence* AnimSequence);
     void SetAnimation(UAnimSequence* AnimSequence, bool bShouldLoop);
 
     void SetLooping(bool InValue) { bLooping = InValue; }

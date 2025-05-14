@@ -933,7 +933,8 @@ void SkeletalPreviewPropertyEditorPanel::RenderForSkeletalMesh(USkeletalMeshComp
                 {
                     currentIndex = i;
                     std::string fullPath = "FBX/" + fbxFiles[i];
-                    SkeletalMeshComp->LoadSkeletalMesh(fullPath);
+                    USkeletalMesh* Mesh = FBXLoader::GetSkeletalMesh(fullPath);
+                    SkeletalMeshComp->SetSkeletalMesh(Mesh);
                 }
                 if (isSelected)
                     ImGui::SetItemDefaultFocus();

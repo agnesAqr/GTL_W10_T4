@@ -1,5 +1,6 @@
 #include "ACharacter.h"
 
+#include "FBXLoader.h"
 #include "Components/PrimitiveComponents/MeshComponents/SkeletalMeshComponent.h"
 
 ACharacter::ACharacter()
@@ -7,7 +8,8 @@ ACharacter::ACharacter()
 {
     SkeletalMeshComponent = AddComponent<USkeletalMeshComponent>(EComponentOrigin::Constructor);
     RootComponent = SkeletalMeshComponent;
-    SkeletalMeshComponent -> LoadSkeletalMesh(TEXT("FBX/mixmix2_2.fbx"));
+    USkeletalMesh* Mesh = FBXLoader::GetSkeletalMesh(TEXT("FBX/mixmix2_2.fbx"));
+    SkeletalMeshComponent->SetSkeletalMesh(Mesh);
 }
 
 ACharacter::ACharacter(const ACharacter& Other)

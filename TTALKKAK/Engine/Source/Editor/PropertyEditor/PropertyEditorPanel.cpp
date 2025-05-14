@@ -970,7 +970,8 @@ void PropertyEditorPanel::RenderForSkeletalMesh(USkeletalMeshComponent* Skeletal
                 {
                     currentIndex = i;
                     std::string fullPath = "FBX/" + fbxFiles[i];
-                    SkeletalMeshComp->LoadSkeletalMesh(fullPath);
+                    USkeletalMesh* Mesh = FBXLoader::GetSkeletalMesh(fullPath);
+                    SkeletalMeshComp->SetSkeletalMesh(Mesh);
                 }
                 if (isSelected)
                     ImGui::SetItemDefaultFocus();
@@ -1130,7 +1131,8 @@ void PropertyEditorPanel::RenderForSkeletalMesh2(USkeletalMeshComponent* Skeleta
                 {
                     currentIndex = i;
                     std::string fullPath = "FBX/" + fbxFiles[i];
-                    SkeletalMeshComp->LoadSkeletalMesh(fullPath);
+                    USkeletalMesh* Mesh = FBXLoader::GetSkeletalMesh(fullPath);
+                    SkeletalMeshComp->SetSkeletalMesh(Mesh);
                 }
                 if (isSelected)
                     ImGui::SetItemDefaultFocus();
@@ -1140,8 +1142,8 @@ void PropertyEditorPanel::RenderForSkeletalMesh2(USkeletalMeshComponent* Skeleta
         #pragma endregion
 
         DrawSkeletalMeshPreviewButton(SkeletalMeshComp->GetSkeletalMesh()->GetRenderData().Name);
-        //if (SkeletalMeshComp->HasAnimation())
-        DrawAnimationPreviewButton(SkeletalMeshComp->GetSkeletalMesh()->GetRenderData().Name);
+        if (SkeletalMeshComp->HasAnimation())
+            DrawAnimationPreviewButton(SkeletalMeshComp->GetSkeletalMesh()->GetRenderData().Name);
 
         ImGui::TreePop();
     }
@@ -2091,7 +2093,8 @@ void PropertyEditorPanel::DrawAnimationPreviewButton(const FString& FilePath)
         SkeletalMeshActor->SetActorLabel("SkeletalMesh");
         USkeletalMeshComponent* SkeletalMeshComp = SkeletalMeshActor->GetComponentByClass<USkeletalMeshComponent>();
         //SkeletalMeshComp->SetSkeletalMesh(FBXLoader::GetSkeletalMesh(FilePath));
-        SkeletalMeshComp->LoadSkeletalMesh(TEXT("FBX/mixmix2_2.fbx"));
+        USkeletalMesh* Mesh = FBXLoader::GetSkeletalMesh(TEXT("FBX/mixmix2_2.fbx"));
+        SkeletalMeshComp->SetSkeletalMesh(Mesh);
     }
     ImGui::PopStyleColor(1);
 }

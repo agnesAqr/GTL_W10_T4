@@ -8,6 +8,7 @@
 #include "Engine/Assets/Animation/AnimDataModel.h"
 #include "Engine/Assets/Animation/IAnimationDataModel.h"
 #include "Engine/Assets/Animation/AnimationAsset.h"
+#include <format>
 
 FbxManager* FBXLoader::FbxManager = nullptr;
     
@@ -1090,8 +1091,21 @@ FObjMaterialInfo FBXLoader::ConvertFbxToObjMaterialInfo(
 USkeletalMesh* FBXLoader::CreateSkeletalMesh(const FString& FilePath)
 {
     FSkeletalMeshRenderData* MeshData = ParseFBX(FilePath);
-    if (MeshData == nullptr)
+    if (!MeshData)
+    {
+        std::wstring filePath = FilePath.ToWideString();
+        std::wstring Msg = std::format(
+            L"경고: FBX 파일을 찾을 수 없습니다:\n{}",
+            filePath
+        );
+        MessageBoxW(
+            nullptr,
+            Msg.c_str(),
+            L"FBXLoader",
+            MB_OK | MB_ICONWARNING
+        );
         return nullptr;
+    }
     
     USkeletalMesh* SkeletalMesh = FObjectFactory::ConstructObject<USkeletalMesh>(nullptr);
     SkeletalMesh->SetData(FilePath);
@@ -1125,10 +1139,31 @@ FRefSkeletal* FBXLoader::GetRefSkeletal(FString FilePath)
 
 UAnimSequence* FBXLoader::CreateAnimationSequence(const FString& FilePath)
 {
-    ParseFBX(FilePath);
+    FSkeletalMeshRenderData* MeshData = ParseFBX(FilePath);
+    if (!MeshData)
+    {
+        std::wstring filePath = FilePath.ToWideString();
+        std::wstring Msg = std::format(
+            L"경고: 애니메이션 생성용 FBX 파일을 찾을 수 없습니다:\n{}",
+            filePath
+        );
+        MessageBoxW(nullptr, Msg.c_str(), L"FBXLoader", MB_OK | MB_ICONWARNING);
+        return nullptr;
+    }
 
     UAnimSequence* AnimSequence = FObjectFactory::ConstructObject<UAnimSequence>(nullptr);
     UAnimDataModel* AnimDataModel = GetAnimDataModel(FilePath);
+    if (!AnimDataModel)
+    {
+        std::wstring filePath = FilePath.ToWideString();
+        std::wstring Msg = std::format(
+            L"경고: AnimDataModel이 존재하지 않습니다:\n{}",
+            filePath
+        );
+        MessageBoxW(nullptr, Msg.c_str(), L"FBXLoader", MB_OK | MB_ICONWARNING);
+        return nullptr;
+    }
+    
     AnimSequence->SetAnimDataModel(AnimDataModel);
     SkeletalAnimSequences.Add(FilePath, AnimSequence);
     

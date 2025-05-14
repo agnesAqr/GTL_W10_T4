@@ -36,7 +36,6 @@ public:
     
     USkeletalMesh* GetSkeletalMesh() const { return SkeletalMesh; }
     void SetSkeletalMesh(USkeletalMesh* value);
-    USkeletalMesh* LoadSkeletalMesh(const FString& FilePath);
     void CreateBoneComponents();
     void UpdateBoneHierarchy();
 
@@ -52,6 +51,8 @@ public:
     * @param bFireNotifies true 이면 해당 시간에 걸친 Notify 이벤트를 HandleAnimNotify()로 전달
     */
     void SetPosition(float InTime, bool bFireNotifies = false);
+
+    bool HasAnimation() const;
 
 private:
     TArray<UStaticMeshComponent*> BoneComponents;

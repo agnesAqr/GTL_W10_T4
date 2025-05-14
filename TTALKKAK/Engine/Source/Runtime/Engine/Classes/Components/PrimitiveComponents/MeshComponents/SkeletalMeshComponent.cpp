@@ -20,7 +20,6 @@ USkeletalMeshComponent::USkeletalMeshComponent()
     , SelectedSubMeshIndex(-1)
     , OwningAnimInstance(nullptr)
 {
-    OwningAnimInstance = FObjectFactory::ConstructObject<UAnimSingleNodeInstance>(this);
 }
 
 USkeletalMeshComponent::USkeletalMeshComponent(const USkeletalMeshComponent& Other)
@@ -158,7 +157,7 @@ void USkeletalMeshComponent::SetSkeletalMesh(USkeletalMesh* value)
 
         if (OwningAnimInstance == nullptr)
         {
-            OwningAnimInstance = FObjectFactory::ConstructObject<UAnimInstance>(this);
+            OwningAnimInstance = FObjectFactory::ConstructObject<UAnimSingleNodeInstance>(this);
         }
 
         if (OwningAnimInstance)
@@ -197,17 +196,6 @@ void USkeletalMeshComponent::CreateBoneComponents()
         BoneComp->SetFName(Bone.BoneName);
         BoneComponents.Add(BoneComp);
     }
-}
-
-USkeletalMesh* USkeletalMeshComponent::LoadSkeletalMesh(const FString& FilePath)
-{
-    USkeletalMesh* NewSkeletalMesh = FBXLoader::GetSkeletalMesh(FilePath);
-    if (NewSkeletalMesh)
-    {
-        SetSkeletalMesh(NewSkeletalMesh);
-    }
-
-    return NewSkeletalMesh;
 }
 
 void USkeletalMeshComponent::UpdateBoneHierarchy()
@@ -462,4 +450,15 @@ void USkeletalMeshComponent::SetPosition(float InTime, bool bFireNotifies)
     // 애니메이션에 따라 본 트랜스폼을 재계산하여 RenderData 에 반영
     UpdateBoneTransformsFromAnim();
     SkeletalMesh->UpdateSkinnedVertices();
+}
+
+bool USkeletalMeshComponent::HasAnimation() const
+{
+    if (!OwningAnimInstance)
+        return false;
+
+    if (auto* SingleNode = Cast<UAnimSingleNodeInstance>(OwningAnimInstance))
+        return SingleNode->GetAnimation() != nullptr;
+
+    return false;
 }
